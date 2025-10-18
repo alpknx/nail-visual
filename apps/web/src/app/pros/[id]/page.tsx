@@ -1,11 +1,9 @@
-// apps/web/src/app/pros/[id]/page.tsx
 "use client";
 
 import * as React from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { getProProfile, listWorks, type Work } from "@/lib/api";
-import Image from "next/image";
+import { getProProfileById, listWorks, type Work } from "@/lib/api";
 
 export default function ProDetailPage() {
     // безопасно берём id (строка/массив → строка)
@@ -22,7 +20,7 @@ export default function ProDetailPage() {
         error: profileError,
     } = useQuery({
         queryKey: ["pro", id],
-        queryFn: () => getProProfile(id as string),
+        queryFn: () => getProProfileById(id as string),
         enabled: !!id,
     });
 
@@ -84,7 +82,7 @@ export default function ProDetailPage() {
                         </>
                     ) : null}
                 </p>
-                {profile.bio ? <p className="text-sm opacity-80">{profile.bio}</p> : null}
+                {profile?.lastWorkAt ? <p className="text-sm opacity-80">{profile?.lastWorkAt}</p> : null}
                 {!!profile.tags?.length && (
                     <p className="text-xs opacity-60">Теги: {profile.tags.join(" • ")}</p>
                 )}

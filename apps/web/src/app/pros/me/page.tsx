@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getProProfile, upsertProProfile } from "@/lib/api";
+import { getMyProProfile, upsertProProfile } from "@/lib/api";
 import { type City, CITIES } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,7 @@ export default function ProMePage() {
     // грузим профиль мастера
     const { data, isLoading } = useQuery({
         queryKey: ["pro", userId],
-        queryFn: () => getProProfile(userId),
+        queryFn: () => getMyProProfile(),
     });
 
     // форма
@@ -66,7 +66,6 @@ export default function ProMePage() {
     const mutation = useMutation({
         mutationFn: (v: FormData) =>
             upsertProProfile({
-                proId: userId,
                 minPricePln: v.minPricePln,
                 instagram: v.instagram || undefined,
                 city: toCity(v.city),            // ✅ приводим к City | undefined

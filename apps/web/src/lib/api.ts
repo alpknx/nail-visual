@@ -257,3 +257,51 @@ export async function getProProfile(id: string): Promise<ProProfile | null> {
     const json = await res.json();
     return json.data as ProProfile;
 }
+
+// ===== References (list) =====
+export async function listReferences(params?: { city?: string; limit?: number }) {
+    const url = new URL("/api/references", window.location.origin);
+    if (params?.city) url.searchParams.set("city", params.city);
+    if (params?.limit) url.searchParams.set("limit", String(params.limit));
+    const res = await fetch(url.toString(), { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch references");
+    const json = await res.json();
+    return (json.data ?? []) as ClientReference[];
+}
+
+// ===== Pro profile (me) =====
+export type ProProfileInput = {
+    bio?: string | null;
+    instagram?: string | null;
+    minPricePln?: number | null;
+    city?: string | null;
+};
+
+// GET чужого профиля по id (/api/pros/[id])
+export async function getProProfileById(id: string): Promise<ProProfile | null> {
+    const res = await fetch(`/api/pros/${id}`, { cache: "no-store" });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    // поддержим оба варианта ответа: {data: ...} или просто объект
+    return (json.data ?? json) as ProProfile;
+}
+
+// GET моего профиля (/api/pros/me)
+export async function getMyProProfile(): Promise<ProProfile | any> {
+    const res = await fetch("/api/pros/me", { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch pro profile");
+    return await res.json();
+}
+
+// UPSERT моего профиля (/api/pros/me)
+export async function upsertProProfile(input: ProProfileInput) {
+    const res = await fetch("/api/pros/me", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error("Failed to upsert pro profile");
+    return await res.json();
+}
+
