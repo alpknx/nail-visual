@@ -3,9 +3,9 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import NextAuthProvider from "@/providers/NextAuthProvider";
-import { ReactQueryClientProvider } from "@/lib/queryClient"; // если используешь react-query
+import { ReactQueryClientProvider } from "@/lib/queryClient";
 import { initPostHog } from "@/lib/analytics";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 export default function ClientShell({ children }: { children: React.ReactNode }) {
     useEffect(() => { initPostHog?.(); }, []);

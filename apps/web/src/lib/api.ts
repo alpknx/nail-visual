@@ -116,6 +116,21 @@ export async function createWork(input: {
     return w;
 }
 
+export async function createWorkViaApi(input: {
+    imageUrl: string;
+    caption?: string | null;
+    city?: string | null;
+    tags?: string[];
+}) {
+    const res = await fetch("/api/works/new", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return (await res.json()).data;
+}
+
 // ---------- References ----------
 /**
  * Совместимая сигнатура для createReference:

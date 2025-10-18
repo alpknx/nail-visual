@@ -1,4 +1,3 @@
-// apps/web/src/db/seed.ts
 import "dotenv/config"; // подхватит .env / .env.local из CWD
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
