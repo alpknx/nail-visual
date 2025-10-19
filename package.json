@@ -3,36 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start",
+    "dev": "pnpm -F web dev",
+    "build": "pnpm -F web build",
+    "start": "pnpm -F web start",
     "lint": "eslint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
-  "dependencies": {
-    "@auth/drizzle-adapter": "^1.11.0",
-    "drizzle-kit": "^0.31.5",
-    "drizzle-orm": "^0.44.6",
-    "next": "15.5.5",
-    "next-auth": "^4.24.11",
-    "pg": "^8.16.3",
-    "postgres": "^3.4.7",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "zod": "^4.1.12"
-  },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.56.1",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20.19.21",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.5",
-    "tailwindcss": "^4",
-    "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "eslint": "^9"
   }
 }

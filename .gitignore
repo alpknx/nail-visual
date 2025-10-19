@@ -5,6 +5,8 @@
 /.pnp
 .pnp.*
 .yarn/*
+**/node_modules
+**/pnp.*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
@@ -16,9 +18,12 @@
 # next.js
 /.next/
 /out/
+**/.next/
+**/out/
 
 # production
 /build
+**/build
 
 # misc
 .DS_Store
