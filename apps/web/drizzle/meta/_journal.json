@@ -15,6 +15,13 @@
       "when": 1760794336744,
       "tag": "0001_pink_jackal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1760905800000,
+      "tag": "0002_add_password",
+      "breakpoints": true
     }
   ]
 }

@@ -26,6 +26,7 @@ export const users = pgTable("users", {
     email: varchar("email", { length: 320 }).unique(),
     emailVerified: timestamp("email_verified", { withTimezone: true }),
     image: text("image"),
+    password: text("password"), // For email/password auth
     role: userRole("role").notNull().default("client"),
     city: varchar("city", { length: 120 }),
     phone: varchar("phone", { length: 40 }),
