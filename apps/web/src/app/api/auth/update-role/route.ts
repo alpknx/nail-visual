@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const updateRoleSchema = z.object({
     userId: z.string().uuid("Invalid user ID"),
@@ -11,6 +13,23 @@ const updateRoleSchema = z.object({
 
 export async function POST(request: NextRequest) {
     try {
+        // Check authentication
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        // Check authorization - only admins can update roles
+        if (session.user.role !== "admin") {
+            return NextResponse.json(
+                { error: "Forbidden: only admins can update user roles" },
+                { status: 403 }
+            );
+        }
+
         const body = await request.json();
 
         // Validate input

@@ -8,7 +8,6 @@ import { isRateLimited } from "@/lib/rate-limit";
 const registerSchema = z.object({
     email: z.string().email("Invalid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    role: z.enum(["client", "pro", "admin"]).optional().default("client"),
 });
 
 export async function POST(request: NextRequest) {
@@ -56,13 +55,13 @@ export async function POST(request: NextRequest) {
         // Hash password
         const hashedPassword = await hash(password, 12);
 
-        // Create user with specified role
+        // Create user with client role (default for new registrations)
         const id = crypto.randomUUID();
         await db.insert(users).values({
             id,
             email: lowercaseEmail,
             password: hashedPassword,
-            role: parsed.data.role,
+            role: "client",
         });
 
         return NextResponse.json({ id, email: lowercaseEmail }, { status: 201 });
