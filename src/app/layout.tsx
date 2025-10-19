@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import "./globals.css";
 
-// серверный layout может импортировать клиентский компонент
 import ClientShell from "./ClientShell";
 
 export const viewport = {
@@ -16,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="ru">
-        <body className="min-h-dvh bg-background text-foreground">
+        <body className="min-h-dvh bg-background text-foreground flex flex-col">
         <ClientShell>{children}</ClientShell>
         </body>
         </html>
