@@ -1,11 +1,43 @@
+"use client";
+
+import { useSession } from "next-auth/react";
 import WorkGrid from "@/components/WorkGrid";
+import ReferencesList from "@/components/ReferencesList";
+import ClientDashboard from "@/components/ClientDashboard";
 
 export default function Home() {
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+
   return (
-      <section className="space-y-4">
-        <h1 className="text-2xl font-semibold">Nail Visual — портфолио и референсы</h1>
-        <p className="text-muted-foreground">Залей работу или найди мастера по стилю</p>
-        <WorkGrid />
-      </section>
+    <section className="space-y-4">
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-semibold">Nail Visual</h1>
+          <p className="text-muted-foreground">
+            {role === "pro"
+              ? "Найди референсы для маникюра и отправляй офферы"
+              : role === "client"
+              ? "Твои референсы и офферы от мастеров"
+              : "Залей работу или найди мастера по стилю"}
+          </p>
+        </div>
+      
+      </div>
+
+      {role === "pro" ? (
+        <>
+          <h2 className="text-lg font-semibold">Свежие референсы</h2>
+          <ReferencesList />
+        </>
+      ) : role === "client" ? (
+        <ClientDashboard />
+      ) : (
+        <>
+          <h2 className="text-lg font-semibold">Портфолио мастеров</h2>
+          <WorkGrid />
+        </>
+      )}
+    </section>
   );
 }

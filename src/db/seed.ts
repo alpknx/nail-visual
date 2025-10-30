@@ -1,7 +1,7 @@
 import "dotenv/config"; // подхватит .env / .env.local из CWD
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { users, proProfiles, works } from "./schema";
+import { users, proProfiles, proWorks } from "./schema";
 
 if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is not set");
@@ -38,7 +38,7 @@ async function main() {
     });
 
     // немного работ, чтобы /pros не был пуст
-    await db.insert(works).values([
+    await db.insert(proWorks).values([
         {
             proId,
             imageUrl: "https://picsum.photos/400/500?1",

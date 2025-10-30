@@ -46,6 +46,10 @@ function TopBar() {
                         <>
                             <span className="opacity-70">{session?.user?.email}</span>
                             <span className="opacity-70">Роль: <b>{role}</b></span>
+                            {mounted && isMaster && (
+                                <Link href="/pro/orders" className="underline hover:opacity-80">Заказы</Link>
+                            )}
+                            <Link href={role === "pro" ? "/pro/profile" : "/profile"} className="underline hover:opacity-80">Профиль</Link>
                             <button onClick={() => signOut({ callbackUrl: "/" })} className="underline">Выйти</button>
                         </>
                     ) : (

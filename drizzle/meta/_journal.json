@@ -22,6 +22,27 @@
       "when": 1760905800000,
       "tag": "0002_add_password",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761838109695,
+      "tag": "0003_new_lockheed",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1761838268066,
+      "tag": "0004_third_layla_miller",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1761838555361,
+      "tag": "0005_lying_mephisto",
+      "breakpoints": true
     }
   ]
 }

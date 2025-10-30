@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users, works } from "@/db/schema";
+import { users, proWorks } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export async function GET(
@@ -40,23 +40,23 @@ export async function GET(
     // агрегаты по работам
     const agg = await db
         .select({
-            worksCount: sql<number>`COUNT(${works.id})`,
+            worksCount: sql<number>`COUNT(${proWorks.id})`,
             sampleUrl: sql<string | null>`
         (
-          SELECT ${works.imageUrl}
-          FROM ${works}
-          WHERE ${works.proId} = ${id}
-          ORDER BY ${works.createdAt} DESC
+          SELECT ${proWorks.imageUrl}
+          FROM ${proWorks}
+          WHERE ${proWorks.proId} = ${id}
+          ORDER BY ${proWorks.createdAt} DESC
           LIMIT 1
         )
       `,
-            lastWorkAt: sql<Date | null>`MAX(${works.createdAt})`,
+            lastWorkAt: sql<Date | null>`MAX(${proWorks.createdAt})`,
             cities: sql<string[]>`
         COALESCE(
           ARRAY(
-            SELECT DISTINCT ${works.city}
-            FROM ${works}
-            WHERE ${works.proId} = ${id} AND ${works.city} IS NOT NULL
+            SELECT DISTINCT ${proWorks.city}
+            FROM ${proWorks}
+            WHERE ${proWorks.proId} = ${id} AND ${proWorks.city} IS NOT NULL
           ),
           '{}'
         )
@@ -65,7 +65,7 @@ export async function GET(
         COALESCE(
           ARRAY(
             SELECT DISTINCT t
-            FROM ${works} w2, LATERAL UNNEST(w2.tags) AS t
+            FROM ${proWorks} w2, LATERAL UNNEST(w2.tags) AS t
             WHERE w2.pro_id = ${id} AND t IS NOT NULL
           ),
           '{}'

@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id || (session as any).role !== "client") {
+    if (!session?.user?.id || session.user.role !== "client") {
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
     }
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

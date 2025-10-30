@@ -24,12 +24,12 @@ export async function GET(req: Request) {
       SELECT
         u.id                                AS pro_id,
         (
-          SELECT COUNT(*) FROM works w2
+          SELECT COUNT(*) FROM pro_works w2
           WHERE w2.pro_id = u.id
         )                                   AS works_count,
         (
           SELECT w2.image_url
-          FROM works w2
+          FROM pro_works w2
           WHERE w2.pro_id = u.id
           ORDER BY w2.created_at DESC
           LIMIT 1
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
         COALESCE(
           ARRAY(
             SELECT DISTINCT w2.city
-            FROM works w2
+            FROM pro_works w2
             WHERE w2.pro_id = u.id AND w2.city IS NOT NULL
           ),
           '{}'::text[]
@@ -45,14 +45,14 @@ export async function GET(req: Request) {
         COALESCE(
           ARRAY(
             SELECT DISTINCT t
-            FROM works w2, LATERAL UNNEST(w2.tags) AS t
+            FROM pro_works w2, LATERAL UNNEST(w2.tags) AS t
             WHERE w2.pro_id = u.id AND t IS NOT NULL
           ),
           '{}'::text[]
         )                                   AS tags,
         (
           SELECT MAX(w2.created_at)
-          FROM works w2
+          FROM pro_works w2
           WHERE w2.pro_id = u.id
         )                                   AS last_work_at
       FROM users u
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
         AND (
           ${city ?? null}::text IS NULL
           OR EXISTS (
-              SELECT 1 FROM works wx
+              SELECT 1 FROM pro_works wx
               WHERE wx.pro_id = u.id AND wx.city = ${city ?? null}
           )
         )
@@ -69,18 +69,19 @@ export async function GET(req: Request) {
     `);
 
         // Приводим к нужному формату
-        const pros: ProSummary[] = (rows as any[]).map((r) => ({
-            proId: r.pro_id,
+        const pros: ProSummary[] = (rows as Array<Record<string, unknown>>).map((r) => ({
+            proId: String(r.pro_id ?? ""),
             worksCount: Number(r.works_count ?? 0),
-            sampleUrl: r.sample_url ?? null,
+            sampleUrl: (r.sample_url as string | null) ?? null,
             cities: Array.isArray(r.cities) ? r.cities.filter(Boolean) : [],
             tags: Array.isArray(r.tags) ? r.tags.filter(Boolean) : [],
         }));
 
         return NextResponse.json({ data: pros });
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const error = e instanceof Error ? e : new Error(String(e));
         return NextResponse.json(
-            { error: "pros_failed", message: e?.message ?? String(e) },
+            { error: "pros_failed", message: error.message },
             { status: 500 }
         );
     }

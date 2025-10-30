@@ -12,10 +12,6 @@ import {
     type ClientReference,
 } from "@/lib/api";
 
-// Сервер возвращает статус у референсов – добавим локальный тип с полем status.
-// Если у тебя уже есть status в ClientReference — можешь заменить на него.
-type RefWithStatus = ClientReference & { status?: "open" | "matched" | "closed" };
-
 export default function AdminPage() {
     // ЯВНО указываем дженерики, чтобы data имела корректный тип, а не {}
     const { data: works = [] } = useQuery<Work[]>({
@@ -23,7 +19,7 @@ export default function AdminPage() {
         queryFn: () => listWorks(),
     });
 
-    const { data: refsRaw = [] } = useQuery<RefWithStatus[]>({
+    const { data: refsRaw = [] } = useQuery<ClientReference[]>({
         queryKey: ["references"],
         queryFn: () => listReferences(),
     });
@@ -34,7 +30,7 @@ export default function AdminPage() {
     const fWorks = useMemo(
         () =>
             works.filter(
-                (w) => (!city || w.city === city) && (!tag || w.tags.includes(tag as any))
+                (w) => (!city || w.city === city) && (!tag || w.tags.includes(tag as "french" | "ombre" | "nude" | "red" | "black" | "white" | "chrome" | "cat-eye" | "glitter" | "pastel"))
             ),
         [works, city, tag]
     );
@@ -42,7 +38,7 @@ export default function AdminPage() {
     const fRefs = useMemo(
         () =>
             refsRaw.filter(
-                (r) => (!city || r.city === city) && (!tag || r.tags.includes(tag as any))
+                (r) => (!city || r.city === city) && (!tag || r.tags.includes(tag as "french" | "ombre" | "nude" | "red" | "black" | "white" | "chrome" | "cat-eye" | "glitter" | "pastel"))
             ),
         [refsRaw, city, tag]
     );

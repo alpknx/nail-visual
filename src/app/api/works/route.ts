@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { works } from "@/db/schema";
-import { and, desc, eq, ilike, sql } from "drizzle-orm";
+import { proWorks } from "@/db/schema";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -11,17 +11,17 @@ export async function GET(req: Request) {
     const limit = Number(searchParams.get("limit") || 50);
 
     const where = and(
-        city ? eq(works.city, city) : undefined,
-        proId ? eq(works.proId, proId) : undefined,
+        city ? eq(proWorks.city, city) : undefined,
+        proId ? eq(proWorks.proId, proId) : undefined,
         // простая фильтрация по тегу (если теги text[])
-        tag ? sql<boolean>`${works.tags}::text ILIKE ${`%${tag}%`}` : undefined,
+        tag ? sql<boolean>`${proWorks.tags}::text ILIKE ${`%${tag}%`}` : undefined,
     );
 
     const rows = await db
         .select()
-        .from(works)
-        .where(where as any)
-        .orderBy(desc(works.createdAt))
+        .from(proWorks)
+        .where(where)
+        .orderBy(desc(proWorks.createdAt))
         .limit(limit);
 
     return NextResponse.json({ data: rows });
