@@ -15,7 +15,13 @@ export type Offer = {
     pricePln: number | null;
     status: "offer" | "accepted" | "declined";
     createdAt: string;
-    acceptedAt: string | null;
+    acceptedAt?: string | null;
+    pro?: {
+        id: string;
+        name: string | null;
+        image: string | null;
+        phone: string | null;
+    };
 };
 
 export type Work = {
@@ -30,10 +36,12 @@ export type Work = {
 
 export type ClientReference = {
     id: string;
+    clientId: string;
     imageUrl: string;
     tags: Tag[];            // для UI
     city: City;
     note?: string | null;
+    status?: string;
     createdAt: string;
 };
 
@@ -159,6 +167,7 @@ export async function createReference(input: CreateReferenceA | CreateReferenceB
         // fallback: локальный mock
         const r: ClientReference = {
             id: `r_${Math.random().toString(36).slice(2, 9)}`,
+            clientId: "mock-client",
             imageUrl,
             tags,
             city,
@@ -214,6 +223,26 @@ export async function createOffer(input: {
         body: JSON.stringify(input),
     });
     if (!res.ok) throw new Error("Failed to create offer");
+    return res.json();
+}
+
+// Удалить референс (может только создатель - клиент)
+export async function deleteReference(id: string) {
+    const res = await fetch(`/api/references/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error("Failed to delete reference");
+    return res.json();
+}
+
+// Удалить оффер (может только создатель - мастер)
+export async function deleteOffer(id: string) {
+    const res = await fetch(`/api/offers/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error("Failed to delete offer");
     return res.json();
 }
 
@@ -303,7 +332,7 @@ export async function getProProfileById(id: string): Promise<ProProfile | null> 
 }
 
 // GET моего профиля (/api/pros/me)
-export async function getMyProProfile(): Promise<ProProfile | any> {
+export async function getMyProProfile(): Promise<ProProfile> {
     const res = await fetch("/api/pros/me", { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch pro profile");
     return await res.json();

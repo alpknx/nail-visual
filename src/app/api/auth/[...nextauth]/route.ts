@@ -64,6 +64,8 @@ export const authOptions: NextAuthOptions = {
                         email: existing.email!,
                         name: existing.name ?? undefined,
                         image: existing.image ?? undefined,
+                        phone: existing.phone ?? undefined,
+                        city: existing.city ?? undefined,
                         role: existing.role as "client" | "pro" | "admin",
                     };
                 } catch (error) {
@@ -78,6 +80,8 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.role = user.role;
                 token.sub = user.id;
+                token.phone = (user as any).phone;
+                token.city = (user as any).city;
             }
             return token;
         },
@@ -85,6 +89,8 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.id = token.sub as string;
                 session.user.role = token.role;
+                (session.user as any).phone = token.phone;
+                (session.user as any).city = token.city;
             }
             return session;
         },

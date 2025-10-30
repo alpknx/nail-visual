@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { db } from "@/db";
-import { works } from "@/db/schema";
+import { proWorks } from "@/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if ((session as any).role !== "pro") {
+    if (session.user.role !== "pro") {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "imageUrl is required" }, { status: 400 });
     }
 
-    const inserted = await db.insert(works).values({
+    const inserted = await db.insert(proWorks).values({
         proId: session.user.id,
         imageUrl,
         caption,

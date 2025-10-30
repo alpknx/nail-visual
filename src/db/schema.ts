@@ -8,7 +8,6 @@ import {
     integer,
     uuid,
     pgEnum,
-    primaryKey,
     index,
     uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -34,52 +33,7 @@ export const users = pgTable("users", {
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
-export const accounts = pgTable(
-    "accounts",
-    {
-        userId: text("user_id")
-            .notNull()
-            .references(() => users.id, { onDelete: "cascade" }),
-        type: text("type").notNull(),
-        provider: varchar("provider", { length: 100 }).notNull(),
-        providerAccountId: varchar("provider_account_id", { length: 200 }).notNull(),
-        refresh_token: text("refresh_token"),
-        access_token: text("access_token"),
-        expires_at: integer("expires_at"),
-        token_type: varchar("token_type", { length: 50 }),
-        scope: text("scope"),
-        id_token: text("id_token"),
-        session_state: text("session_state"),
-    },
-    (t) => ({
-        // ✅ составной первичный ключ как требует NextAuth
-        pk: primaryKey({ columns: [t.provider, t.providerAccountId] }),
-        byUser: index("accounts_by_user").on(t.userId),
-    }),
-);
-
-export const sessions = pgTable("sessions", {
-    sessionToken: varchar("session_token", { length: 255 }).primaryKey(),
-    userId: text("user_id")
-        .notNull()
-        .references(() => users.id, { onDelete: "cascade" }),
-    expires: timestamp("expires", { withTimezone: true }).notNull(),
-});
-
-export const verificationTokens = pgTable(
-    "verification_tokens",
-    {
-        identifier: varchar("identifier", { length: 255 }).notNull(),
-        token: varchar("token", { length: 255 }).notNull(),
-        expires: timestamp("expires", { withTimezone: true }).notNull(),
-    },
-    (t) => ({
-        // ✅ составной PK вместо сырого ALTER TABLE
-        pk: primaryKey({ columns: [t.identifier, t.token] }),
-    }),
-);
-
-/** pro profile + контент **/
+/** pro profile + контент */
 export const proProfiles = pgTable("pro_profiles", {
     userId: text("user_id")
         .primaryKey()
@@ -90,8 +44,8 @@ export const proProfiles = pgTable("pro_profiles", {
     isVerified: boolean("is_verified").notNull().default(false),
 });
 
-export const works = pgTable(
-    "works",
+export const proWorks = pgTable(
+    "pro_works",
     {
         id: uuid("id").primaryKey().defaultRandom(),
         proId: text("pro_id")
@@ -104,11 +58,11 @@ export const works = pgTable(
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     },
     (t) => ({
-        byProCreatedAt: index("works_by_pro_created_at").on(t.proId, t.createdAt),
-        byCity: index("works_by_city").on(t.city),
+        byProCreatedAt: index("pro_works_by_pro_created_at").on(t.proId, t.createdAt),
+        byCity: index("pro_works_by_city").on(t.city),
         // GIN для массива тегов — через raw SQL с ИМЕНЕМ индекса
-        tagsGin: sql`CREATE INDEX IF NOT EXISTS "works_tags_gin" ON "works" USING GIN ("tags")`.as(
-            "works_tags_gin",
+        tagsGin: sql`CREATE INDEX IF NOT EXISTS "pro_works_tags_gin" ON "pro_works" USING GIN ("tags")`.as(
+            "pro_works_tags_gin",
         ),
     }),
 );
