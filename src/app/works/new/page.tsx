@@ -1,4 +1,5 @@
 // apps/web/src/app/works/new/page.tsx
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useMemo, useState } from "react";
@@ -123,7 +124,11 @@ export default function NewWorkPage() {
                         selected={selectedTags}
                         onToggle={(t: Tag) => {
                             const set = new Set<Tag>(selectedTags);
-                            set.has(t) ? set.delete(t) : set.add(t);
+                            if (set.has(t)) {
+                                set.delete(t);
+                            } else {
+                                set.add(t);
+                            }
                             setValue("tags", Array.from(set) as unknown as string[]);
                         }}
                     />

@@ -30,7 +30,15 @@ export async function GET(req: Request) {
         .where(eq(offers.refId, refId))
         .orderBy(desc(offers.createdAt));
     
-    return NextResponse.json({ data: rows });
+    const response = NextResponse.json({ data: rows });
+    
+    // Кэшировать офферы на 2 минуты (часто меняются)
+    response.headers.set(
+        "Cache-Control",
+        "public, s-maxage=120, stale-while-revalidate=600"
+    );
+    
+    return response;
 }
 
 export async function POST(req: Request) {

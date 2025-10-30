@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getProProfileById, listWorks, type Work } from "@/lib/api";
@@ -96,12 +97,13 @@ export default function ProDetailPage() {
             ) : (
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
                     {works.map((w: Work) => (
-                        <figure key={w.id} className="rounded-2xl overflow-hidden border">
+                        <figure key={w.id} className="rounded-2xl overflow-hidden border relative">
                             <div className="relative aspect-[4/5]">
-                                <img
+                                <Image
                                     src={w.imageUrl}
-                                    alt={w.caption ?? ""}
-                                    sizes="(max-width: 768px) 50vw, 25vw"
+                                    alt={w.caption ?? "Работа мастера"}
+                                    fill
+                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                     className="object-cover"
                                 />
                             </div>

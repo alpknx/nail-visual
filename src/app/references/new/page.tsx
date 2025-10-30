@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,10 +50,12 @@ export default function NewReferencePage() {
         mutationFn: createReference,
         onSuccess: (res) => {
             posthog.capture("create_reference", { city: res.city, tags: res.tags });
-            toast.success("Референс создан — скоро подберём мастеров");
-            router.push(`/references/${res.id}`);
+            toast.success("Референс создан — ждём офферы от мастеров");
+            router.push("/");
         },
-        onError: () => toast.error("Ошибка при отправке"),
+        onError: () => {
+            toast.error("Ошибка при отправке");
+        },
     });
 
     const onSubmit = async (data: FormData) => {
@@ -60,12 +63,16 @@ export default function NewReferencePage() {
             toast.error("Добавь фото-референс");
             return;
         }
-        await createRefMutation.mutateAsync({
-            imageUrl,
-            note: data.note || undefined,
-            city: data.city,   // уже City
-            tags: data.tags,   // уже Tag[]
-        });
+        try {
+            await createRefMutation.mutateAsync({
+                imageUrl,
+                note: data.note || undefined,
+                city: data.city,
+                tags: data.tags,
+            });
+        } catch {
+            // ошибка обработана в onError
+        }
     };
 
     return (
@@ -77,19 +84,23 @@ export default function NewReferencePage() {
                     <label className="text-sm">Фото-референс</label>
                     <UtDropzone onUrl={setImageUrl} />
                     {imageUrl && (
-                        <img
-                            src={imageUrl}
-                            alt=""
-                            className="mt-2 h-40 w-auto rounded-lg object-cover border"
-                        />
+                        <div className="relative mt-2 h-40 rounded-lg border overflow-hidden">
+                            <Image
+                                src={imageUrl}
+                                alt="Превью референса"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                className="object-cover"
+                            />
+                        </div>
                     )}
                 </div>
 
                 <div className="space-y-2">
                     <label className="text-sm">Город</label>
                     <CitySelect
-                        value={city as City | undefined}
-                        onChange={(c) => setValue("city", c, { shouldValidate: true })}
+                        value={city}
+                        onChange={(c) => setValue("city", c as City, { shouldValidate: true })}
                         placeholder="Город"
                     />
                     {errors.city && (
@@ -103,7 +114,11 @@ export default function NewReferencePage() {
                         selected={tags as Tag[]}
                         onToggle={(t: Tag) => {
                             const set = new Set<Tag>(tags ?? []);
-                            set.has(t) ? set.delete(t) : set.add(t);
+                            if (set.has(t)) {
+                                set.delete(t);
+                            } else {
+                                set.add(t);
+                            }
                             setValue("tags", Array.from(set), { shouldValidate: true });
                         }}
                     />

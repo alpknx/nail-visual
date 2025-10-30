@@ -50,9 +50,8 @@ export default function SignUpPage() {
             } else {
                 setError("Sign in failed after registration");
             }
-        } catch (err) {
+        } catch {
             setError("An error occurred");
-            console.error(err);
         } finally {
             setLoading(false);
         }

@@ -4,22 +4,23 @@ const nextConfig: NextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
+    compress: true, // Включить Gzip/Brotli компрессию
+    poweredByHeader: false, // Убрать X-Powered-By header для безопасности
+    productionBrowserSourceMaps: false, // Отключить source maps в продакшене (меньше размер)
     images: {
         remotePatterns: [
-            // UploadThing CDN
             { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
             { protocol: "https", hostname: "**.ufs.sh", pathname: "/f/**" },
-
-            // (опционально, если планируешь) Pinterest / Unsplash / Instagram
             { protocol: "https", hostname: "i.pinimg.com", pathname: "/**" },
             { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
             { protocol: "https", hostname: "*.cdninstagram.com", pathname: "/**" },
             { protocol: "https", hostname: "scontent-*.xx.fbcdn.net", pathname: "/**" },
+            { protocol: "https", hostname: "picsum.photos", pathname: "/**" },
         ],
-        domains: ["utfs.io", "uploadthing.com"],
+        minimumCacheTTL: 60,
+        deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     },
-    // если Next ругается на корень воркспейса — можешь явно указать:
-    // experimental: { turbopack: { root: "../../" } },
 };
 
 export default nextConfig;

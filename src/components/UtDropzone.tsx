@@ -12,10 +12,9 @@ export default function UtDropzone({ onUrl }: { onUrl: (url: string) => void }) 
                     const url =
                         res?.[0]?.ufsUrl ??
                         // если вернули в serverData:
-                        (res?.[0])?.serverData?.ufsUrl ??
+                        (res?.[0] as { serverData?: { url?: string } })?.serverData?.url ??
                         // legacy fallback:
-                        res?.[0]?.url ??
-                        (res?.[0] as any)?.serverData?.url;
+                        res?.[0]?.url;
 
                     if (url) onUrl(url);
                 }}

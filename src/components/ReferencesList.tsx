@@ -22,6 +22,10 @@ export default function ReferencesList() {
   const initialCity = (searchParams.get("city") as City | null) || undefined;
   const [selectedCity, setSelectedCity] = useState<City | undefined>(initialCity);
 
+  const handleCityChange = (v: string) => {
+    setSelectedCity(v as City);
+  };
+
   // Fetch все референсы (или отфильтрованные по городу)
   const { data: references, isLoading } = useQuery({
     queryKey: ["references", selectedCity],
@@ -52,7 +56,7 @@ export default function ReferencesList() {
       <div className="sticky top-0 bg-white z-10 pb-4">
         <CitySelect
           value={selectedCity}
-          onChange={setSelectedCity}
+          onChange={handleCityChange}
           placeholder="Все города"
         />
       </div>
@@ -68,9 +72,11 @@ export default function ReferencesList() {
               className="group border rounded-xl overflow-hidden hover:shadow-md transition"
             >
               <div className="relative h-48 bg-muted">
-                <img
+                <Image
                   src={ref.imageUrl}
                   alt={ref.note || "Референс"}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover group-hover:scale-105 transition"
                 />
                 

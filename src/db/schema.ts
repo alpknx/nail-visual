@@ -83,6 +83,8 @@ export const clientReferences = pgTable(
     },
     (t) => ({
         byCityCreatedAt: index("refs_by_city_created_at").on(t.city, t.createdAt),
+        byClientId: index("refs_by_client_id").on(t.clientId),
+        byStatus: index("refs_by_status").on(t.status),
         tagsGin: sql`CREATE INDEX IF NOT EXISTS "refs_tags_gin" ON "client_references" USING GIN ("tags")`.as(
             "refs_tags_gin",
         ),

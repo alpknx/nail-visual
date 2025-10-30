@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { Suspense } from "react";
 import WorkGrid from "@/components/WorkGrid";
 import ReferencesList from "@/components/ReferencesList";
 import ClientDashboard from "@/components/ClientDashboard";
@@ -31,7 +32,15 @@ export default function Home() {
           <ReferencesList />
         </>
       ) : role === "client" ? (
-        <ClientDashboard />
+        <>
+          <Suspense fallback={<div className="h-64 rounded-xl border animate-pulse" />}>
+            <ClientDashboard />
+          </Suspense>
+          <div className="mt-8 pt-8 border-t">
+            <h2 className="text-lg font-semibold mb-4">Портфолио мастеров</h2>
+            <WorkGrid />
+          </div>
+        </>
       ) : (
         <>
           <h2 className="text-lg font-semibold">Портфолио мастеров</h2>

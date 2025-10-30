@@ -1,21 +1,59 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { clientReferences } from "@/db/schema";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { getServerSession } from "next-auth";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const ids = searchParams.getAll("id");
+    
     if (ids.length) {
-        const rows = await db.select().from(clientReferences).where(inArray(clientReferences.id, ids as any));
+        const rows = await db.select({
+            id: clientReferences.id,
+            clientId: clientReferences.clientId,
+            imageUrl: clientReferences.imageUrl,
+            note: clientReferences.note,
+            tags: clientReferences.tags,
+            city: clientReferences.city,
+            status: clientReferences.status,
+            createdAt: clientReferences.createdAt,
+        }).from(clientReferences).where(inArray(clientReferences.id, ids));
         return NextResponse.json({ data: rows });
     }
+    
     const city = searchParams.get("city") ?? undefined;
+    const limit = Math.min(Number(searchParams.get("limit") || 50), 100);
+    const offset = Number(searchParams.get("offset") || 0);
+    
     const where = city ? eq(clientReferences.city, city) : undefined;
-    const rows = await db.select().from(clientReferences).where(where as any).orderBy(desc(clientReferences.createdAt));
-    return NextResponse.json({ data: rows });
+    const rows = await db
+        .select({
+            id: clientReferences.id,
+            clientId: clientReferences.clientId,
+            imageUrl: clientReferences.imageUrl,
+            note: clientReferences.note,
+            tags: clientReferences.tags,
+            city: clientReferences.city,
+            status: clientReferences.status,
+            createdAt: clientReferences.createdAt,
+        })
+        .from(clientReferences)
+        .where(where)
+        .orderBy(desc(clientReferences.createdAt))
+        .limit(limit)
+        .offset(offset);
+    
+    const response = NextResponse.json({ data: rows });
+    
+    // Кэшировать открытые референсы на 10 минут
+    response.headers.set(
+        "Cache-Control",
+        "public, s-maxage=600, stale-while-revalidate=3600"
+    );
+    
+    return response;
 }
 
 export async function POST(req: Request) {
