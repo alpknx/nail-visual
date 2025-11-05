@@ -76,69 +76,104 @@ export default function NewReferencePage() {
     };
 
     return (
-        <section className="max-w-2xl mx-auto space-y-6">
-            <h1 className="text-2xl font-semibold">Хочу такой маникюр</h1>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="space-y-2">
-                    <label className="text-sm">Фото-референс</label>
-                    <UtDropzone onUrl={setImageUrl} />
-                    {imageUrl && (
-                        <div className="relative mt-2 h-40 rounded-lg border overflow-hidden">
-                            <Image
-                                src={imageUrl}
-                                alt="Превью референса"
-                                fill
-                                sizes="(max-width: 768px) 100vw, 50vw"
-                                className="object-cover"
-                            />
-                        </div>
-                    )}
+        <div className="min-h-screen p-4 pb-8 pt-16 md:pt-4">
+            <div className="max-w-2xl mx-auto space-y-6">
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold">Хочу такой маникюр</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Загрузи фото желаемого маникюра
+                    </p>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-sm">Город</label>
-                    <CitySelect
-                        value={city}
-                        onChange={(c) => setValue("city", c as City, { shouldValidate: true })}
-                        placeholder="Город"
-                    />
-                    {errors.city && (
-                        <p className="text-xs text-red-500">{errors.city.message}</p>
-                    )}
-                </div>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Фото-референс */}
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium block">
+                            Фото-референс
+                        </label>
+                        <UtDropzone onUrl={setImageUrl} />
+                        {imageUrl && (
+                            <div className="relative w-full aspect-square max-w-md mx-auto rounded-lg border-2 border-primary/20 overflow-hidden">
+                                <Image
+                                    src={imageUrl}
+                                    alt="Превью референса"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover"
+                                />
+                            </div>
+                        )}
+                    </div>
 
-                <div className="space-y-2">
-                    <label className="text-sm">Теги (стиль/цвет)</label>
-                    <TagPicker
-                        selected={tags as Tag[]}
-                        onToggle={(t: Tag) => {
-                            const set = new Set<Tag>(tags ?? []);
-                            if (set.has(t)) {
-                                set.delete(t);
-                            } else {
-                                set.add(t);
-                            }
-                            setValue("tags", Array.from(set), { shouldValidate: true });
-                        }}
-                    />
-                    {errors.tags && (
-                        <p className="text-xs text-red-500">{errors.tags.message as string}</p>
-                    )}
-                </div>
+                    {/* Город */}
+                    <div className="space-y-3">
+                        <label htmlFor="city" className="text-sm font-medium block">
+                            Город
+                        </label>
+                        <CitySelect
+                            value={city}
+                            onChange={(c) => setValue("city", c as City, { shouldValidate: true })}
+                            placeholder="Выбери город"
+                        />
+                        {errors.city && (
+                            <p className="text-xs text-destructive font-medium">{errors.city.message}</p>
+                        )}
+                    </div>
 
-                <div className="space-y-2">
-                    <label className="text-sm">Комментарий (необязательно)</label>
-                    <Textarea
-                        placeholder="Например: хочется более холодный нюд"
-                        {...register("note")}
-                    />
-                </div>
+                    {/* Теги */}
+                    <div className="space-y-3">
+                        <label className="text-sm font-medium block">
+                            Теги (стиль/цвет)
+                        </label>
+                        <TagPicker
+                            selected={tags as Tag[]}
+                            onToggle={(t: Tag) => {
+                                const set = new Set<Tag>(tags ?? []);
+                                if (set.has(t)) {
+                                    set.delete(t);
+                                } else {
+                                    set.add(t);
+                                }
+                                setValue("tags", Array.from(set), { shouldValidate: true });
+                            }}
+                        />
+                        {errors.tags && (
+                            <p className="text-xs text-destructive font-medium">{errors.tags.message as string}</p>
+                        )}
+                        {tags.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                                Выбрано тегов: {tags.length}
+                            </p>
+                        )}
+                    </div>
 
-                <Button type="submit" disabled={isSubmitting || createRefMutation.isPending}>
-                    {createRefMutation.isPending ? "Отправляем..." : "Отправить"}
-                </Button>
-            </form>
-        </section>
+                    {/* Комментарий */}
+                    <div className="space-y-3">
+                        <label htmlFor="note" className="text-sm font-medium block">
+                            Комментарий <span className="text-muted-foreground font-normal">(необязательно)</span>
+                        </label>
+                        <Textarea
+                            id="note"
+                            placeholder="Например: хочется более холодный нюд"
+                            rows={4}
+                            className="resize-none"
+                            {...register("note")}
+                        />
+                    </div>
+
+                    {/* Кнопка отправки */}
+                    <div className="pt-2">
+                        <Button 
+                            type="submit" 
+                            disabled={isSubmitting || createRefMutation.isPending}
+                            className="w-full"
+                            size="lg"
+                        >
+                            {createRefMutation.isPending ? "Отправляем..." : "Отправить"}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </div>
     );
 }

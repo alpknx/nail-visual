@@ -1,6 +1,6 @@
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen p-4 max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen p-4 max-w-4xl mx-auto space-y-6 pt-16 md:pt-4">
       <div>
         <h1 className="text-3xl font-bold mb-4">Политика конфиденциальности</h1>
         <p className="text-sm text-muted-foreground">Последнее обновление: {new Date().toLocaleDateString("ru-RU")}</p>

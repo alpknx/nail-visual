@@ -78,8 +78,18 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
       {/* Sheet меню слева */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="left" className="w-[80vw] sm:w-[320px] p-0">
-          <SheetHeader className="p-4 border-b">
+          <SheetHeader className="p-4 border-b space-y-2">
             <SheetTitle className="text-left">Меню</SheetTitle>
+            {mounted && session && (
+              <div className="text-xs text-muted-foreground">
+                <p className="font-medium">
+                  Роль: <span className="capitalize text-foreground">{role === "pro" ? "master" : role}</span>
+                </p>
+                {session.user?.email && (
+                  <p className="mt-1 truncate">{session.user.email}</p>
+                )}
+              </div>
+            )}
           </SheetHeader>
           
           <nav className="flex flex-col h-full">

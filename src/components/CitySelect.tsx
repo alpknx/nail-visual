@@ -16,7 +16,7 @@ export default function CitySelect({
 
     return (
         <Select value={value || ""} onValueChange={(v) => onChange?.(v)}>
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className="w-full">
                 <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>

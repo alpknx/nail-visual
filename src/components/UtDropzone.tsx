@@ -5,7 +5,7 @@ import type { OurFileRouter } from "@/app/api/uploadthing/core";
 
 export default function UtDropzone({ onUrl }: { onUrl: (url: string) => void }) {
     return (
-        <div className="rounded-2xl border p-4">
+        <div className="rounded-lg border-2 border-dashed border-input p-6 transition-colors hover:border-primary/50">
             <UploadDropzone<OurFileRouter, "imageUploader">
                 endpoint="imageUploader"
                 onClientUploadComplete={(res) => {

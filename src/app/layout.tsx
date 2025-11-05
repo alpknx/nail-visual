@@ -11,8 +11,17 @@ export const viewport = {
 export const metadata: Metadata = {
     title: "Nail Visual",
     description: "Поиск и отклики мастеров маникюра",
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "default",
+        title: "Nail Visual",
+    },
     other: {
         "p:domain_verify": "db57b5002e17eb5680785647002de0b9",
+        "apple-mobile-web-app-capable": "yes",
+        "apple-mobile-web-app-status-bar-style": "default",
+        "apple-mobile-web-app-title": "Nail Visual",
     },
 };
 

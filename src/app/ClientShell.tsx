@@ -6,6 +6,7 @@ import { ReactQueryClientProvider } from "@/lib/queryClient";
 import { initPostHog } from "@/lib/analytics";
 import BurgerMenu from "@/components/BurgerMenu";
 import PinterestMeta from "@/components/PinterestMeta";
+import PWARegister from "@/components/PWARegister";
 
 export default function ClientShell({ children }: { children: React.ReactNode }) {
     useEffect(() => { initPostHog?.(); }, []);
@@ -14,6 +15,7 @@ export default function ClientShell({ children }: { children: React.ReactNode })
         <ReactQueryClientProvider>
             <NextAuthProvider>
                 <PinterestMeta />
+                <PWARegister />
                 <BurgerMenu>
                     <main className="min-h-screen">{children}</main>
                 </BurgerMenu>

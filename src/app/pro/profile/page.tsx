@@ -93,7 +93,7 @@ export default function ProProfilePage() {
   };
 
   return (
-    <section className="max-w-md mx-auto py-8">
+    <section className="max-w-md mx-auto py-8 pt-16 md:pt-8 px-4">
       <h1 className="text-2xl font-semibold mb-6">Мой профиль мастера</h1>
 
       {profileLoading && <p className="opacity-70">Загружаем...</p>}

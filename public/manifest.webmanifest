@@ -1,14 +1,17 @@
 {
   "name": "Nail Visual",
   "short_name": "NailVisual",
+  "description": "Поиск и отклики мастеров маникюра",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0f0f10",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
   "theme_color": "#0ea5e9",
-  "lang": "pl-PL",
+  "lang": "ru",
+  "categories": ["beauty", "lifestyle"],
   "icons": [
-//     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-//     { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
   ]
 }

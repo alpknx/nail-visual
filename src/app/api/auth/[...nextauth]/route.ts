@@ -31,7 +31,22 @@ const credentialsSchema = z.object({
 });
 
 export const authOptions: NextAuthOptions = {
-    session: { strategy: "jwt" },
+    session: { 
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 дней
+    },
+    cookies: {
+        sessionToken: {
+            name: `next-auth.session-token`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 30 * 24 * 60 * 60, // 30 дней
+            },
+        },
+    },
     providers: [
         Credentials({
             name: "Email & Password",

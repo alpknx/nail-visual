@@ -28,6 +28,16 @@ export default function ClientOffersPage() {
     enabled: !!session?.user?.id,
   });
 
+  const references = myReferences || [];
+  
+  // Открытые референсы
+  const openReferences = references.filter((r: ClientReference) => r.status === "open");
+
+  // Мэтчи (принятые офферы)
+  const matchedReferences = references.filter((r: ClientReference) => r.status === "matched");
+
+  const selectedReference = references.find((r: ClientReference) => r.id === selectedRef);
+
   // Загрузить офферы к выбранному референсу
   const { data: offers = [], isLoading: offersLoading } = useQuery({
     queryKey: ["offers", selectedRef],
@@ -39,26 +49,18 @@ export default function ClientOffersPage() {
   });
 
   // Загрузить офферы для всех мэтчей
+  const matchedRefIds = matchedReferences.map((r: ClientReference) => r.id);
   const { data: allMatchedOffers = [] } = useQuery({
-    queryKey: ["all-matched-offers", matchedReferences.map((r) => r.id)],
+    queryKey: ["all-matched-offers", matchedRefIds.join(",")],
     queryFn: async () => {
       if (matchedReferences.length === 0) return [];
       const allOffers = await Promise.all(
-        matchedReferences.map((ref) => listOffersByReference(ref.id))
+        matchedReferences.map((ref: ClientReference) => listOffersByReference(ref.id))
       );
       return allOffers.flat();
     },
     enabled: matchedReferences.length > 0,
   });
-
-  const references = myReferences || [];
-  const selectedReference = references.find((r: ClientReference) => r.id === selectedRef);
-
-  // Открытые референсы
-  const openReferences = references.filter((r: ClientReference) => r.status === "open");
-
-  // Мэтчи (принятые офферы)
-  const matchedReferences = references.filter((r: ClientReference) => r.status === "matched");
 
   const handleOfferAction = async (offerId: string, action: "accepted" | "declined") => {
     setIsProcessing(offerId);
@@ -83,7 +85,7 @@ export default function ClientOffersPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 space-y-6">
+    <div className="min-h-screen p-4 space-y-6 pt-16 md:pt-4">
       <div>
         <h1 className="text-2xl font-semibold mb-2">Мои офферы</h1>
         <p className="text-sm text-muted-foreground">
