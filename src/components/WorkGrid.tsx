@@ -30,7 +30,11 @@ export default function WorkGrid() {
                     key={w.id} 
                     href={`/pro/${w.proId}/portfolio`}
                     className="rounded-2xl overflow-hidden border hover:border-foreground transition-colors cursor-pointer"
-                    onMouseEnter={() => prefetch(w.proId)}
+                    onMouseEnter={() => {
+                        if (w.proId !== "unsplash") {
+                            prefetch(w.proId);
+                        }
+                    }}
                 >
                     <figure className="relative aspect-[4/5]">
                         <Image 

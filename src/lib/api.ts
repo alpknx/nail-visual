@@ -1,49 +1,9 @@
-// ---------- Константы и типы (как было) ----------
-export type City = "Kraków" | "Warszawa" | "Wrocław" | "Gdańsk" | "Poznań";
-export const CITIES: City[] = ["Kraków", "Warszawa", "Wrocław", "Gdańsk", "Poznań"];
+import { CITIES } from "@/lib/domain";
+import type { City, Tag, Work, ClientReference, Offer } from "@/lib/domain";
 
-export const TAGS = [
-    "french", "ombre", "nude", "red", "black", "white", "chrome", "cat-eye", "glitter", "pastel",
-] as const;
-export type Tag = typeof TAGS[number];
-
-export type Offer = {
-    id: string;
-    refId: string;
-    proId: string;
-    message: string | null;
-    pricePln: number | null;
-    status: "offer" | "accepted" | "declined";
-    createdAt: string;
-    acceptedAt?: string | null;
-    pro?: {
-        id: string;
-        name: string | null;
-        image: string | null;
-        phone: string | null;
-    };
-};
-
-export type Work = {
-    id: string;
-    imageUrl: string;
-    tags: Tag[];            // для UI
-    city: City;
-    proId: string;
-    caption?: string | null;
-    createdAt: string;
-};
-
-export type ClientReference = {
-    id: string;
-    clientId: string;
-    imageUrl: string;
-    tags: Tag[];            // для UI
-    city: City;
-    note?: string | null;
-    status?: string;
-    createdAt: string;
-};
+// Re-export types/constants for backwards compatibility
+export { CITIES, TAGS } from "@/lib/domain";
+export type { City, Tag, Work, ClientReference, Offer } from "@/lib/domain";
 
 // ---------- Локальные моки (fallback на ранний этап) ----------
 let worksMem: Work[] = [
@@ -71,6 +31,8 @@ export type WorkDto = {
 
 // Унифицированный список работ: сначала пробуем серверный API, иначе — локальный mock
 export async function listWorks(params?: { city?: City; tags?: Tag[]; proId?: string; limit?: number }): Promise<Work[]> {
+    let rows: WorkDto[] = [];
+
     try {
         const url = new URL("/api/works", window.location.origin);
         if (params?.city)  url.searchParams.set("city", params.city);
@@ -80,8 +42,12 @@ export async function listWorks(params?: { city?: City; tags?: Tag[]; proId?: st
         const res = await fetch(url.toString(), { cache: "no-store" });
         if (!res.ok) throw new Error("works api not ok");
         const json = await res.json();
-        const rows = (json.data ?? []) as WorkDto[];
+        rows = (json.data ?? []) as WorkDto[];
+    } catch (error) {
+        console.warn("Failed to fetch works from DB API, attempting inspiration fallback", error);
+    }
 
+    if (rows.length) {
         return rows.map((r): Work => ({
             id: r.id,
             imageUrl: r.imageUrl,
@@ -91,15 +57,20 @@ export async function listWorks(params?: { city?: City; tags?: Tag[]; proId?: st
             caption: r.caption,
             createdAt: r.createdAt,
         }));
-    } catch {
-        // fallback: локальные моки + простая фильтрация
-        const city = params?.city;
-        const tags = params?.tags;
-        let data = worksMem;
-        if (city) data = data.filter(w => w.city === city);
-        if (tags?.length) data = data.filter(w => tags.every(t => w.tags.includes(t)));
-        return data;
     }
+
+    const inspiration = await fetchWorksInspiration(params);
+    if (inspiration.length) {
+        return inspiration;
+    }
+
+    // fallback: локальные моки + простая фильтрация
+    const city = params?.city;
+    const tags = params?.tags;
+    let data = worksMem;
+    if (city) data = data.filter(w => w.city === city);
+    if (tags?.length) data = data.filter(w => tags.every(t => w.tags.includes(t)));
+    return data;
 }
 
 // создать работу (mock-вариант для демо; реальный API можешь добавить аналогично)
@@ -307,10 +278,58 @@ export async function listReferences(params?: { city?: string; limit?: number })
     const url = new URL("/api/references", window.location.origin);
     if (params?.city) url.searchParams.set("city", params.city);
     if (params?.limit) url.searchParams.set("limit", String(params.limit));
-    const res = await fetch(url.toString(), { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch references");
-    const json = await res.json();
-    return (json.data ?? []) as ClientReference[];
+
+    try {
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        if (res.ok) {
+            const json = await res.json();
+            const data = (json.data ?? []) as ClientReference[];
+            if (data.length) {
+                return data;
+            }
+        }
+    } catch (error) {
+        console.warn("Failed to fetch references from DB API, falling back to Unsplash", error);
+    }
+
+    return fetchReferenceInspiration(params);
+}
+
+async function fetchReferenceInspiration(params?: { city?: string; limit?: number }) {
+    const url = new URL("/api/reference-inspiration", window.location.origin);
+    if (params?.city) url.searchParams.set("city", params.city);
+    if (params?.limit) url.searchParams.set("limit", String(params.limit));
+
+    try {
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        if (!res.ok) {
+            throw new Error(`Failed to fetch reference inspiration: ${res.status}`);
+        }
+        const json = await res.json();
+        return (json.data ?? []) as ClientReference[];
+    } catch (error) {
+        console.error("Unable to load reference inspiration", error);
+        return [];
+    }
+}
+
+async function fetchWorksInspiration(params?: { city?: City; tags?: Tag[]; limit?: number }) {
+    const url = new URL("/api/works/inspiration", window.location.origin);
+    if (params?.city) url.searchParams.set("city", params.city);
+    if (params?.limit) url.searchParams.set("limit", String(params.limit));
+    if (params?.tags?.length) url.searchParams.set("tags", params.tags.join(","));
+
+    try {
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        if (!res.ok) {
+            throw new Error(`Failed to fetch works inspiration: ${res.status}`);
+        }
+        const json = await res.json();
+        return (json.data ?? []) as Work[];
+    } catch (error) {
+        console.error("Unable to load works inspiration", error);
+        return [];
+    }
 }
 
 // ===== Pro profile (me) =====
@@ -348,4 +367,3 @@ export async function upsertProProfile(input: ProProfileInput) {
     if (!res.ok) throw new Error("Failed to upsert pro profile");
     return await res.json();
 }
-

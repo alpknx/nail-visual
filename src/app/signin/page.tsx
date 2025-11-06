@@ -15,28 +15,6 @@ export default function SignInPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    if (session) {
-        return (
-            <div className="min-h-screen p-4 flex items-center justify-center">
-                <div className="w-full max-w-md space-y-4 text-center">
-                    <p className="text-sm text-muted-foreground">
-                        Вы вошли как {session.user?.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                        Роль: {session.user?.role === "pro" ? "master" : session.user?.role}
-                    </p>
-                    <Button
-                        variant="destructive"
-                        onClick={() => signOut()}
-                        className="w-full"
-                    >
-                        Выйти
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
     // Загрузить сохраненный email при монтировании
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -79,6 +57,28 @@ export default function SignInPage() {
             setLoading(false);
         }
     };
+
+    if (session) {
+        return (
+            <div className="min-h-screen p-4 flex items-center justify-center">
+                <div className="w-full max-w-md space-y-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                        Вы вошли как {session.user?.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        Роль: {session.user?.role === "pro" ? "master" : session.user?.role}
+                    </p>
+                    <Button
+                        variant="destructive"
+                        onClick={() => signOut()}
+                        className="w-full"
+                    >
+                        Выйти
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen p-4 flex items-center justify-center bg-background">
