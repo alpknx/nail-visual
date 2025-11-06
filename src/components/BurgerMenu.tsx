@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useClient } from "@/hooks/useClient";
@@ -64,6 +65,34 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
     signOut({ callbackUrl: "/" });
   };
 
+  const profilePath = role === "pro" ? "/pro/profile" : "/profile";
+
+  const primaryNavItems = [
+    { label: "Главная", href: "/" },
+    ...(mounted && session
+      ? [{ label: "Профиль", href: profilePath }]
+      : []),
+    ...(mounted && isClient
+      ? [{ label: "Хочу", href: "/references/new" }]
+      : []),
+    ...(mounted && isMaster
+      ? [{ label: "Заказы", href: "/pro/orders" }]
+      : []),
+    ...(mounted && isClient
+      ? [{ label: "Офферы", href: "/client/offers" }]
+      : []),
+  ];
+
+  const signedOutItems = !session
+    ? [
+        { label: "Войти", href: "/signin" },
+        { label: "Регистрация", href: "/signup" },
+      ]
+    : [];
+
+  const desktopNavItems = [...primaryNavItems, ...signedOutItems];
+  const mobileNavItems = [...primaryNavItems, ...signedOutItems];
+
   return (
     <>
       {/* Кнопка бургер-меню */}
@@ -74,6 +103,58 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
       >
         <Menu className="w-6 h-6" />
       </button>
+
+      {/* Desktop navigation */}
+      <header className="hidden md:block sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
+        <div className="flex h-14 items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="font-semibold tracking-tight">
+              Nail Visual
+            </Link>
+            <nav className="flex items-center gap-2">
+              {desktopNavItems.map((item) => (
+                <Button
+                  key={item.href}
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start"
+                  onClick={() => handleNavigation(item.href)}
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/privacy"
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Политика конфиденциальности
+            </Link>
+            {mounted && session && (
+              <>
+                <div className="text-xs text-muted-foreground text-right">
+                  <p className="font-medium">
+                    Роль:{" "}
+                    <span className="capitalize text-foreground">
+                      {role === "pro" ? "master" : role}
+                    </span>
+                  </p>
+                  {session.user?.email && (
+                    <p className="mt-1 max-w-[180px] truncate">
+                      {session.user.email}
+                    </p>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                  Выйти
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
 
       {/* Sheet меню слева */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -91,77 +172,19 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
               </div>
             )}
           </SheetHeader>
-          
+        
           <nav className="flex flex-col h-full">
             <div className="flex-1 p-4 space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => handleNavigation("/")}
-              >
-                Главная
-              </Button>
-
-              {mounted && session && (
-                <>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => handleNavigation(role === "pro" ? "/pro/profile" : "/profile")}
-                  >
-                    Профиль
-                  </Button>
-
-                  {isClient && (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => handleNavigation("/references/new")}
-                    >
-                      Хочу
-                    </Button>
-                  )}
-
-                  {isMaster && (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => handleNavigation("/pro/orders")}
-                    >
-                      Заказы
-                    </Button>
-                  )}
-
-                  {isClient && (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => handleNavigation("/client/offers")}
-                    >
-                      Офферы
-                    </Button>
-                  )}
-                </>
-              )}
-
-              {!session && (
-                <>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => handleNavigation("/signin")}
-                  >
-                    Войти
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => handleNavigation("/signup")}
-                  >
-                    Регистрация
-                  </Button>
-                </>
-              )}
+              {mobileNavItems.map((item) => (
+                <Button
+                  key={item.href}
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation(item.href)}
+                >
+                  {item.label}
+                </Button>
+              ))}
             </div>
 
             <div className="p-4 border-t space-y-2">
@@ -190,4 +213,3 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
     </>
   );
 }
-

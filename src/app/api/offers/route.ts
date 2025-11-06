@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { offers, users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import {getServerSession} from "next-auth";
-import {authOptions} from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);

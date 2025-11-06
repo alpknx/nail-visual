@@ -17,7 +17,7 @@ export default function ClientShell({ children }: { children: React.ReactNode })
                 <PinterestMeta />
                 <PWARegister />
                 <BurgerMenu>
-                    <main className="min-h-screen">{children}</main>
+                    <main className="min-h-screen p-2">{children}</main>
                 </BurgerMenu>
             </NextAuthProvider>
         </ReactQueryClientProvider>

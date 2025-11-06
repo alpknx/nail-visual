@@ -25,7 +25,7 @@ export default function WorkGrid() {
 
     return (
         <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
-            {data?.map((w) => (
+            {data?.map((w, index) => (
                 <Link 
                     key={w.id} 
                     href={`/pro/${w.proId}/portfolio`}
@@ -39,7 +39,7 @@ export default function WorkGrid() {
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             className="object-cover"
-                            priority={false}
+                            priority={index === 0}
                         />
                         <figcaption className="absolute bottom-0 left-0 right-0 p-2 text-sm opacity-70 flex items-center gap-2 bg-gradient-to-t from-black/50 to-transparent">
                             <span>{w.tags?.length ? w.tags.join(" • ") : "—"}</span>

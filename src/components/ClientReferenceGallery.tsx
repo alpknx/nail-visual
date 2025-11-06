@@ -88,7 +88,7 @@ export default function ClientReferenceGallery() {
   return (
     <>
       <div className="grid grid-cols-2 gap-2 pb-4">
-        {references.map((ref: ClientReference) => (
+        {references.map((ref: ClientReference, index: number) => (
           <div
             key={ref.id}
             className="relative aspect-[3/4] rounded-lg overflow-hidden group cursor-pointer"
@@ -100,6 +100,7 @@ export default function ClientReferenceGallery() {
               fill
               sizes="50vw"
               className="object-cover"
+              priority={index === 0}
             />
             {/* Кнопка ХОЧУ */}
             <button
@@ -176,4 +177,3 @@ export default function ClientReferenceGallery() {
     </>
   );
 }
-
