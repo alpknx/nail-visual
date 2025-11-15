@@ -1,5 +1,5 @@
+/* stylelint-disable at-rule-no-unknown */
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -120,3 +120,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 3D Flip Modal Styles */
+.perspective-1000 {
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+/* stylelint-enable at-rule-no-unknown */

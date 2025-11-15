@@ -2,7 +2,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getProProfile } from "@/lib/api";
+import { getProProfile, type ProProfileInput } from "@/lib/api";
 import ProProfileForm from "./pro-profile-form";
 import { useSession } from "next-auth/react";
 
@@ -28,8 +28,7 @@ export default function ProMePage() {
     }
 
     // API может вернуть либо объект профиля, либо { data: ... } — нормализуем:
-    const initial =
-        data && "data" in (data as any) ? (data as any).data : (data ?? null);
+    const initial: ProProfileInput | null = data ? (typeof data === "object" && "data" in data ? (data as { data: ProProfileInput }).data : data) : null;
 
     return (
         <section className="space-y-6 max-w-2xl">

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -100,24 +101,19 @@ export default function ReferenceDetailPage() {
         declineMutation.isPending ||
         ref.status !== "open";
 
-    const copyLink = () => {
-        const url = `${window.location.origin}/references/${id}`;
-        navigator.clipboard.writeText(url);
-        toast.success("Ссылка скопирована");
-    };
-
     return (
         <section className="space-y-6">
             <header className="flex gap-4 items-start justify-between">
                 <div className="flex gap-4 items-start flex-1">
                     <div className="relative w-48 h-60 rounded-xl overflow-hidden border bg-muted">
                         {/* убедись, что домен картинки добавлен в next.config.js -> images.domains */}
-                        <img 
+                        <Image 
                             src={ref.imageUrl} 
                             alt="Изображение референса" 
-                            width={192}
-                            height={240}
+                            fill
+                            sizes="192px"
                             className="object-cover"
+                            priority
                         />
                     </div>
 
@@ -130,12 +126,6 @@ export default function ReferenceDetailPage() {
                         {ref.note && <p className="text-sm">{ref.note}</p>}
                     </div>
                 </div>
-
-                {isClient && (
-                    <Button variant="outline" onClick={copyLink} className="whitespace-nowrap">
-                        Копировать ссылку
-                    </Button>
-                )}
             </header>
 
             {/* Форма оффера — только для мастера и только пока референс открыт */}
@@ -196,7 +186,7 @@ export default function ReferenceDetailPage() {
                                                 )}
                                                 {offer.pro.image && (
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <img
+                                                        <Image
                                                             src={offer.pro.image}
                                                             alt={offer.pro.name || "Мастер"}
                                                             width={24}

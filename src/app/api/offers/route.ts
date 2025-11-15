@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { offers, users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import {getServerSession} from "next-auth";
-import {authOptions} from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -30,7 +30,15 @@ export async function GET(req: Request) {
         .where(eq(offers.refId, refId))
         .orderBy(desc(offers.createdAt));
     
-    return NextResponse.json({ data: rows });
+    const response = NextResponse.json({ data: rows });
+    
+    // Кэшировать офферы на 2 минуты (часто меняются)
+    response.headers.set(
+        "Cache-Control",
+        "public, s-maxage=120, stale-while-revalidate=600"
+    );
+    
+    return response;
 }
 
 export async function POST(req: Request) {

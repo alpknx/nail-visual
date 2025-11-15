@@ -1,30 +1,30 @@
 "use client";
 
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function SignInPage() {
     const { data: session } = useSession();
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    if (session) {
-        return (
-            <div className="p-6">
-                <p>Вы вошли как {session.user?.email} (роль: {(session as any)?.role})</p>
-                <button
-                    className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                    onClick={() => signOut()}
-                >
-                    Выйти
-                </button>
-            </div>
-        );
-    }
+    // Загрузить сохраненный email при монтировании
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedEmail = localStorage.getItem("nail_visual_email");
+            if (savedEmail) {
+                setEmail(savedEmail);
+                setRememberMe(true);
+            }
+        }
+    }, []);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -39,86 +39,131 @@ export default function SignInPage() {
             });
 
             if (!result?.ok) {
-                setError(result?.error || "Invalid credentials");
+                setError(result?.error || "Неверные учетные данные");
                 return;
             }
 
+            // Сохранить email если выбрано "Запомнить меня"
+            if (rememberMe && typeof window !== "undefined") {
+                localStorage.setItem("nail_visual_email", email);
+            } else if (typeof window !== "undefined") {
+                localStorage.removeItem("nail_visual_email");
+            }
+
             router.push("/");
-        } catch (err) {
-            setError("An error occurred");
-            console.error(err);
+        } catch {
+            setError("Произошла ошибка");
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="flex items-center justify-center flex-1 bg-gray-50 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Sign in to your account
-                    </h2>
+    if (session) {
+        return (
+            <div className="min-h-screen p-4 flex items-center justify-center">
+                <div className="w-full max-w-md space-y-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                        Вы вошли как {session.user?.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        Роль: {session.user?.role === "pro" ? "master" : session.user?.role}
+                    </p>
+                    <Button
+                        variant="destructive"
+                        onClick={() => signOut()}
+                        className="w-full"
+                    >
+                        Выйти
+                    </Button>
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen p-4 flex items-center justify-center bg-background">
+            <div className="w-full max-w-md space-y-6">
+                <div className="text-center space-y-2">
+                    <h1 className="text-2xl font-bold">Вход</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Войдите в свой аккаунт
+                    </p>
+                </div>
+
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     {error && (
-                        <div className="rounded-md bg-red-50 p-4">
-                            <p className="text-sm font-medium text-red-800">{error}</p>
+                        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+                            <p className="text-sm text-destructive font-medium">{error}</p>
                         </div>
                     )}
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <label htmlFor="email-address" className="sr-only">
-                                Email address
+
+                    <div className="space-y-3">
+                        <div className="space-y-2">
+                            <label htmlFor="email" className="text-sm font-medium">
+                                Email
                             </label>
-                            <input
-                                id="email-address"
+                            <Input
+                                id="email"
                                 name="email"
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="Email address"
+                                placeholder="your@email.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                className="w-full"
                             />
                         </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">
-                                Password
+
+                        <div className="space-y-2">
+                            <label htmlFor="password" className="text-sm font-medium">
+                                Пароль
                             </label>
-                            <input
+                            <Input
                                 id="password"
                                 name="password"
                                 type="password"
                                 autoComplete="current-password"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="Password"
+                                placeholder="Введите пароль"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                className="w-full"
                             />
                         </div>
                     </div>
 
-                    <div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                        >
-                            {loading ? "Signing in..." : "Sign in"}
-                        </button>
+                    {/* Запомнить меня */}
+                    <div className="flex items-center space-x-2">
+                        <input
+                            type="checkbox"
+                            id="remember"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+                            Запомнить меня
+                        </label>
                     </div>
 
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full"
+                        size="lg"
+                    >
+                        {loading ? "Вход..." : "Войти"}
+                    </Button>
+
                     <div className="text-center text-sm">
-                        <span className="text-gray-600">Don&apos;t have an account? </span>
+                        <span className="text-muted-foreground">Нет аккаунта? </span>
                         <button
                             type="button"
                             onClick={() => router.push("/signup")}
-                            className="font-medium text-blue-600 hover:text-blue-500"
+                            className="font-medium text-primary hover:underline"
                         >
-                            Sign up
+                            Зарегистрироваться
                         </button>
                     </div>
                 </form>

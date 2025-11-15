@@ -43,6 +43,13 @@
       "when": 1761838555361,
       "tag": "0005_lying_mephisto",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1761843976572,
+      "tag": "0006_nice_makkari",
+      "breakpoints": true
     }
   ]
 }

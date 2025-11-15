@@ -1,43 +1,47 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import ClientReferenceGallery from "@/components/ClientReferenceGallery";
+import ProOrdersGallery from "@/components/ProOrdersGallery";
 import WorkGrid from "@/components/WorkGrid";
-import ReferencesList from "@/components/ReferencesList";
-import ClientDashboard from "@/components/ClientDashboard";
 
 export default function Home() {
   const { data: session } = useSession();
   const role = session?.user?.role;
 
   return (
-    <section className="space-y-4">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-semibold">Nail Visual</h1>
-          <p className="text-muted-foreground">
-            {role === "pro"
-              ? "Найди референсы для маникюра и отправляй офферы"
-              : role === "client"
-              ? "Твои референсы и офферы от мастеров"
-              : "Залей работу или найди мастера по стилю"}
-          </p>
-        </div>
-      
-      </div>
-
+    <main className="min-h-screen pb-4">
       {role === "pro" ? (
-        <>
-          <h2 className="text-lg font-semibold">Свежие референсы</h2>
-          <ReferencesList />
-        </>
+        <div className="space-y-4">
+          <div className="px-4 pt-16 md:pt-4">
+            <h1 className="text-2xl font-semibold mb-2">Заказы клиентов</h1>
+            <p className="text-sm text-muted-foreground">
+              Найди референсы для маникюра и отправляй офферы
+            </p>
+          </div>
+          <ProOrdersGallery />
+        </div>
       ) : role === "client" ? (
-        <ClientDashboard />
+        <div className="space-y-4">
+          <div className="px-4 pt-16 md:pt-4">
+            <h1 className="text-2xl font-semibold mb-2">Галерея референсов</h1>
+            <p className="text-sm text-muted-foreground">
+              Выбери понравившийся референс и отправь заказ
+            </p>
+          </div>
+          <ClientReferenceGallery />
+        </div>
       ) : (
-        <>
-          <h2 className="text-lg font-semibold">Портфолио мастеров</h2>
+        <div className="space-y-4">
+          <div className="px-4 pt-16 md:pt-4">
+            <h1 className="text-2xl font-semibold mb-2">Портфолио мастеров</h1>
+            <p className="text-sm text-muted-foreground">
+              Залей работу или найди мастера по стилю
+            </p>
+          </div>
           <WorkGrid />
-        </>
+        </div>
       )}
-    </section>
+    </main>
   );
 }

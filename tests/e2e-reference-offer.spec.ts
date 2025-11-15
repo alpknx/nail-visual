@@ -77,7 +77,7 @@ test("client creates reference → pro offers → client accepts", async ({ page
       `/api/offers?referenceId=${referenceId}`
   );
   const offersJson = await offersList.json();
-  const accepted = offersJson.data.find((o: any) => o.id === offerId);
+  const accepted = offersJson.data.find((o: { id: string }) => o.id === offerId);
   expect(accepted?.status).toBe("accepted");
   expect(accepted?.acceptedAt ?? accepted?.accepted_at).toBeTruthy();
 

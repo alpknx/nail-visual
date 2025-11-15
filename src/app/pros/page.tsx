@@ -34,7 +34,13 @@ export default function ProsPage() {
                     >
                         <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted">
                             {p.sampleUrl ? (
-                                <img src={p.sampleUrl} alt="" className="object-cover" />
+                                <Image 
+                                    src={p.sampleUrl} 
+                                    alt={`Мастер ${p.proId.slice(0, 6)}`}
+                                    fill
+                                    sizes="48px"
+                                    className="object-cover" 
+                                />
                             ) : null}
                         </div>
                         <div className="min-w-0">
