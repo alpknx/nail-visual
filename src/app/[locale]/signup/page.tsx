@@ -1,9 +1,9 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/routing';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,12 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function SignUpPage() {
     const t = useTranslations('auth.signUp');
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState<"client" | "pro">("client");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    // Читаем роль из query параметров
+    useEffect(() => {
+        const roleParam = searchParams.get('role');
+        if (roleParam === 'client' || roleParam === 'pro') {
+            setRole(roleParam);
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();

@@ -305,7 +305,11 @@
       "price": "Price",
       "error": "Error updating",
       "needAuth": "Authentication required",
-      "clientsOnly": "This page is only available for clients"
+      "clientsOnly": "This page is only available for clients",
+      "offerDetails": "Offer Details",
+      "masterMessage": "Master's Message",
+      "matchDetails": "Match Details",
+      "orderDescription": "Order Description"
     }
   },
   "works": {

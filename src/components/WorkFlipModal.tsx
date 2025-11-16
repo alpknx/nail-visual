@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from "@/i18n/routing";
 import { Session } from "next-auth";
 import FlipModal from "@/components/FlipModal";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { createReference, type City, type Work } from "@/lib/api";
 import { useGeolocationContext } from "@/contexts/GeolocationContext";
@@ -140,9 +141,20 @@ export default function WorkFlipModal({
         )}
         
         {!canCreateOrder && (
-          <p className="text-xs text-muted-foreground text-center p-2 bg-muted rounded-lg">
-            {tDesigns('onlyClientsCanOrder') || "Только клиенты могут создавать заказы"}
-          </p>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground text-center p-2 bg-muted rounded-lg">
+              {tDesigns('onlyClientsCanOrder') || "Только клиенты могут создавать заказы"}
+            </p>
+            {!session && (
+              <Button
+                onClick={() => router.push("/signup?role=client")}
+                className="w-full"
+                size="lg"
+              >
+                {tCommon('signUp') || "Зарегистрироваться как клиент"}
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </FlipModal>

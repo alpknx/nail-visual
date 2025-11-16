@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import FlipModal from "@/components/FlipModal";
 import { listOffersByReference, patchOfferStatus, type Offer, type ClientReference } from "@/lib/api";
 
 export default function ClientOffersPage() {
@@ -14,7 +15,8 @@ export default function ClientOffersPage() {
   const tCommon = useTranslations('common');
   const { data: session } = useSession();
   const qc = useQueryClient();
-  const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+  const [selectedMatchedRef, setSelectedMatchedRef] = useState<ClientReference | null>(null);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   // Загрузить все референсы клиента
@@ -39,16 +41,18 @@ export default function ClientOffersPage() {
   // Мэтчи (принятые офферы)
   const matchedReferences = references.filter((r: ClientReference) => r.status === "matched");
 
-  const selectedReference = references.find((r: ClientReference) => r.id === selectedRef);
-
-  // Загрузить офферы к выбранному референсу
-  const { data: offers = [], isLoading: offersLoading } = useQuery({
-    queryKey: ["offers", selectedRef],
+  // Загрузить офферы для всех открытых референсов
+  const openRefIds = openReferences.map((r: ClientReference) => r.id);
+  const { data: allOpenOffers = [], isLoading: offersLoading } = useQuery({
+    queryKey: ["all-open-offers", openRefIds.join(",")],
     queryFn: async () => {
-      if (!selectedRef) return [];
-      return listOffersByReference(selectedRef);
+      if (openReferences.length === 0) return [];
+      const allOffers = await Promise.all(
+        openReferences.map((ref: ClientReference) => listOffersByReference(ref.id))
+      );
+      return allOffers.flat();
     },
-    enabled: !!selectedRef,
+    enabled: openReferences.length > 0,
   });
 
   // Загрузить офферы для всех мэтчей
@@ -70,13 +74,31 @@ export default function ClientOffersPage() {
     try {
       await patchOfferStatus(offerId, action);
       toast.success(action === "accepted" ? t('acceptedToast') : t('declinedToast'));
-      await qc.invalidateQueries({ queryKey: ["offers", selectedRef] });
+      await qc.invalidateQueries({ queryKey: ["all-open-offers"] });
+      await qc.invalidateQueries({ queryKey: ["all-matched-offers"] });
       await qc.invalidateQueries({ queryKey: ["my-references", session?.user?.id] });
+      setSelectedOffer(null);
     } catch (e) {
       toast.error((e as Error).message || t('error'));
     } finally {
       setIsProcessing(null);
     }
+  };
+
+  const handleOpenOfferModal = (offer: Offer) => {
+    setSelectedOffer(offer);
+  };
+
+  const handleCloseOfferModal = () => {
+    setSelectedOffer(null);
+  };
+
+  const handleOpenMatchedModal = (ref: ClientReference) => {
+    setSelectedMatchedRef(ref);
+  };
+
+  const handleCloseMatchedModal = () => {
+    setSelectedMatchedRef(null);
   };
 
   if (!session) {
@@ -87,243 +109,336 @@ export default function ClientOffersPage() {
     return <p className="text-center py-12 opacity-70">{t('clientsOnly')}</p>;
   }
 
+  // Получить референс для каждого оффера
+  const getReferenceForOffer = (offer: Offer): ClientReference | undefined => {
+    return references.find((r: ClientReference) => r.id === offer.refId);
+  };
+
   return (
-    <div className="min-h-screen p-4 space-y-6 pt-16 md:pt-4">
-      <div>
-        <h1 className="text-2xl font-semibold mb-2">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t('subtitle')}
-        </p>
-      </div>
+    <>
+      <div className="min-h-screen space-y-6 pt-16 md:pt-4">
+        <div className="px-4">
+          <h1 className="text-2xl font-semibold mb-2">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">
+            {t('subtitle')}
+          </p>
+        </div>
 
-      {/* Открытые референсы */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">{t('open')} ({openReferences.length})</h2>
-        
-        {refsLoading ? (
-          <div className="grid grid-cols-2 gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
-            ))}
+        {/* Офферы к открытым референсам */}
+        <div className="space-y-4">
+          <div className="px-4">
+            <h2 className="text-lg font-semibold">{t('open')} ({allOpenOffers.length})</h2>
           </div>
-        ) : openReferences.length === 0 ? (
-          <p className="text-sm opacity-70 text-center py-8">{t('noOpen')}</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {openReferences.map((ref: ClientReference) => (
-              <div
-                key={ref.id}
-                className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 cursor-pointer transition-colors ${
-                  selectedRef === ref.id ? "border-primary" : "border-transparent"
-                }`}
-                onClick={() => setSelectedRef(ref.id)}
-              >
-                <Image
-                  src={ref.imageUrl}
-                  alt={ref.note || tCommon('reference')}
-                  fill
-                  sizes="50vw"
-                  className="object-cover"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
-                  <p className="font-medium">{ref.city}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Офферы к выбранному референсу */}
-        {selectedRef && selectedReference && (
-          <div className="mt-6 space-y-4">
-            <h3 className="text-lg font-semibold">{t('offersToSelected')}</h3>
-            
-            {offersLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="h-20 rounded border animate-pulse bg-muted" />
-                ))}
-              </div>
-            ) : offers.length === 0 ? (
-              <p className="text-sm opacity-70">{t('noResponses')}</p>
-            ) : (
-              <div className="space-y-3">
-                {offers.map((offer: Offer) => (
+          
+          {refsLoading || offersLoading ? (
+            <div className="grid grid-cols-2 gap-2 px-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : allOpenOffers.length === 0 ? (
+            <p className="text-sm opacity-70 text-center py-8 px-4">{t('noResponses')}</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 px-4">
+              {allOpenOffers.map((offer: Offer, index: number) => {
+                const ref = getReferenceForOffer(offer);
+                if (!ref) return null;
+                
+                return (
                   <div
                     key={offer.id}
-                    className="p-4 rounded-lg border space-y-3 hover:bg-muted/50 transition"
+                    className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group"
+                    onClick={() => handleOpenOfferModal(offer)}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        {offer.pro?.image && (
-                          <Image
-                            src={offer.pro.image}
-                            alt={offer.pro.name || "Pro"}
-                            width={48}
-                            height={48}
-                            className="rounded-full w-12 h-12 object-cover flex-shrink-0"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold">
-                            {offer.pro?.name || `${t('master')} ${offer.proId.slice(0, 6)}`}
-                          </p>
-                          <p className="text-xs opacity-70 mt-1">
-                            {new Date(offer.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className={`text-xs font-medium px-2 py-1 rounded flex-shrink-0 ${
-                          offer.status === "accepted"
-                            ? "bg-green-100 text-green-700"
-                            : offer.status === "declined"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {offer.status === "accepted"
-                          ? `✅ ${t('statusAccepted')}`
-                          : offer.status === "declined"
-                          ? `❌ ${t('statusDeclined')}`
-                          : t('statusNew')}
-                      </span>
+                    <Image
+                      src={ref.imageUrl}
+                      alt={ref.note || tCommon('reference')}
+                      fill
+                      sizes="50vw"
+                      className="object-cover"
+                      priority={index < 2}
+                    />
+                    <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded bg-black/50 text-white text-xs font-medium">
+                      {offer.status === "accepted"
+                        ? `✅ ${t('statusAccepted')}`
+                        : offer.status === "declined"
+                        ? `❌ ${t('statusDeclined')}`
+                        : t('statusNew')}
                     </div>
-
-                    {offer.message && (
-                      <p className="text-sm">{offer.message}</p>
-                    )}
-
-                    {typeof offer.pricePln === "number" && (
-                      <p className="text-sm font-semibold text-green-600">
-                        {t('price')}: {offer.pricePln} PLN
-                      </p>
-                    )}
-
-                    {offer.status === "offer" && (
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          onClick={() => handleOfferAction(offer.id, "accepted")}
-                          disabled={isProcessing === offer.id}
-                          className="flex-1"
-                          size="sm"
-                        >
-                          {isProcessing === offer.id ? t('accepting') : t('accept')}
-                        </Button>
-                        <Button
-                          onClick={() => handleOfferAction(offer.id, "declined")}
-                          disabled={isProcessing === offer.id}
-                          variant="outline"
-                          className="flex-1"
-                          size="sm"
-                        >
-                          {isProcessing === offer.id ? t('declining') : t('decline')}
-                        </Button>
-                      </div>
-                    )}
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
+                      <p className="font-medium">{ref.city}</p>
+                      {offer.pro?.name && (
+                        <p className="opacity-90">{offer.pro.name}</p>
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Мэтчи */}
+        <div className="space-y-4 pt-6 border-t">
+          <div className="px-4">
+            <h2 className="text-lg font-semibold">{t('matches')} ({matchedReferences.length})</h2>
           </div>
-        )}
+          
+          {matchedReferences.length === 0 ? (
+            <p className="text-sm opacity-70 text-center py-8 px-4">{t('noMatches')}</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 px-4">
+              {matchedReferences.map((ref: ClientReference, index: number) => {
+                const matchedOffer = allMatchedOffers.find(
+                  (o: Offer) => o.refId === ref.id && o.status === "accepted"
+                );
+
+                return (
+                  <div
+                    key={ref.id}
+                    className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group"
+                    onClick={() => handleOpenMatchedModal(ref)}
+                  >
+                    <Image
+                      src={ref.imageUrl}
+                      alt={ref.note || tCommon('reference')}
+                      fill
+                      sizes="50vw"
+                      className="object-cover"
+                      priority={index < 2}
+                    />
+                    <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded bg-green-500/90 text-white text-xs font-medium">
+                      ✅ {t('statusAccepted')}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
+                      <p className="font-medium">{ref.city}</p>
+                      {matchedOffer?.pro?.name && (
+                        <p className="opacity-90">{matchedOffer.pro.name}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Мэтчи */}
-      <div className="space-y-4 pt-6 border-t">
-        <h2 className="text-lg font-semibold">{t('matches')} ({matchedReferences.length})</h2>
+      {/* Модальное окно для оффера */}
+      {selectedOffer && (() => {
+        const ref = getReferenceForOffer(selectedOffer);
+        if (!ref) return null;
         
-        {matchedReferences.length === 0 ? (
-          <p className="text-sm opacity-70 text-center py-8">{t('noMatches')}</p>
-        ) : (
-          <div className="space-y-4">
-            {matchedReferences.map((ref: ClientReference) => {
-              // Найти принятый оффер для этого референса
-              const matchedOffer = allMatchedOffers.find(
-                (o: Offer) => o.refId === ref.id && o.status === "accepted"
-              );
-
-              return (
-                <div
-                  key={ref.id}
-                  className="p-4 rounded-lg border space-y-3 bg-green-50/50"
-                >
-                  <div className="flex gap-4">
-                    <div className="relative w-24 h-32 rounded-lg overflow-hidden flex-shrink-0">
-                      <Image
-                        src={ref.imageUrl}
-                        alt={ref.note || "Референс"}
-                        fill
-                        sizes="96px"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div>
-                        <p className="text-sm font-medium opacity-70">{t('city')}</p>
-                        <p className="text-sm font-semibold">{ref.city}</p>
-                      </div>
-                      {ref.tags && ref.tags.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium opacity-70">{t('tags')}</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {ref.tags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="inline-block px-2 py-1 bg-green-100 rounded text-xs"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {matchedOffer && (
-                    <div className="pt-4 border-t space-y-2">
-                      <div className="flex items-start gap-3">
-                        {matchedOffer.pro?.image && (
-                          <Image
-                            src={matchedOffer.pro.image}
-                            alt={matchedOffer.pro.name || t('master')}
-                            width={40}
-                            height={40}
-                            className="rounded-full w-10 h-10 object-cover flex-shrink-0"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold">
-                            {matchedOffer.pro?.name || `${t('master')} ${matchedOffer.proId.slice(0, 6)}`}
-                          </p>
-                          {matchedOffer.pro?.phone && (
-                            <a
-                              href={`tel:${matchedOffer.pro.phone}`}
-                              className="text-sm text-blue-600 hover:underline"
-                            >
-                              {matchedOffer.pro.phone}
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      {matchedOffer.message && (
-                        <p className="text-sm">{matchedOffer.message}</p>
-                      )}
-                      {typeof matchedOffer.pricePln === "number" && (
-                        <p className="text-sm font-semibold text-green-600">
-                          {t('price')}: {matchedOffer.pricePln} PLN
-                        </p>
-                      )}
-                    </div>
+        return (
+          <FlipModal
+            isOpen={!!selectedOffer}
+            onClose={handleCloseOfferModal}
+            imageUrl={ref.imageUrl}
+            title={t('offerDetails')}
+          >
+            <div className="space-y-4">
+              {/* Информация о мастере */}
+              <div className="flex items-start gap-3">
+                {selectedOffer.pro?.image && (
+                  <Image
+                    src={selectedOffer.pro.image}
+                    alt={selectedOffer.pro.name || t('master')}
+                    width={64}
+                    height={64}
+                    className="rounded-full w-16 h-16 object-cover flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1">
+                  <p className="text-lg font-semibold">
+                    {selectedOffer.pro?.name || `${t('master')} ${selectedOffer.proId.slice(0, 6)}`}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {new Date(selectedOffer.createdAt).toLocaleDateString()}
+                  </p>
+                  {selectedOffer.pro?.phone && (
+                    <a
+                      href={`tel:${selectedOffer.pro.phone}`}
+                      className="text-sm text-blue-600 hover:underline mt-1 block"
+                    >
+                      {selectedOffer.pro.phone}
+                    </a>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded flex-shrink-0 ${
+                    selectedOffer.status === "accepted"
+                      ? "bg-green-100 text-green-700"
+                      : selectedOffer.status === "declined"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {selectedOffer.status === "accepted"
+                    ? `✅ ${t('statusAccepted')}`
+                    : selectedOffer.status === "declined"
+                    ? `❌ ${t('statusDeclined')}`
+                    : t('statusNew')}
+                </span>
+              </div>
+
+              {/* Описание заказа */}
+              {ref.note && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    {t('orderDescription')}
+                  </label>
+                  <p className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                    {ref.note}
+                  </p>
+                </div>
+              )}
+
+              {/* Сообщение мастера */}
+              {selectedOffer.message && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    {t('masterMessage')}
+                  </label>
+                  <p className="text-sm p-3 bg-muted rounded-lg">
+                    {selectedOffer.message}
+                  </p>
+                </div>
+              )}
+
+              {/* Цена */}
+              {typeof selectedOffer.pricePln === "number" && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    {t('price')}
+                  </label>
+                  <p className="text-lg font-semibold text-green-600">
+                    {selectedOffer.pricePln} PLN
+                  </p>
+                </div>
+              )}
+
+              {/* Кнопки действий */}
+              {selectedOffer.status === "offer" && (
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button
+                    onClick={() => handleOfferAction(selectedOffer.id, "accepted")}
+                    disabled={isProcessing === selectedOffer.id}
+                    className="flex-1"
+                    size="lg"
+                  >
+                    {isProcessing === selectedOffer.id ? t('accepting') : t('accept')}
+                  </Button>
+                  <Button
+                    onClick={() => handleOfferAction(selectedOffer.id, "declined")}
+                    disabled={isProcessing === selectedOffer.id}
+                    variant="outline"
+                    className="flex-1"
+                    size="lg"
+                  >
+                    {isProcessing === selectedOffer.id ? t('declining') : t('decline')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </FlipModal>
+        );
+      })()}
+
+      {/* Модальное окно для мэтча */}
+      {selectedMatchedRef && (() => {
+        const matchedOffer = allMatchedOffers.find(
+          (o: Offer) => o.refId === selectedMatchedRef.id && o.status === "accepted"
+        );
+        
+        return (
+          <FlipModal
+            isOpen={!!selectedMatchedRef}
+            onClose={handleCloseMatchedModal}
+            imageUrl={selectedMatchedRef.imageUrl}
+            title={t('matchDetails')}
+          >
+            <div className="space-y-4">
+              {/* Информация о мастере */}
+              {matchedOffer && (
+                <>
+                  <div className="flex items-start gap-3">
+                    {matchedOffer.pro?.image && (
+                      <Image
+                        src={matchedOffer.pro.image}
+                        alt={matchedOffer.pro.name || t('master')}
+                        width={64}
+                        height={64}
+                        className="rounded-full w-16 h-16 object-cover flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-lg font-semibold">
+                        {matchedOffer.pro?.name || `${t('master')} ${matchedOffer.proId.slice(0, 6)}`}
+                      </p>
+                      {matchedOffer.pro?.phone && (
+                        <a
+                          href={`tel:${matchedOffer.pro.phone}`}
+                          className="text-sm text-blue-600 hover:underline mt-1 block"
+                        >
+                          {matchedOffer.pro.phone}
+                        </a>
+                      )}
+                    </div>
+                    <span className="text-xs font-medium px-2 py-1 rounded bg-green-100 text-green-700 flex-shrink-0">
+                      ✅ {t('statusAccepted')}
+                    </span>
+                  </div>
+
+                  {/* Описание заказа */}
+                  {selectedMatchedRef.note && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        {t('orderDescription')}
+                      </label>
+                      <p className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                        {selectedMatchedRef.note}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Сообщение мастера */}
+                  {matchedOffer.message && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        {t('masterMessage')}
+                      </label>
+                      <p className="text-sm p-3 bg-muted rounded-lg">
+                        {matchedOffer.message}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Цена */}
+                  {typeof matchedOffer.pricePln === "number" && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        {t('price')}
+                      </label>
+                      <p className="text-lg font-semibold text-green-600">
+                        {matchedOffer.pricePln} PLN
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Город */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      {t('city')}
+                    </label>
+                    <p className="text-sm">{selectedMatchedRef.city}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </FlipModal>
+        );
+      })()}
+    </>
   );
 }
 

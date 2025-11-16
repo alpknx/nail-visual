@@ -303,7 +303,11 @@
       "price": "Cena",
       "error": "Błąd aktualizacji",
       "needAuth": "Wymagana autoryzacja",
-      "clientsOnly": "Ta strona jest dostępna tylko dla klientów"
+      "clientsOnly": "Ta strona jest dostępna tylko dla klientów",
+      "offerDetails": "Szczegóły oferty",
+      "masterMessage": "Wiadomość od mistrza",
+      "matchDetails": "Szczegóły dopasowania",
+      "orderDescription": "Opis zamówienia"
     }
   },
   "works": {
