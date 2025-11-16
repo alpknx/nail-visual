@@ -9,10 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
+// Prevent static generation - this page requires authentication
+export const dynamic = 'force-dynamic';
+
 export default function ProProfilePage() {
   const t = useTranslations('pro.profile');
   const tCommon = useTranslations('common');
-  const { data: session, update: updateSession } = useSession();
+  const sessionResult = useSession();
+  const session = sessionResult?.data ?? null;
+  const updateSession = sessionResult?.update;
   const user = session?.user as { id: string; name?: string; email?: string; image?: string; phone?: string; city?: string; role: string };
 
   const [formData, setFormData] = useState({
@@ -86,7 +91,9 @@ export default function ProProfilePage() {
       if (!res2.ok) throw new Error(t('updateProError'));
 
       toast.success(t('updated'));
-      await updateSession();
+      if (updateSession) {
+        await updateSession();
+      }
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       toast.error(err.message);

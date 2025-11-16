@@ -6,9 +6,13 @@ import { getProProfile, type ProProfileInput } from "@/lib/api";
 import ProProfileForm from "./pro-profile-form";
 import { useSession } from "next-auth/react";
 
+// Prevent static generation - this page requires authentication
+export const dynamic = 'force-dynamic';
+
 export default function ProMePage() {
     const t = useTranslations('pro.profile');
-    const { status } = useSession();
+    const sessionResult = useSession();
+    const status = sessionResult?.status ?? 'loading';
 
     // грузим профиль текущего pro
     const { data, isLoading, isError, error } = useQuery({

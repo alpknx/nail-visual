@@ -98,7 +98,7 @@ export default function ProDetailPage() {
                 <p className="opacity-70">{t('noWorks')}</p>
             ) : (
                 <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
-                    {works.map((w: Work) => (
+                    {works.map((w: Work, index: number) => (
                         <figure key={w.id} className="rounded-2xl overflow-hidden border relative">
                             <div className="relative aspect-[4/5]">
                                 <Image
@@ -107,6 +107,7 @@ export default function ProDetailPage() {
                                     fill
                                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                     className="object-cover"
+                                    priority={index < 4}
                                 />
                             </div>
                             <figcaption className="p-2 text-sm opacity-70">

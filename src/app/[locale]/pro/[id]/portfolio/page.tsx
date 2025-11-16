@@ -63,7 +63,7 @@ export default function ProPortfolioPage() {
                 )}
             </header>
             <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
-                {works.map((w) => (
+                {works.map((w, index) => (
                     <figure key={w.id} className="rounded-2xl overflow-hidden border relative aspect-[4/5]">
                         <Image 
                             src={w.imageUrl} 
@@ -71,6 +71,7 @@ export default function ProPortfolioPage() {
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             className="object-cover"
+                            priority={index < 4}
                         />
                         <figcaption className="absolute bottom-0 left-0 right-0 p-2 text-sm opacity-70 bg-gradient-to-t from-black/50 to-transparent">
                             {w.tags?.length ? w.tags.join(" • ") : "—"}

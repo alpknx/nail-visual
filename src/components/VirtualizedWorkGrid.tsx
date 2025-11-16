@@ -78,6 +78,7 @@ export default function VirtualizedWorkGrid() {
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover"
+                  priority={index < 4}
                 />
               ) : (
                 <div className="w-full h-full bg-muted animate-pulse" />

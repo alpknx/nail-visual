@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import FlipModal from "@/components/FlipModal";
 
+// Prevent static generation - this page requires authentication
+export const dynamic = 'force-dynamic';
+
 interface Reference {
   id: string;
   imageUrl: string;
@@ -32,7 +35,8 @@ interface Offer {
 export default function ProOrdersPage() {
   const t = useTranslations('pro.orders');
   const tCommon = useTranslations('common');
-  const { data: session } = useSession();
+  const sessionResult = useSession();
+  const session = sessionResult?.data ?? null;
   const qc = useQueryClient();
   const [filter, setFilter] = useState<"all" | "matched" | "open">("all");
   const [selectedRef, setSelectedRef] = useState<string | null>(null);

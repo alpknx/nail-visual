@@ -8,10 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
+// Prevent static generation - this page requires authentication
+export const dynamic = 'force-dynamic';
+
 export default function ClientProfilePage() {
   const t = useTranslations('profile');
   const tCommon = useTranslations('common');
-  const { data: session, update: updateSession } = useSession();
+  const sessionResult = useSession();
+  const session = sessionResult?.data ?? null;
+  const updateSession = sessionResult?.update;
   const user = session?.user as { id: string; name?: string; email?: string; image?: string; phone?: string; city?: string; role: string };
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -31,7 +36,9 @@ export default function ClientProfilePage() {
     },
     onSuccess: async () => {
       toast.success(t('updated'));
-      await updateSession();
+      if (updateSession) {
+        await updateSession();
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
