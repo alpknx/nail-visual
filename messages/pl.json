@@ -1,0 +1,230 @@
+{
+  "common": {
+    "home": "Strona główna",
+    "profile": "Profil",
+    "orders": "Zamówienia",
+    "offers": "Oferty",
+    "want": "Chcę",
+    "signIn": "Zaloguj się",
+    "signUp": "Rejestracja",
+    "signOut": "Wyloguj się",
+    "menu": "Menu",
+    "openMenu": "Otwórz menu",
+    "privacy": "Polityka prywatności",
+    "role": "Rola",
+    "email": "Email",
+    "password": "Hasło",
+    "city": "Miasto",
+    "price": "Cena",
+    "message": "Wiadomość",
+    "description": "Opis",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "create": "Utwórz",
+    "add": "Dodaj",
+    "search": "Szukaj",
+    "filter": "Filtr",
+    "submit": "Wyślij",
+    "saving": "Zapisywanie...",
+    "sending": "Wysyłanie...",
+    "loading": "Ładowanie...",
+    "allCities": "Wszystkie miasta",
+    "selectCity": "Wybierz miasto",
+    "tags": "Tagi",
+    "optional": "opcjonalnie",
+    "required": "wymagane",
+    "error": "Błąd",
+    "success": "Sukces"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Logowanie",
+      "subtitle": "Zaloguj się do swojego konta",
+      "email": "Email",
+      "password": "Hasło",
+      "rememberMe": "Zapamiętaj mnie",
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie...",
+      "noAccount": "Nie masz konta?",
+      "register": "Zarejestruj się",
+      "invalidCredentials": "Nieprawidłowe dane logowania",
+      "error": "Wystąpił błąd",
+      "signedInAs": "Zalogowano jako",
+      "signOut": "Wyloguj się"
+    },
+    "signUp": {
+      "title": "Rejestracja",
+      "subtitle": "Utwórz nowe konto",
+      "email": "Email",
+      "iWant": "Chcę",
+      "findMaster": "Znaleźć mistrza",
+      "offerServices": "Oferować usługi",
+      "password": "Hasło",
+      "confirmPassword": "Potwierdź hasło",
+      "submit": "Zarejestruj się",
+      "submitting": "Rejestracja...",
+      "hasAccount": "Masz już konto?",
+      "signIn": "Zaloguj się",
+      "passwordsNotMatch": "Hasła nie pasują",
+      "passwordMinLength": "Hasło musi mieć co najmniej 6 znaków",
+      "registrationError": "Błąd rejestracji",
+      "signInAfterRegistrationError": "Nie udało się zalogować po rejestracji",
+      "error": "Wystąpił błąd"
+    }
+  },
+  "home": {
+    "pro": {
+      "title": "Zamówienia klientów",
+      "subtitle": "Znajdź referencje do paznokci i wyślij oferty"
+    },
+    "client": {
+      "title": "Galeria referencji",
+      "subtitle": "Wybierz referencję, która Ci się podoba i złóż zamówienie"
+    },
+    "guest": {
+      "title": "Portfolio mistrzów",
+      "subtitle": "Wgraj pracę lub znajdź mistrza według stylu"
+    }
+  },
+  "references": {
+    "new": {
+      "title": "Chcę taki manicure",
+      "subtitle": "Wgraj zdjęcie wymarzonego manicure",
+      "photo": "Zdjęcie referencyjne",
+      "city": "Miasto",
+      "tags": "Tagi (styl/kolor)",
+      "comment": "Komentarz",
+      "submit": "Wyślij",
+      "submitting": "Wysyłanie...",
+      "addPhoto": "Dodaj zdjęcie referencyjne",
+      "addAtLeastOneTag": "Dodaj co najmniej jeden tag",
+      "created": "Referencja utworzona — czekamy na oferty od mistrzów",
+      "error": "Błąd wysyłania",
+      "selectedTags": "Wybrane tagi"
+    },
+    "gallery": {
+      "want": "Chcę",
+      "wantTitle": "Chcę taki manicure",
+      "fillCityAndTags": "Wypełnij miasto i wybierz co najmniej jeden tag",
+      "created": "Referencja utworzona!",
+      "error": "Błąd tworzenia referencji",
+      "city": "Miasto",
+      "tags": "Tagi (styl/kolor)",
+      "description": "Opis",
+      "example": "Na przykład: chcę chłodniejszy nudy"
+    },
+    "detail": {
+      "notFound": "Referencja nie znaleziona",
+      "title": "Referencja",
+      "master": "Mistrz",
+      "price": "Cena",
+      "deleteOffer": "Usuń ofertę",
+      "deleting": "Usuwanie...",
+      "deleted": "Oferta usunięta"
+    }
+  },
+  "offers": {
+    "pro": {
+      "title": "Mogę to zrobić",
+      "noOpenOrders": "Brak otwartych zamówień w tym mieście",
+      "canDo": "Mogę",
+      "orderDescription": "Opis zamówienia",
+      "pricePln": "Cena (PLN)",
+      "priceExample": "Na przykład: 150",
+      "description": "Opis (mogę)",
+      "descriptionExample": "Na przykład: mogę zrobić taki manicure, mam doświadczenie z tym stylem...",
+      "sent": "Oferta wysłana!",
+      "error": "Błąd wysyłania oferty",
+      "needSignIn": "Wymagane logowanie"
+    },
+    "client": {
+      "title": "Moje oferty",
+      "subtitle": "Zarządzaj ofertami od mistrzów",
+      "open": "Otwarte",
+      "matches": "Dopasowania",
+      "noOpen": "Brak otwartych referencji",
+      "offersToSelected": "Oferty dla wybranej referencji",
+      "noResponses": "Brak odpowiedzi",
+      "master": "Mistrz",
+      "new": "Nowy",
+      "accepted": "Zaakceptowany",
+      "declined": "Odrzucony",
+      "accept": "Zaakceptuj",
+      "accepting": "Akceptowanie...",
+      "decline": "Odrzuć",
+      "declining": "Odrzucanie...",
+      "acceptedToast": "Oferta zaakceptowana",
+      "declinedToast": "Oferta odrzucona",
+      "noMatches": "Brak dopasowanych referencji",
+      "city": "Miasto",
+      "tags": "Tagi",
+      "price": "Cena",
+      "error": "Błąd aktualizacji",
+      "needAuth": "Wymagana autoryzacja",
+      "clientsOnly": "Ta strona jest dostępna tylko dla klientów"
+    }
+  },
+  "works": {
+    "new": {
+      "title": "Dodaj pracę",
+      "subtitle": "Wgraj zdjęcie swojej pracy",
+      "photo": "Zdjęcie pracy",
+      "city": "Miasto",
+      "tags": "Tagi",
+      "caption": "Podpis",
+      "submit": "Zapisz",
+      "submitting": "Zapisywanie...",
+      "added": "Praca dodana"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "city": "Miasto",
+    "name": "Imię",
+    "phone": "Telefon",
+    "updated": "Profil zaktualizowany"
+  },
+  "pro": {
+    "profile": {
+      "title": "Profil mistrza",
+      "city": "Miasto",
+      "cities": "Miasta",
+      "name": "Imię",
+      "phone": "Telefon",
+      "updated": "Profil zaktualizowany"
+    },
+    "orders": {
+      "title": "Moje zamówienia",
+      "subtitle": "Zarządzaj swoimi ofertami",
+      "filters": "Filtry",
+      "all": "Wszystkie",
+      "open": "Otwarte",
+      "matched": "Dopasowane",
+      "reference": "Referencja",
+      "notFound": "Oferta nie znaleziona",
+      "delete": "Usuń",
+      "deleting": "Usuwanie...",
+      "deleted": "Oferta usunięta",
+      "message": "Wiadomość",
+      "price": "Cena"
+    },
+    "portfolio": {
+      "title": "Portfolio",
+      "master": "mistrza",
+      "cityNotSpecified": "Miasto nie podane",
+      "cities": "Miasta"
+    }
+  },
+  "masters": {
+    "title": "Mistrzowie",
+    "master": "Mistrz",
+    "portfolio": "Portfolio"
+  },
+  "privacy": {
+    "title": "Polityka prywatności",
+    "lastUpdated": "Ostatnia aktualizacja"
+  }
+}
+

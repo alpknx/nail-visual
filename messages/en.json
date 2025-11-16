@@ -1,0 +1,230 @@
+{
+  "common": {
+    "home": "Home",
+    "profile": "Profile",
+    "orders": "Orders",
+    "offers": "Offers",
+    "want": "Want",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "privacy": "Privacy Policy",
+    "role": "Role",
+    "email": "Email",
+    "password": "Password",
+    "city": "City",
+    "price": "Price",
+    "message": "Message",
+    "description": "Description",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "submit": "Submit",
+    "saving": "Saving...",
+    "sending": "Sending...",
+    "loading": "Loading...",
+    "allCities": "All cities",
+    "selectCity": "Select city",
+    "tags": "Tags",
+    "optional": "optional",
+    "required": "required",
+    "error": "Error",
+    "success": "Success"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Sign In",
+      "subtitle": "Sign in to your account",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "submit": "Sign In",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "register": "Sign Up",
+      "invalidCredentials": "Invalid credentials",
+      "error": "An error occurred",
+      "signedInAs": "Signed in as",
+      "signOut": "Sign Out"
+    },
+    "signUp": {
+      "title": "Sign Up",
+      "subtitle": "Create a new account",
+      "email": "Email",
+      "iWant": "I want to",
+      "findMaster": "Find a master",
+      "offerServices": "Offer services",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Sign Up",
+      "submitting": "Signing up...",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign In",
+      "passwordsNotMatch": "Passwords do not match",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "registrationError": "Registration error",
+      "signInAfterRegistrationError": "Failed to sign in after registration",
+      "error": "An error occurred"
+    }
+  },
+  "home": {
+    "pro": {
+      "title": "Client Orders",
+      "subtitle": "Find nail art references and send offers"
+    },
+    "client": {
+      "title": "Reference Gallery",
+      "subtitle": "Choose a reference you like and place an order"
+    },
+    "guest": {
+      "title": "Masters Portfolio",
+      "subtitle": "Upload your work or find a master by style"
+    }
+  },
+  "references": {
+    "new": {
+      "title": "I want this nail art",
+      "subtitle": "Upload a photo of your desired nail art",
+      "photo": "Photo reference",
+      "city": "City",
+      "tags": "Tags (style/color)",
+      "comment": "Comment",
+      "submit": "Submit",
+      "submitting": "Submitting...",
+      "addPhoto": "Add a photo reference",
+      "addAtLeastOneTag": "Add at least one tag",
+      "created": "Reference created — waiting for offers from masters",
+      "error": "Error submitting",
+      "selectedTags": "Selected tags"
+    },
+    "gallery": {
+      "want": "Want",
+      "wantTitle": "I want this nail art",
+      "fillCityAndTags": "Fill in city and select at least one tag",
+      "created": "Reference created!",
+      "error": "Error creating reference",
+      "city": "City",
+      "tags": "Tags (style/color)",
+      "description": "Description",
+      "example": "For example: want a cooler nude"
+    },
+    "detail": {
+      "notFound": "Reference not found",
+      "title": "Reference",
+      "master": "Master",
+      "price": "Price",
+      "deleteOffer": "Delete offer",
+      "deleting": "Deleting...",
+      "deleted": "Offer deleted"
+    }
+  },
+  "offers": {
+    "pro": {
+      "title": "I can do this",
+      "noOpenOrders": "No open orders in this city",
+      "canDo": "Can do",
+      "orderDescription": "Order description",
+      "pricePln": "Price (PLN)",
+      "priceExample": "For example: 150",
+      "description": "Description (I can)",
+      "descriptionExample": "For example: I can do this nail art, have experience with this style...",
+      "sent": "Offer sent!",
+      "error": "Error sending offer",
+      "needSignIn": "Sign in required"
+    },
+    "client": {
+      "title": "My Offers",
+      "subtitle": "Manage offers from masters",
+      "open": "Open",
+      "matches": "Matches",
+      "noOpen": "No open references",
+      "offersToSelected": "Offers for selected reference",
+      "noResponses": "No responses yet",
+      "master": "Master",
+      "new": "New",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "accept": "Accept",
+      "accepting": "Accepting...",
+      "decline": "Decline",
+      "declining": "Declining...",
+      "acceptedToast": "Offer accepted",
+      "declinedToast": "Offer declined",
+      "noMatches": "No matched references",
+      "city": "City",
+      "tags": "Tags",
+      "price": "Price",
+      "error": "Error updating",
+      "needAuth": "Authentication required",
+      "clientsOnly": "This page is only available for clients"
+    }
+  },
+  "works": {
+    "new": {
+      "title": "Add Work",
+      "subtitle": "Upload a photo of your work",
+      "photo": "Work photo",
+      "city": "City",
+      "tags": "Tags",
+      "caption": "Caption",
+      "submit": "Save",
+      "submitting": "Saving...",
+      "added": "Work added"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "city": "City",
+    "name": "Name",
+    "phone": "Phone",
+    "updated": "Profile updated"
+  },
+  "pro": {
+    "profile": {
+      "title": "Master Profile",
+      "city": "City",
+      "cities": "Cities",
+      "name": "Name",
+      "phone": "Phone",
+      "updated": "Profile updated"
+    },
+    "orders": {
+      "title": "My Orders",
+      "subtitle": "Manage your offers",
+      "filters": "Filters",
+      "all": "All",
+      "open": "Open",
+      "matched": "Matched",
+      "reference": "Reference",
+      "notFound": "Offer not found",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleted": "Offer deleted",
+      "message": "Message",
+      "price": "Price"
+    },
+    "portfolio": {
+      "title": "Portfolio",
+      "master": "master",
+      "cityNotSpecified": "City not specified",
+      "cities": "Cities"
+    }
+  },
+  "masters": {
+    "title": "Masters",
+    "master": "Master",
+    "portfolio": "Portfolio"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated"
+  }
+}
+
