@@ -8,7 +8,6 @@ import { Link } from "@/i18n/routing";
 
 export default function ProsPage() {
     const t = useTranslations('masters');
-    const tCommon = useTranslations('common');
     const { data, isLoading } = useQuery({
         queryKey: ["pros"],
         queryFn: () => listPros({ limit: 50 }),

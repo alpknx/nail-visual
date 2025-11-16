@@ -5,10 +5,8 @@ import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import { useTranslations } from 'next-intl';
 import { useGeolocationContext } from "@/contexts/GeolocationContext";
 import { useSession } from "next-auth/react";
-import { useRouter } from "@/i18n/routing";
 import Image from "next/image";
 import { Heart } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import DesignFlipModal from "@/components/DesignFlipModal";
 
 export type Design = {
@@ -26,7 +24,6 @@ export default function DesignsPage() {
   const tCommon = useTranslations('common');
   const { detectedCity } = useGeolocationContext();
   const { data: session } = useSession();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
