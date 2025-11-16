@@ -12,14 +12,15 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black",
     title: "Nail Visual",
   },
   other: {
     "p:domain_verify": "db57b5002e17eb5680785647002de0b9",
     "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-status-bar-style": "black",
     "apple-mobile-web-app-title": "Nail Visual",
+    "theme-color": "#ffffff",
   },
 };
 
