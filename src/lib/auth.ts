@@ -97,13 +97,31 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.role = user.role;
         token.sub = user.id;
         token.phone = (user as any).phone ?? null;
         token.city = (user as any).city ?? null;
       }
+      
+      // Обновляем данные из базы при каждом запросе сессии (например, после updateSession)
+      if (trigger === "update" || !token.city) {
+        try {
+          const dbUser = await (db.query.users.findFirst as any)({
+            where: (t: any, { eq }: any) => eq(t.id, token.sub),
+          });
+          
+          if (dbUser) {
+            token.phone = dbUser.phone ?? null;
+            token.city = dbUser.city ?? null;
+            token.role = dbUser.role as "client" | "pro" | "admin";
+          }
+        } catch (error) {
+          console.error("Error updating JWT token:", error);
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {
