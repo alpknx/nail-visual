@@ -76,7 +76,10 @@ export default function SignInPage() {
                     </p>
                     <Button
                         variant="destructive"
-                        onClick={() => signOut()}
+                        onClick={() => {
+                            const locale = window.location.pathname.split('/')[1] || 'en';
+                            signOut({ callbackUrl: `/${locale}/signin` });
+                        }}
                         className="w-full"
                     >
                         {t('signOut')}

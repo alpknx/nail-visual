@@ -5,9 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Heart } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useGeolocationContext } from "@/contexts/GeolocationContext";
-import DesignModal from "@/components/DesignModal";
+import DesignFlipModal from "@/components/DesignFlipModal";
 import { useState } from "react";
 import type { Design } from "@/app/[locale]/designs/page";
 
@@ -71,7 +70,7 @@ export default function FavoritesPage() {
         <div className="px-4 pt-16 md:pt-4">
           <h1 className="text-2xl font-semibold mb-2">{t('title') || 'Избранное'}</h1>
         </div>
-        <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(200px,1fr))] px-4">
+        <div className="grid grid-cols-2 gap-2">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="aspect-[3/4] rounded-lg border animate-pulse bg-muted" />
           ))}
@@ -93,11 +92,11 @@ export default function FavoritesPage() {
         </div>
 
         {designs.length === 0 ? (
-          <p className="text-center py-12 opacity-70">
+          <p className="text-center py-12 opacity-70 px-4">
             {t('empty') || 'У вас пока нет избранных дизайнов'}
           </p>
         ) : (
-          <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(200px,1fr))] px-4 pb-4">
+          <div className="grid grid-cols-2 gap-2 pb-4">
             {designs.map((design: Design, index: number) => (
               <div
                 key={design.id}
@@ -108,9 +107,10 @@ export default function FavoritesPage() {
                   src={design.imageUrl}
                   alt={design.description || "Nail design"}
                   fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  sizes="50vw"
                   className="object-cover"
                   priority={index < 4}
+                  loading={index < 4 ? "eager" : "lazy"}
                 />
                 <button
                   onClick={(e) => {
@@ -122,11 +122,6 @@ export default function FavoritesPage() {
                 >
                   <Heart className="w-5 h-5 fill-current" />
                 </button>
-                {design.tags && design.tags.length > 0 && (
-                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
-                    <p className="opacity-90">{design.tags.slice(0, 3).join(", ")}</p>
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -134,10 +129,11 @@ export default function FavoritesPage() {
       </div>
 
       {selectedDesign && (
-        <DesignModal
+        <DesignFlipModal
           design={selectedDesign}
           city={detectedCity || undefined}
           onClose={() => setSelectedDesign(null)}
+          session={session}
         />
       )}
     </>

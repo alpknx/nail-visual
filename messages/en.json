@@ -40,6 +40,7 @@
     "sending": "Sending...",
     "loading": "Loading...",
     "allCities": "All cities",
+    "all": "All",
     "selectCity": "Select city",
     "selectCityOrDetect": "Select a city manually or detect your location",
     "tags": "Tags",

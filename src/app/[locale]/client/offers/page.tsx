@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import FlipModal from "@/components/FlipModal";
@@ -15,7 +15,7 @@ export default function ClientOffersPage() {
   const tCommon = useTranslations('common');
   const { data: session } = useSession();
   const qc = useQueryClient();
-  const [filter, setFilter] = useState<"open" | "matches">("open");
+  const [filter, setFilter] = useState<"all" | "open" | "matches">("all");
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [selectedMatchedRef, setSelectedMatchedRef] = useState<ClientReference | null>(null);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -36,50 +36,131 @@ export default function ClientOffersPage() {
 
   const references = myReferences || [];
   
-  // Открытые референсы
-  const openReferences = references.filter((r: ClientReference) => r.status === "open");
+  // Открытые референсы и мэтчи вычисляются через useMemo для автоматического пересчета
+  const openReferences = useMemo(() => 
+    references.filter((r: ClientReference) => r.status === "open"),
+    [references]
+  );
+  const matchedReferences = useMemo(() => 
+    references.filter((r: ClientReference) => r.status === "matched"),
+    [references]
+  );
 
-  // Мэтчи (принятые офферы)
-  const matchedReferences = references.filter((r: ClientReference) => r.status === "matched");
+  // ID референсов также вычисляются через useMemo
+  const allRefIds = useMemo(() => 
+    references.map((r: ClientReference) => r.id).join(","),
+    [references]
+  );
+  const openRefIds = useMemo(() => 
+    openReferences.map((r: ClientReference) => r.id).join(","),
+    [openReferences]
+  );
+  const matchedRefIds = useMemo(() => 
+    matchedReferences.map((r: ClientReference) => r.id).join(","),
+    [matchedReferences]
+  );
+
+  // Загрузить офферы для всех референсов
+  const { data: allOffers = [], isLoading: allOffersLoading } = useQuery({
+    queryKey: ["all-offers", allRefIds],
+    queryFn: async () => {
+      if (references.length === 0) return [];
+      const allOffersData = await Promise.all(
+        references.map((ref: ClientReference) => listOffersByReference(ref.id))
+      );
+      return allOffersData.flat();
+    },
+    enabled: references.length > 0,
+  });
 
   // Загрузить офферы для всех открытых референсов
-  const openRefIds = openReferences.map((r: ClientReference) => r.id);
   const { data: allOpenOffers = [], isLoading: offersLoading } = useQuery({
-    queryKey: ["all-open-offers", openRefIds.join(",")],
+    queryKey: ["all-open-offers", openRefIds],
     queryFn: async () => {
       if (openReferences.length === 0) return [];
-      const allOffers = await Promise.all(
+      const allOffersData = await Promise.all(
         openReferences.map((ref: ClientReference) => listOffersByReference(ref.id))
       );
-      return allOffers.flat();
+      return allOffersData.flat();
     },
     enabled: openReferences.length > 0,
   });
 
   // Загрузить офферы для всех мэтчей
-  const matchedRefIds = matchedReferences.map((r: ClientReference) => r.id);
   const { data: allMatchedOffers = [] } = useQuery({
-    queryKey: ["all-matched-offers", matchedRefIds.join(",")],
+    queryKey: ["all-matched-offers", matchedRefIds],
     queryFn: async () => {
       if (matchedReferences.length === 0) return [];
-      const allOffers = await Promise.all(
+      const allOffersData = await Promise.all(
         matchedReferences.map((ref: ClientReference) => listOffersByReference(ref.id))
       );
-      return allOffers.flat();
+      return allOffersData.flat();
     },
     enabled: matchedReferences.length > 0,
   });
 
   const handleOfferAction = async (offerId: string, action: "accepted" | "declined") => {
     setIsProcessing(offerId);
+    
+    // Находим оффер и референс для optimistic update
+    const offer = allOpenOffers.find((o: Offer) => o.id === offerId);
+    const ref = offer ? getReferenceForOffer(offer) : null;
+    
+    if (action === "accepted" && offer && ref) {
+      // Optimistic update: обновляем статус референса в кэше
+      qc.setQueryData(["my-references", session?.user?.id], (old: ClientReference[] = []) => {
+        return old.map((r: ClientReference) =>
+          r.id === ref.id ? { ...r, status: "matched" as const } : r
+        );
+      });
+      
+      // Обновляем кэш открытых офферов - удаляем принятый оффер
+      if (openRefIds) {
+        qc.setQueryData(["all-open-offers", openRefIds], (old: Offer[] = []) => {
+          return old.filter((o: Offer) => o.id !== offerId);
+        });
+      }
+      
+      // Обновляем кэш всех офферов - обновляем статус оффера
+      if (allRefIds) {
+        qc.setQueryData(["all-offers", allRefIds], (old: Offer[] = []) => {
+          return old.map((o: Offer) => 
+            o.id === offerId ? { ...o, status: "accepted" as const } : o
+          );
+        });
+      }
+      
+      // Инвалидируем запросы, чтобы они пересчитались с новыми queryKey
+      // Это заставит React Query пересчитать openReferences и matchedReferences
+      qc.invalidateQueries({ queryKey: ["my-references", session?.user?.id] });
+      
+      // Используем requestAnimationFrame для синхронизации с React рендером
+      // После того как React пересчитает matchedRefIds, запросы обновятся автоматически
+      requestAnimationFrame(() => {
+        // Инвалидируем все запросы, чтобы они пересчитались с новыми queryKey
+        qc.invalidateQueries({ queryKey: ["all-offers"], exact: false });
+        qc.invalidateQueries({ queryKey: ["all-open-offers"], exact: false });
+        qc.invalidateQueries({ queryKey: ["all-matched-offers"], exact: false });
+      });
+    }
+    
     try {
       await patchOfferStatus(offerId, action);
       toast.success(action === "accepted" ? t('acceptedToast') : t('declinedToast'));
-      await qc.invalidateQueries({ queryKey: ["all-open-offers"] });
-      await qc.invalidateQueries({ queryKey: ["all-matched-offers"] });
-      await qc.invalidateQueries({ queryKey: ["my-references", session?.user?.id] });
+      
+      // Инвалидируем все связанные запросы для синхронизации с сервером
+      qc.invalidateQueries({ queryKey: ["all-offers"] });
+      qc.invalidateQueries({ queryKey: ["all-open-offers"] });
+      qc.invalidateQueries({ queryKey: ["all-matched-offers"] });
+      qc.invalidateQueries({ queryKey: ["my-references", session?.user?.id] });
+      
       setSelectedOffer(null);
     } catch (e) {
+      // В случае ошибки откатываем optimistic update
+      qc.invalidateQueries({ queryKey: ["all-offers"] });
+      qc.invalidateQueries({ queryKey: ["all-open-offers"] });
+      qc.invalidateQueries({ queryKey: ["all-matched-offers"] });
+      qc.invalidateQueries({ queryKey: ["my-references", session?.user?.id] });
       toast.error((e as Error).message || t('error'));
     } finally {
       setIsProcessing(null);
@@ -128,6 +209,14 @@ export default function ClientOffersPage() {
         {/* Табы фильтров */}
         <div className="px-4 flex gap-2">
           <Button
+            variant={filter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter("all")}
+            className="flex-1"
+          >
+            {tCommon('all') || t('all') || 'Все'} ({allOffers.length})
+          </Button>
+          <Button
             variant={filter === "open" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("open")}
@@ -146,7 +235,56 @@ export default function ClientOffersPage() {
         </div>
 
         {/* Контент в зависимости от выбранного фильтра */}
-        {filter === "open" ? (
+        {filter === "all" ? (
+          <div className="space-y-4">
+            {refsLoading || allOffersLoading ? (
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
+                ))}
+              </div>
+            ) : allOffers.length === 0 ? (
+              <p className="text-sm opacity-70 text-center py-8 px-4">{t('noResponses')}</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {allOffers.map((offer: Offer, index: number) => {
+                  const ref = getReferenceForOffer(offer);
+                  if (!ref) return null;
+                  
+                  return (
+                    <div
+                      key={offer.id}
+                      className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group"
+                      onClick={() => handleOpenOfferModal(offer)}
+                    >
+                      <Image
+                        src={ref.imageUrl}
+                        alt={ref.note || tCommon('reference')}
+                        fill
+                        sizes="50vw"
+                        className="object-cover"
+                        priority={index < 2}
+                      />
+                      <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded bg-black/50 text-white text-xs font-medium">
+                        {offer.status === "accepted"
+                          ? `✅ ${t('statusAccepted')}`
+                          : offer.status === "declined"
+                          ? `❌ ${t('statusDeclined')}`
+                          : t('statusNew')}
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
+                        <p className="font-medium">{ref.city}</p>
+                        {offer.pro?.name && (
+                          <p className="opacity-90">{offer.pro.name}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : filter === "open" ? (
           <div className="space-y-4">
             {refsLoading || offersLoading ? (
               <div className="grid grid-cols-2 gap-2">

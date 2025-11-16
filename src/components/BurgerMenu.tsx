@@ -67,7 +67,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
   const handleSignOut = () => {
     setIsOpen(false);
     const locale = pathname.split('/')[1] || 'en';
-    signOut({ callbackUrl: `/${locale}` });
+    signOut({ callbackUrl: `/${locale}/signin` });
   };
 
   const profilePath = role === "pro" ? "/pro/profile" : "/profile";
