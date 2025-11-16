@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import { X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -25,9 +26,11 @@ export default function FlipModal({
   title,
   children,
   onSubmit,
-  submitLabel = "Отправить",
+  submitLabel,
   submitDisabled = false,
 }: FlipModalProps) {
+  const tCommon = useTranslations('common');
+  const defaultSubmitLabel = submitLabel || tCommon('submit');
   const [isFlipped, setIsFlipped] = useState(false);
 
   useEffect(() => {
@@ -74,7 +77,7 @@ export default function FlipModal({
                 <button
                   onClick={onClose}
                   className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-                  aria-label="Закрыть"
+                  aria-label={tCommon('cancel')}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -117,7 +120,7 @@ export default function FlipModal({
                       className="w-full"
                       size="lg"
                     >
-                      {submitLabel}
+                      {defaultSubmitLabel}
                     </Button>
                   </div>
                 )}

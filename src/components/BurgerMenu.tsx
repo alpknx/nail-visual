@@ -1,22 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from 'next-intl';
+import { Link, useRouter, usePathname } from '@/i18n/routing';
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useClient } from "@/hooks/useClient";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 interface BurgerMenuProps {
   children?: React.ReactNode;
 }
 
 export default function BurgerMenu({ children }: BurgerMenuProps) {
+  const t = useTranslations('common');
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const mounted = useClient();
   const role = session?.user?.role ?? "guest";
   const isMaster = role === "pro" || role === "admin";
@@ -62,31 +65,32 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
 
   const handleSignOut = () => {
     setIsOpen(false);
-    signOut({ callbackUrl: "/" });
+    const locale = pathname.split('/')[1] || 'en';
+    signOut({ callbackUrl: `/${locale}` });
   };
 
   const profilePath = role === "pro" ? "/pro/profile" : "/profile";
 
   const primaryNavItems = [
-    { label: "Главная", href: "/" },
+    { label: t('home'), href: "/" },
     ...(mounted && session
-      ? [{ label: "Профиль", href: profilePath }]
+      ? [{ label: t('profile'), href: profilePath }]
       : []),
     ...(mounted && isClient
-      ? [{ label: "Хочу", href: "/references/new" }]
+      ? [{ label: t('want'), href: "/references/new" }]
       : []),
     ...(mounted && isMaster
-      ? [{ label: "Заказы", href: "/pro/orders" }]
+      ? [{ label: t('orders'), href: "/pro/orders" }]
       : []),
     ...(mounted && isClient
-      ? [{ label: "Офферы", href: "/client/offers" }]
+      ? [{ label: t('offers'), href: "/client/offers" }]
       : []),
   ];
 
   const signedOutItems = !session
     ? [
-        { label: "Войти", href: "/signin" },
-        { label: "Регистрация", href: "/signup" },
+        { label: t('signIn'), href: "/signin" },
+        { label: t('signUp'), href: "/signup" },
       ]
     : [];
 
@@ -99,10 +103,15 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
       <button
         onClick={() => setIsOpen(true)}
         className="md:hidden fixed top-2 left-2 z-50 p-2 rounded-lg bg-background border shadow-lg"
-        aria-label="Открыть меню"
+        aria-label={t('openMenu')}
       >
         <Menu className="w-6 h-6" />
       </button>
+
+      {/* Кнопка переключения языка для мобильной версии */}
+      <div className="md:hidden fixed top-2 right-2 z-50">
+        <LanguageSwitcher mobile />
+      </div>
 
       {/* Desktop navigation */}
       <header className="hidden md:block sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
@@ -126,19 +135,23 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <Link
               href="/privacy"
               className="text-xs text-muted-foreground hover:text-foreground"
             >
-              Политика конфиденциальности
+              {t('privacy')}
             </Link>
             {mounted && session && (
               <>
                 <div className="text-xs text-muted-foreground text-right">
                   <p className="font-medium">
-                    Роль:{" "}
+                    {t('role')}:{" "}
                     <span className="capitalize text-foreground">
-                      {role === "pro" ? "master" : role}
+                      {role === "pro" ? t('rolePro') :
+                       role === "client" ? t('roleClient') :
+                       role === "admin" ? t('roleAdmin') :
+                       t('roleGuest')}
                     </span>
                   </p>
                   {session.user?.email && (
@@ -148,7 +161,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
                   )}
                 </div>
                 <Button variant="outline" size="sm" onClick={handleSignOut}>
-                  Выйти
+                  {t('signOut')}
                 </Button>
               </>
             )}
@@ -160,11 +173,16 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="left" className="w-[80vw] sm:w-[320px] p-0">
           <SheetHeader className="p-4 border-b space-y-2">
-            <SheetTitle className="text-left">Меню</SheetTitle>
+            <SheetTitle className="text-left">{t('menu')}</SheetTitle>
             {mounted && session && (
               <div className="text-xs text-muted-foreground">
                 <p className="font-medium">
-                  Роль: <span className="capitalize text-foreground">{role === "pro" ? "master" : role}</span>
+                  {t('role')}: <span className="capitalize text-foreground">
+                    {role === "pro" ? t('rolePro') :
+                     role === "client" ? t('roleClient') :
+                     role === "admin" ? t('roleAdmin') :
+                     t('roleGuest')}
+                  </span>
                 </p>
                 {session.user?.email && (
                   <p className="mt-1 truncate">{session.user.email}</p>
@@ -193,7 +211,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
                 className="w-full justify-start text-xs opacity-70"
                 onClick={() => handleNavigation("/privacy")}
               >
-                Политика конфиденциальности
+                {t('privacy')}
               </Button>
               {mounted && session && (
                 <Button
@@ -201,7 +219,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
                   className="w-full justify-start text-destructive"
                   onClick={handleSignOut}
                 >
-                  Выйти
+                  {t('signOut')}
                 </Button>
               )}
             </div>

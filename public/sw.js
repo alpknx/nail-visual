@@ -37,15 +37,27 @@ self.addEventListener('activate', (event) => {
 
 // Стратегия: Network First, Fallback to Cache
 self.addEventListener('fetch', (event) => {
+  // Пропускаем не-GET запросы (POST, PUT, DELETE и т.д.)
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Пропускаем запросы к API
+  if (event.request.url.includes('/api/')) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Клонируем ответ для кэширования
-        const responseToCache = response.clone();
-        
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
+        // Кэшируем только успешные GET запросы
+        if (response.status === 200) {
+          const responseToCache = response.clone();
+          
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
         
         return response;
       })
