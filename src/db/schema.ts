@@ -122,3 +122,44 @@ export const offers = pgTable(
     `.as("offers_one_accepted_per_ref"),
     }),
 );
+
+/** Каталог дизайнов ногтей (inspiration gallery) */
+export const designCatalog = pgTable(
+    "design_catalog",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        imageUrl: text("image_url").notNull(),
+        description: text("description"),
+        tags: text("tags").array(), // text[]
+        source: varchar("source", { length: 50 }).default("unsplash"), // unsplash, manual
+        sourceId: varchar("source_id", { length: 200 }), // ID из внешнего источника
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    },
+    (t) => ({
+        tagsGin: sql`CREATE INDEX IF NOT EXISTS "design_catalog_tags_gin" ON "design_catalog" USING GIN ("tags")`.as(
+            "design_catalog_tags_gin",
+        ),
+        bySource: index("design_catalog_by_source").on(t.source, t.sourceId),
+    }),
+);
+
+/** Избранное пользователей */
+export const favorites = pgTable(
+    "favorites",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        userId: text("user_id")
+            .notNull()
+            .references(() => users.id, { onDelete: "cascade" }),
+        designId: uuid("design_id")
+            .notNull()
+            .references(() => designCatalog.id, { onDelete: "cascade" }),
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    },
+    (t) => ({
+        // один пользователь может добавить дизайн в избранное только один раз
+        uniqUserDesign: uniqueIndex("favorites_user_design_uniq").on(t.userId, t.designId),
+        byUser: index("favorites_by_user").on(t.userId),
+        byDesign: index("favorites_by_design").on(t.designId),
+    }),
+);

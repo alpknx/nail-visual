@@ -73,15 +73,22 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
   const profilePath = role === "pro" ? "/pro/profile" : "/profile";
 
   const primaryNavItems = [
-    { label: t('home'), href: "/" },
+    { label: t('designs') || 'Каталог дизайнов', href: "/designs" },
+    { label: t('masters') || 'Мастера', href: "/pros" },
     ...(mounted && session
       ? [{ label: t('profile'), href: profilePath }]
+      : []),
+    ...(mounted && session
+      ? [{ label: t('favorites') || 'Избранное', href: "/favorites" }]
       : []),
     ...(mounted && isClient
       ? [{ label: t('want'), href: "/references/new" }]
       : []),
     ...(mounted && isMaster
-      ? [{ label: t('orders'), href: "/pro/orders" }]
+      ? [
+          { label: t('addWork') || 'Добавить работу', href: "/works/new" },
+          { label: t('orders'), href: "/pro/orders" }
+        ]
       : []),
     ...(mounted && isClient
       ? [{ label: t('offers'), href: "/client/offers" }]

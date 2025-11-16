@@ -3,9 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import ClientReferenceGallery from "@/components/ClientReferenceGallery";
 import ProOrdersGallery from "@/components/ProOrdersGallery";
-import WorkGrid from "@/components/WorkGrid";
+import DesignsGrid from "@/components/DesignsGrid";
 
 // Сохраняем роль в sessionStorage для сохранения при переключении языка
 const ROLE_STORAGE_KEY = 'user_role';
@@ -63,25 +62,16 @@ export default function Home() {
           </div>
           <ProOrdersGallery />
         </div>
-      ) : role === "client" ? (
-        <div className="space-y-4">
-          <div className="px-4 pt-16 md:pt-4">
-            <h1 className="text-2xl font-semibold mb-2">{t('client.title')}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t('client.subtitle')}
-            </p>
-          </div>
-          <ClientReferenceGallery />
-        </div>
       ) : (
+        // Для клиентов и гостей показываем каталог дизайнов
         <div className="space-y-4">
           <div className="px-4 pt-16 md:pt-4">
             <h1 className="text-2xl font-semibold mb-2">{t('guest.title')}</h1>
             <p className="text-sm text-muted-foreground">
-              {t('guest.subtitle')}
+              {t('guest.subtitle') || "Я просто листала красивые ноготочки и нашла мастера в своём районе"}
             </p>
           </div>
-          <WorkGrid />
+          <DesignsGrid />
         </div>
       )}
     </main>

@@ -16,47 +16,63 @@ export default function ProsPage() {
 
     if (isLoading) {
         return (
-            <div className="grid gap-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-24 rounded-xl border animate-pulse" />
-                ))}
+            <div className="space-y-6 pt-16 md:pt-4 px-4">
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="aspect-[3/4] rounded-xl border animate-pulse bg-muted" />
+                    ))}
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-6 pt-16 md:pt-4 px-4">
+            <div>
+                <h1 className="text-2xl font-semibold mb-2">{t('title') || 'Мастера'}</h1>
+                <p className="text-sm text-muted-foreground">
+                    {t('subtitle') || 'Выберите мастера, чтобы посмотреть его работы'}
+                </p>
+            </div>
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {data?.map((p: ProSummary) => {
                 const city = p.cities?.[0] ?? "—";
                 return (
                     <Link
-                        key={p.proId} // ✅ уникальный ключ
-                        href={`/pros/${p.proId}`} // ✅ правильный id в ссылке
-                        className="p-3 rounded-xl border flex items-center gap-3 hover:bg-muted/30"
+                        key={p.proId}
+                        href={`/pros/${p.proId}`}
+                        className="group rounded-xl border overflow-hidden hover:border-foreground transition-colors"
                     >
-                        <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted">
+                        {/* Превью работы мастера */}
+                        <div className="relative aspect-[3/4] bg-muted">
                             {p.sampleUrl ? (
                                 <Image 
                                     src={p.sampleUrl} 
                                     alt={`${t('master')} ${p.proId.slice(0, 6)}`}
                                     fill
-                                    sizes="48px"
-                                    className="object-cover" 
+                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                    className="object-cover"
                                 />
-                            ) : null}
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                    {t('noWorks') || 'Нет работ'}
+                                </div>
+                            )}
                         </div>
-                        <div className="min-w-0">
-                            <div className="font-medium truncate">{t('master')} {p.proId.slice(0, 6)}</div>
+                        {/* Информация о мастере */}
+                        <div className="p-3 space-y-1">
+                            <div className="font-medium text-sm truncate">{t('master')} {p.proId.slice(0, 6)}</div>
                             <div className="text-xs opacity-70">
-                                {city} • {t('worksCount')}: {p.worksCount}
+                                {city} • {p.worksCount} {t('works') || 'работ'}
                             </div>
                             {!!p.tags.length && (
-                                <div className="text-[11px] opacity-60 truncate">{p.tags.join(" • ")}</div>
+                                <div className="text-[11px] opacity-60 truncate">{p.tags.slice(0, 2).join(" • ")}</div>
                             )}
                         </div>
                     </Link>
                 );
             })}
+            </div>
         </div>
     );
 }

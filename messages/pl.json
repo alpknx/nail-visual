@@ -1,6 +1,8 @@
 {
   "common": {
     "home": "Strona główna",
+    "designs": "Katalog wzorów",
+    "favorites": "Ulubione",
     "profile": "Profil",
     "orders": "Zamówienia",
     "offers": "Oferty",
@@ -29,6 +31,7 @@
     "edit": "Edytuj",
     "create": "Utwórz",
     "add": "Dodaj",
+    "addWork": "Dodaj pracę",
     "search": "Szukaj",
     "filter": "Filtr",
     "submit": "Wyślij",
@@ -157,7 +160,8 @@
     },
     "guest": {
       "title": "Portfolio mistrzów",
-      "subtitle": "Wgraj pracę lub znajdź mistrza według stylu"
+      "subtitle": "Wgraj pracę lub znajdź mistrza według stylu",
+      "browseDesigns": "Przejdź do katalogu wzorów →"
     }
   },
   "references": {
@@ -342,8 +346,10 @@
     "locationDetectionFailed": "Nie udało się wykryć lokalizacji. Wybierz miasto ręcznie."
   },
   "pro": {
+    "addWork": "Dodaj pracę",
     "profile": {
       "title": "Profil mistrza",
+      "addWork": "Dodaj pracę",
       "city": "Miasto",
       "cities": "Miasta",
       "name": "Imię",
@@ -419,9 +425,11 @@
   },
   "masters": {
     "title": "Mistrzowie",
+    "subtitle": "Wybierz mistrza, aby zobaczyć jego prace",
     "master": "Mistrz",
     "portfolio": "Portfolio",
     "worksCount": "prac",
+    "works": "prac",
     "profileError": "Nie udało się załadować profilu",
     "worksError": "Nie udało się załadować prac",
     "profileNotFound": "Profil nie znaleziony",
@@ -476,6 +484,31 @@
     "noWorks": "Brak prac",
     "references": "Referencje",
     "noReferences": "Brak referencji"
+  },
+  "designs": {
+    "title": "Katalog wzorów",
+    "subtitle": "Znajdź idealny wzór dla swoich paznokci",
+    "noDesigns": "Nie znaleziono wzorów",
+    "designDetails": "Szczegóły wzoru",
+    "selectCityFirst": "Proszę najpierw wybrać miasto",
+    "orderCreated": "Zamówienie utworzone! Mistrzowie zobaczą Twoje zapytanie.",
+    "orderError": "Błąd podczas tworzenia zamówienia",
+    "createOrder": "Utwórz zamówienie",
+    "selectCityToOrder": "Wybierz miasto, aby utworzyć zamówienie",
+    "findMasters": "Znajdź mistrzów, którzy mogą wykonać taki wzór",
+    "loadingMatching": "Wyszukiwanie mistrzów...",
+    "mastersInCity": "{count} mistrzów może wykonać takie paznokcie w {city}",
+    "mastersAvailable": "{count} mistrzów może wykonać takie paznokcie",
+    "matchingDescription": "Mistrzowie znalezieni w Twoim mieście. Wyślij zamówienie, a oni będą mogli odpowiedzieć.",
+    "noMastersInCity": "Jeszcze nie ma mistrzów, którzy wykonują taki wzór w {city}",
+    "noMasters": "Jeszcze nie ma mistrzów, którzy wykonują taki wzór",
+    "onlyClientsCanOrder": "Tylko klienci mogą tworzyć zamówienia",
+    "canStillOrder": "Nadal możesz utworzyć zamówienie. Mistrzowie zobaczą Twoje zapytanie i będą mogli odpowiedzieć."
+  },
+  "favorites": {
+    "title": "Ulubione",
+    "subtitle": "Twoje zapisane wzory",
+    "empty": "Nie masz jeszcze żadnych ulubionych wzorów"
   }
 }
 

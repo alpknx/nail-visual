@@ -10,12 +10,13 @@ const nextConfig: NextConfig = {
     compress: true, // Включить Gzip/Brotli компрессию
     poweredByHeader: false, // Убрать X-Powered-By header для безопасности
     productionBrowserSourceMaps: false, // Отключить source maps в продакшене (меньше размер)
-    images: {
+        images: {
         remotePatterns: [
             { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
             { protocol: "https", hostname: "**.ufs.sh", pathname: "/f/**" },
             { protocol: "https", hostname: "i.pinimg.com", pathname: "/**" },
             { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+            { protocol: "https", hostname: "images.pexels.com", pathname: "/**" },
             { protocol: "https", hostname: "*.cdninstagram.com", pathname: "/**" },
             { protocol: "https", hostname: "scontent-*.xx.fbcdn.net", pathname: "/**" },
             { protocol: "https", hostname: "picsum.photos", pathname: "/**" },

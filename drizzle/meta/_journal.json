@@ -50,6 +50,13 @@
       "when": 1761843976572,
       "tag": "0006_nice_makkari",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1763303675896,
+      "tag": "0007_nifty_the_captain",
+      "breakpoints": true
     }
   ]
 }

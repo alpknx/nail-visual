@@ -113,16 +113,16 @@ export default function ProOrdersPage() {
   };
 
   return (
-    <div className="min-h-screen p-4 pb-8 space-y-6 pt-16 md:pt-4">
-      <div>
-        <h1 className="text-2xl font-bold mb-2">{t('title')}</h1>
+    <div className="min-h-screen space-y-4">
+      <div className="pt-16 md:pt-4">
+        <h1 className="text-2xl font-semibold mb-2">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">
           {t('subtitle')}
         </p>
       </div>
 
       {/* Фильтры */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 px-4">
         <Button
           variant={filter === "all" ? "default" : "outline"}
           size="sm"
@@ -160,7 +160,7 @@ export default function ProOrdersPage() {
           {filter === "matched" && t('noMatched')}
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 pb-4">
           {filteredReferences.map((ref: Reference) => (
             <div
               key={ref.id}

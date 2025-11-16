@@ -1,6 +1,9 @@
 {
   "common": {
     "home": "Home",
+    "designs": "Designs",
+    "masters": "Masters",
+    "favorites": "Favorites",
     "profile": "Profile",
     "orders": "Orders",
     "offers": "Offers",
@@ -29,6 +32,7 @@
     "edit": "Edit",
     "create": "Create",
     "add": "Add",
+    "addWork": "Add Work",
     "search": "Search",
     "filter": "Filter",
     "submit": "Submit",
@@ -159,7 +163,8 @@
     },
     "guest": {
       "title": "Masters Portfolio",
-      "subtitle": "Upload your work or find a master by style"
+      "subtitle": "Upload your work or find a master by style",
+      "browseDesigns": "Browse Designs Catalog →"
     }
   },
   "references": {
@@ -344,8 +349,10 @@
     "locationDetectionFailed": "Failed to detect location. Please select city manually."
   },
   "pro": {
+    "addWork": "Add Work",
     "profile": {
       "title": "Master Profile",
+      "addWork": "Add Work",
       "city": "City",
       "cities": "Cities",
       "name": "Name",
@@ -421,9 +428,11 @@
   },
   "masters": {
     "title": "Masters",
+    "subtitle": "Select a master to view their works",
     "master": "Master",
     "portfolio": "Portfolio",
     "worksCount": "works",
+    "works": "works",
     "profileError": "Failed to load profile",
     "worksError": "Failed to load works",
     "profileNotFound": "Profile not found",
@@ -478,6 +487,31 @@
     "noWorks": "No works",
     "references": "References",
     "noReferences": "No references"
+  },
+  "designs": {
+    "title": "Designs Catalog",
+    "subtitle": "Find the perfect design for your nails",
+    "noDesigns": "No designs found",
+    "designDetails": "Design Details",
+    "selectCityFirst": "Please select a city first",
+    "orderCreated": "Order created! Masters will see your request.",
+    "orderError": "Error creating order",
+    "createOrder": "Create Order",
+    "selectCityToOrder": "Select a city to create an order",
+    "findMasters": "Find masters who can make this design",
+    "loadingMatching": "Searching for masters...",
+    "mastersInCity": "{count} masters can make such nails in {city}",
+    "mastersAvailable": "{count} masters can make such nails",
+    "matchingDescription": "Masters found in your city. Send an order and they can respond to you.",
+    "noMastersInCity": "No masters yet who make this design in {city}",
+    "noMasters": "No masters yet who make this design",
+    "onlyClientsCanOrder": "Only clients can create orders",
+    "canStillOrder": "You can still create an order. Masters will see your request and can respond."
+  },
+  "favorites": {
+    "title": "Favorites",
+    "subtitle": "Your saved designs",
+    "empty": "You don't have any favorite designs yet"
   }
 }
 

@@ -36,9 +36,10 @@ export default function FlipModal({
   useEffect(() => {
     if (isOpen) {
       setIsFlipped(false);
-      // Небольшая задержка для плавного переворота
-      const timer = setTimeout(() => setIsFlipped(true), 50);
-      return () => clearTimeout(timer);
+      // Переворот карточки начинается одновременно с открытием модального окна
+      requestAnimationFrame(() => {
+        setIsFlipped(true);
+      });
     } else {
       setIsFlipped(false);
     }
@@ -46,12 +47,15 @@ export default function FlipModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden max-h-[90vh]">
-        <div className="relative w-full h-[70vh] min-h-[400px] perspective-1000">
+      <DialogContent 
+        showCloseButton={false}
+        className="sm:max-w-lg p-0 overflow-hidden max-h-[95vh] w-[calc(100%-2rem)] !top-[50%] !left-[50%] !translate-x-[-50%] !translate-y-[-50%]"
+      >
+        <div className="relative w-full h-[85vh] min-h-[500px] max-h-[90vh] perspective-1000">
           {/* 3D Flip Container */}
           <div
             className={cn(
-              "w-full h-full relative transition-transform duration-700 ease-in-out",
+              "w-full h-full relative transition-transform duration-500 ease-in-out",
               isFlipped ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]"
             )}
             style={{ transformStyle: "preserve-3d" }}
@@ -65,7 +69,7 @@ export default function FlipModal({
                 transform: "rotateY(0deg)",
               }}
             >
-              <div className="relative w-full h-full">
+              <div className="relative w-full h-full bg-black/10">
                 <Image
                   src={imageUrl}
                   alt={title || "Image"}
@@ -73,6 +77,7 @@ export default function FlipModal({
                   sizes="100vw"
                   className="object-cover"
                   priority
+                  quality={100}
                 />
                 <button
                   onClick={onClose}
@@ -100,7 +105,7 @@ export default function FlipModal({
                   </DialogHeader>
                 )}
                 
-                <div className="relative w-full h-48 rounded-lg overflow-hidden flex-shrink-0">
+                <div className="relative w-full h-96 rounded-lg overflow-hidden flex-shrink-0 bg-black/5">
                   <Image
                     src={imageUrl}
                     alt={title || "Image"}
