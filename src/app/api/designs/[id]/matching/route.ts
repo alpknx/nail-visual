@@ -62,7 +62,7 @@ export async function GET(
       ORDER BY pro_id, created_at DESC
     `);
     
-    const sampleWorks = (sampleWorksRaw.rows || []).map((row: any) => ({
+    const sampleWorks = (Array.isArray(sampleWorksRaw) ? sampleWorksRaw : []).map((row: any) => ({
       proId: row.proId,
       sampleUrl: row.sampleUrl,
     }));

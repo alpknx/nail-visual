@@ -256,6 +256,11 @@ export type ProProfile = {
     image: string | null;
     city: string | null;
     instagram: string | null;
+    facebook: string | null;
+    whatsapp: string | null;
+    telegram: string | null;
+    phone: string | null;
+    externalLink: string | null;
     minPricePln: number | null;
     isVerified: boolean;
     worksCount: number;
