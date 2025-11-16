@@ -15,6 +15,7 @@ export default function ClientOffersPage() {
   const tCommon = useTranslations('common');
   const { data: session } = useSession();
   const qc = useQueryClient();
+  const [filter, setFilter] = useState<"open" | "matches">("open");
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [selectedMatchedRef, setSelectedMatchedRef] = useState<ClientReference | null>(null);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -124,104 +125,117 @@ export default function ClientOffersPage() {
           </p>
         </div>
 
-        {/* Офферы к открытым референсам */}
-        <div className="space-y-4">
-          <div className="px-4">
-            <h2 className="text-lg font-semibold">{t('open')} ({allOpenOffers.length})</h2>
-          </div>
-          
-          {refsLoading || offersLoading ? (
-            <div className="grid grid-cols-2 gap-2 px-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
-              ))}
-            </div>
-          ) : allOpenOffers.length === 0 ? (
-            <p className="text-sm opacity-70 text-center py-8 px-4">{t('noResponses')}</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 px-4">
-              {allOpenOffers.map((offer: Offer, index: number) => {
-                const ref = getReferenceForOffer(offer);
-                if (!ref) return null;
-                
-                return (
-                  <div
-                    key={offer.id}
-                    className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group"
-                    onClick={() => handleOpenOfferModal(offer)}
-                  >
-                    <Image
-                      src={ref.imageUrl}
-                      alt={ref.note || tCommon('reference')}
-                      fill
-                      sizes="50vw"
-                      className="object-cover"
-                      priority={index < 2}
-                    />
-                    <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded bg-black/50 text-white text-xs font-medium">
-                      {offer.status === "accepted"
-                        ? `✅ ${t('statusAccepted')}`
-                        : offer.status === "declined"
-                        ? `❌ ${t('statusDeclined')}`
-                        : t('statusNew')}
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
-                      <p className="font-medium">{ref.city}</p>
-                      {offer.pro?.name && (
-                        <p className="opacity-90">{offer.pro.name}</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+        {/* Табы фильтров */}
+        <div className="px-4 flex gap-2">
+          <Button
+            variant={filter === "open" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter("open")}
+            className="flex-1"
+          >
+            {t('open')} ({allOpenOffers.length})
+          </Button>
+          <Button
+            variant={filter === "matches" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter("matches")}
+            className="flex-1"
+          >
+            {t('matches')} ({matchedReferences.length})
+          </Button>
         </div>
 
-        {/* Мэтчи */}
-        <div className="space-y-4 pt-6 border-t">
-          <div className="px-4">
-            <h2 className="text-lg font-semibold">{t('matches')} ({matchedReferences.length})</h2>
+        {/* Контент в зависимости от выбранного фильтра */}
+        {filter === "open" ? (
+          <div className="space-y-4">
+            {refsLoading || offersLoading ? (
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
+                ))}
+              </div>
+            ) : allOpenOffers.length === 0 ? (
+              <p className="text-sm opacity-70 text-center py-8 px-4">{t('noResponses')}</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {allOpenOffers.map((offer: Offer, index: number) => {
+                  const ref = getReferenceForOffer(offer);
+                  if (!ref) return null;
+                  
+                  return (
+                    <div
+                      key={offer.id}
+                      className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group"
+                      onClick={() => handleOpenOfferModal(offer)}
+                    >
+                      <Image
+                        src={ref.imageUrl}
+                        alt={ref.note || tCommon('reference')}
+                        fill
+                        sizes="50vw"
+                        className="object-cover"
+                        priority={index < 2}
+                      />
+                      <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded bg-black/50 text-white text-xs font-medium">
+                        {offer.status === "accepted"
+                          ? `✅ ${t('statusAccepted')}`
+                          : offer.status === "declined"
+                          ? `❌ ${t('statusDeclined')}`
+                          : t('statusNew')}
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
+                        <p className="font-medium">{ref.city}</p>
+                        {offer.pro?.name && (
+                          <p className="opacity-90">{offer.pro.name}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          
-          {matchedReferences.length === 0 ? (
-            <p className="text-sm opacity-70 text-center py-8 px-4">{t('noMatches')}</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 px-4">
-              {matchedReferences.map((ref: ClientReference, index: number) => {
-                const matchedOffer = allMatchedOffers.find(
-                  (o: Offer) => o.refId === ref.id && o.status === "accepted"
-                );
+        ) : (
+          <div className="space-y-4">
+            {matchedReferences.length === 0 ? (
+              <p className="text-sm opacity-70 text-center py-8 px-4">{t('noMatches')}</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {matchedReferences.map((ref: ClientReference, index: number) => {
+                  const matchedOffer = allMatchedOffers.find(
+                    (o: Offer) => o.refId === ref.id && o.status === "accepted"
+                  );
 
-                return (
-                  <div
-                    key={ref.id}
-                    className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group"
-                    onClick={() => handleOpenMatchedModal(ref)}
-                  >
-                    <Image
-                      src={ref.imageUrl}
-                      alt={ref.note || tCommon('reference')}
-                      fill
-                      sizes="50vw"
-                      className="object-cover"
-                      priority={index < 2}
-                    />
-                    <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded bg-green-500/90 text-white text-xs font-medium">
-                      ✅ {t('statusAccepted')}
+                  return (
+                    <div
+                      key={ref.id}
+                      className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group"
+                      onClick={() => handleOpenMatchedModal(ref)}
+                    >
+                      <Image
+                        src={ref.imageUrl}
+                        alt={ref.note || tCommon('reference')}
+                        fill
+                        sizes="50vw"
+                        className="object-cover"
+                        priority={index < 2}
+                      />
+                      <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded bg-green-500/90 text-white text-xs font-medium">
+                        ✅ {t('statusAccepted')}
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
+                        <p className="font-medium">{ref.city}</p>
+                        {matchedOffer?.pro?.name && (
+                          <p className="opacity-90">{matchedOffer.pro.name}</p>
+                        )}
+                      </div>
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
-                      <p className="font-medium">{ref.city}</p>
-                      {matchedOffer?.pro?.name && (
-                        <p className="opacity-90">{matchedOffer.pro.name}</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Модальное окно для оффера */}
