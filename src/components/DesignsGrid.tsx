@@ -122,7 +122,7 @@ export default function DesignsGrid() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-2 px-4">
+      <div className="grid grid-cols-2 gap-2">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="aspect-[3/4] rounded-lg border animate-pulse bg-muted" />
         ))}

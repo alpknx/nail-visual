@@ -1,29 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { designCatalog } from "@/db/schema";
-import { and, desc, sql, or, eq } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const tags = searchParams.get("tags")?.split(",").filter(Boolean) || [];
     const limit = Math.min(Number(searchParams.get("limit") || 50), 200);
     const offset = Number(searchParams.get("offset") || 0);
 
-    let where: any = undefined;
-
-    // Фильтрация по тегам: ищем дизайны, у которых есть хотя бы один из указанных тегов
-    if (tags.length > 0) {
-      // Используем оператор && для проверки пересечения массивов
-      // Создаем PostgreSQL массив из тегов
-      // Формат: ARRAY['tag1', 'tag2']::text[]
-      const tagsArraySql = sql`ARRAY[${sql.join(tags.map(tag => sql`${tag}`), sql`, `)}]::text[]`;
-      where = sql`${designCatalog.tags} && ${tagsArraySql}`;
-    }
-
     // Используем группировку для исключения дубликатов по sourceId
     // Берем только уникальные sourceId, выбирая самую новую запись для каждого
-    const designs = await db
+    const query = db
       .select({
         id: designCatalog.id,
         imageUrl: designCatalog.imageUrl,
@@ -34,10 +22,11 @@ export async function GET(req: NextRequest) {
         createdAt: designCatalog.createdAt,
       })
       .from(designCatalog)
-      .where(where)
       .orderBy(desc(designCatalog.createdAt))
       .limit(limit * 2) // Берем больше, чтобы после фильтрации осталось достаточно
       .offset(offset);
+
+    const designs = await query;
 
     // Фильтруем дубликаты по sourceId и по id на стороне приложения
     const seenSourceIds = new Set<string | null>();

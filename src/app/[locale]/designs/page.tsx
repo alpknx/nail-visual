@@ -142,7 +142,7 @@ export default function DesignsPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-2 px-4">
+        <div className="grid grid-cols-2 gap-2">
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className="aspect-[3/4] rounded-lg border animate-pulse bg-muted" />
           ))}
@@ -163,7 +163,7 @@ export default function DesignsPage() {
 
         {/* Галерея дизайнов */}
         {designs.length === 0 ? (
-          <p className="text-center py-12 opacity-70">
+          <p className="text-center py-12 opacity-70 px-2">
             {t('noDesigns') || 'Дизайны не найдены'}
           </p>
         ) : (

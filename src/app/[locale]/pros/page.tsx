@@ -16,8 +16,8 @@ export default function ProsPage() {
 
     if (isLoading) {
         return (
-            <div className="space-y-6 pt-16 md:pt-4 px-4">
-                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="space-y-6 pt-16 md:pt-4">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                     {Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="aspect-[3/4] rounded-xl border animate-pulse bg-muted" />
                     ))}
@@ -27,7 +27,7 @@ export default function ProsPage() {
     }
 
     return (
-        <div className="space-y-6 pt-16 md:pt-4 px-4">
+        <div className="space-y-6 pt-16 md:pt-4">
             <div>
                 <h1 className="text-2xl font-semibold mb-2">{t('title') || 'Мастера'}</h1>
                 <p className="text-sm text-muted-foreground">

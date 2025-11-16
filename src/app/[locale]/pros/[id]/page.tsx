@@ -89,10 +89,10 @@ export default function ProDetailPage() {
     if (loading) {
         return (
             <div className="space-y-4">
-                <div className="pt-16 md:pt-4 px-4">
+                <div className="pt-16 md:pt-4">
                     <div className="h-16 rounded-2xl border animate-pulse" />
                 </div>
-                <div className="grid grid-cols-2 gap-2 px-4">
+                <div className="grid grid-cols-2 gap-2">
                     {Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="aspect-[3/4] rounded-lg border animate-pulse bg-muted" />
                     ))}
@@ -114,7 +114,7 @@ export default function ProDetailPage() {
 
     return (
         <section className="space-y-4">
-            <div className="pt-16 md:pt-4 px-4">
+                <div className="pt-16 md:pt-4">
                 <header className="space-y-1">
                     <h1 className="text-2xl font-semibold">
                         {profile.name || `${t('master')} ${String(id).slice(0, 6)}`}{" "}
@@ -143,10 +143,10 @@ export default function ProDetailPage() {
             </div>
 
             {!works?.length && !worksLoading ? (
-                <p className="opacity-70 px-4">{t('noWorks')}</p>
+                <p className="opacity-70 px-2">{t('noWorks')}</p>
             ) : (
                 <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pb-4 px-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pb-4">
                         {works.map((w: Work, index: number) => (
                             <figure 
                                 key={w.id} 

@@ -55,7 +55,7 @@ export default function FlipModal({
           {/* 3D Flip Container */}
           <div
             className={cn(
-              "w-full h-full relative transition-transform duration-500 ease-in-out",
+              "w-full h-full relative transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]",
               isFlipped ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]"
             )}
             style={{ transformStyle: "preserve-3d" }}
@@ -98,7 +98,15 @@ export default function FlipModal({
                 transform: "rotateY(180deg)",
               }}
             >
-              <div className="p-6 space-y-4 min-h-full flex flex-col">
+              <div className="p-6 space-y-4 min-h-full flex flex-col relative">
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                  aria-label={tCommon('close')}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                
                 {title && (
                   <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
