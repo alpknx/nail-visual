@@ -37,6 +37,7 @@
     "loading": "Ładowanie...",
     "allCities": "Wszystkie miasta",
     "selectCity": "Wybierz miasto",
+    "selectCityOrDetect": "Wybierz miasto ręcznie lub wykryj swoją lokalizację",
     "tags": "Tagi",
     "optional": "opcjonalnie",
     "required": "wymagane",

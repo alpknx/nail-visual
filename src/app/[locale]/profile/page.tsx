@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import CitySelect from "@/components/CitySelect";
 import { toast } from "sonner";
 import { CITIES, type City } from "@/lib/api";
+import { useGeolocationContext } from "@/contexts/GeolocationContext";
 
 // Prevent static generation - this page requires authentication
 export const dynamic = 'force-dynamic';
@@ -25,8 +26,7 @@ export default function ClientProfilePage() {
     phone: user?.phone || "",
     city: user?.city || "",
   });
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
-  const [locationWarning, setLocationWarning] = useState<{ country: string; city: string } | null>(null);
+  const { detectedCity, locationWarning, clearWarning } = useGeolocationContext();
 
   // Автоматически установить город из профиля пользователя при загрузке
   useEffect(() => {
@@ -34,6 +34,13 @@ export default function ClientProfilePage() {
       setFormData(prev => ({ ...prev, city: user.city || "" }));
     }
   }, [user?.city]);
+
+  // Обновить форму при определении города через геолокацию
+  useEffect(() => {
+    if (detectedCity) {
+      setFormData(prev => ({ ...prev, city: detectedCity }));
+    }
+  }, [detectedCity]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -54,95 +61,6 @@ export default function ClientProfilePage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  // Определение города через геолокацию
-  const detectCityByLocation = async () => {
-    if (!navigator.geolocation) {
-      toast.error(t('geolocationNotSupported') || tCommon('geolocationNotSupported') || 'Geolocation is not supported');
-      return;
-    }
-
-    setIsDetectingLocation(true);
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-        });
-      });
-
-      const res = await fetch(
-        `/api/geolocation/city?lat=${position.coords.latitude}&lon=${position.coords.longitude}`
-      );
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to determine city');
-      }
-      
-      const data = await res.json();
-      const detectedCity = data.city;
-      const rawDetectedCity = data.detectedCity;
-
-      if (detectedCity && CITIES.includes(detectedCity as City)) {
-        setFormData(prev => ({ ...prev, city: detectedCity }));
-        setLocationWarning(null);
-        toast.success(t('cityDetected') || tCommon('cityDetected') || `City detected: ${detectedCity}`);
-      } else if (rawDetectedCity) {
-        const isPoland = data.isPoland;
-        const country = data.country || 'unknown';
-        
-        if (!isPoland) {
-          setLocationWarning({ country, city: rawDetectedCity });
-          toast.warning(
-            t('locationOutsidePoland') || tCommon('locationOutsidePoland') || 
-            `Detected location is in ${country}, outside Poland. Please select a Polish city manually.`,
-            { duration: 8000 }
-          );
-        } else {
-          toast.error(
-            t('cityNotInList') || tCommon('cityNotInList') || 
-            `Detected city "${rawDetectedCity}" is not in the available cities list. Please select city manually.`,
-            { duration: 5000 }
-          );
-        }
-        console.log('Detected city not in list:', rawDetectedCity, 'Country:', country, 'Raw address:', data.rawAddress);
-      } else {
-        toast.error(t('locationDetectionFailed') || tCommon('locationDetectionFailed') || 'Failed to detect city. Please select city manually.');
-      }
-    } catch (error) {
-      if (error instanceof GeolocationPositionError || (error as any)?.code !== undefined) {
-        const geolocationError = error as GeolocationPositionError;
-        switch (geolocationError.code) {
-          case 1:
-            const isPermanentlyDenied = geolocationError.message?.includes('blocked') || 
-                                       geolocationError.message?.includes('dismissed');
-            if (isPermanentlyDenied) {
-              toast.error(
-                t('geolocationBlocked') || tCommon('geolocationBlocked') || 
-                'Location access is blocked. Click the lock icon next to the URL to reset permissions, or select city manually.',
-                { duration: 6000 }
-              );
-            } else {
-              toast.error(t('geolocationDenied') || tCommon('geolocationDenied') || 'Location access denied. Please allow location access or select city manually.');
-            }
-            break;
-          case 2:
-            toast.error(t('geolocationUnavailable') || tCommon('geolocationUnavailable') || 'Location information is unavailable. Please select city manually.');
-            break;
-          case 3:
-            toast.error(t('geolocationTimeout') || tCommon('geolocationTimeout') || 'Location request timed out. Please try again or select city manually.');
-            break;
-          default:
-            toast.error(t('locationDetectionFailed') || tCommon('locationDetectionFailed') || 'Failed to detect location. Please select city manually.');
-        }
-      } else {
-        console.error('Location detection error:', error);
-        toast.error(t('locationDetectionFailed') || tCommon('locationDetectionFailed') || 'Failed to detect location. Please select city manually.');
-      }
-    } finally {
-      setIsDetectingLocation(false);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,7 +95,7 @@ export default function ClientProfilePage() {
               </div>
               <button
                 type="button"
-                onClick={() => setLocationWarning(null)}
+                onClick={clearWarning}
                 className="flex-shrink-0 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200"
                 aria-label={tCommon('close') || 'Close'}
               >
@@ -211,25 +129,11 @@ export default function ClientProfilePage() {
 
         <div>
           <label className="block text-sm font-medium mb-1">{t('cityLabel')}</label>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <CitySelect
-                value={formData.city}
-                onChange={(city) => setFormData({ ...formData, city })}
-                placeholder={t('cityPlaceholder') || tCommon('selectCity')}
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={detectCityByLocation}
-              disabled={isDetectingLocation}
-              className="whitespace-nowrap"
-            >
-              {isDetectingLocation ? (tCommon('detecting') || 'Detecting...') : (tCommon('detectLocation') || '📍 Detect')}
-            </Button>
-          </div>
+          <CitySelect
+            value={formData.city}
+            onChange={(city) => setFormData({ ...formData, city })}
+            placeholder={t('cityPlaceholder') || tCommon('selectCity')}
+          />
         </div>
 
         <div className="pt-4">

@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { useClient } from "@/hooks/useClient";
 import LanguageSwitcher from "./LanguageSwitcher";
+import GeolocationDisplay from "./GeolocationDisplay";
 
 interface BurgerMenuProps {
   children?: React.ReactNode;
@@ -112,6 +113,9 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
       <div className="md:hidden fixed top-2 right-2 z-50">
         <LanguageSwitcher mobile />
       </div>
+
+      {/* Отображение геолокации посередине (только для мобильной версии) */}
+      <GeolocationDisplay />
 
       {/* Desktop navigation */}
       <header className="hidden md:block sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
