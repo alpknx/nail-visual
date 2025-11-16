@@ -45,7 +45,7 @@ export default function ClientShell({ children }: { children: React.ReactNode })
                     <PWARegister />
                     <GeolocationWarning />
                     <BurgerMenu>
-                        <main className="min-h-screen p-2">{children}</main>
+                        <main className="flex-1 p-2">{children}</main>
                     </BurgerMenu>
                 </GeolocationProvider>
             </NextAuthProvider>

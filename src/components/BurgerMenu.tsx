@@ -91,10 +91,10 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
     router.push(path);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setIsOpen(false);
-    const locale = pathname.split('/')[1] || 'en';
-    signOut({ callbackUrl: `/${locale}/signin` });
+    await signOut({ redirect: false });
+    router.push('/signin');
   };
 
   const profilePath = role === "pro" ? "/pro/profile" : "/profile";

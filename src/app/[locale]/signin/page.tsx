@@ -76,9 +76,9 @@ export default function SignInPage() {
                     </p>
                     <Button
                         variant="destructive"
-                        onClick={() => {
-                            const locale = window.location.pathname.split('/')[1] || 'en';
-                            signOut({ callbackUrl: `/${locale}/signin` });
+                        onClick={async () => {
+                            await signOut({ redirect: false });
+                            router.push('/signin');
                         }}
                         className="w-full"
                     >

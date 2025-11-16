@@ -28,8 +28,8 @@ export const metadata: Metadata = {
 // The actual locale-specific layout is in [locale]/layout.tsx
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html suppressHydrationWarning lang="en">
-      <body className="min-h-dvh bg-background text-foreground flex flex-col">
+    <html suppressHydrationWarning lang="en" className="h-full">
+      <body className="h-full bg-background text-foreground flex flex-col overflow-x-hidden">
         {children}
       </body>
     </html>
