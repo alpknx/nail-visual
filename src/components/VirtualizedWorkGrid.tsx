@@ -1,13 +1,15 @@
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { useQuery } from "@tanstack/react-query";
 import { listWorks } from "@/lib/api";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { usePrefetchPro } from "@/lib/usePrefetch";
 import { useEffect, useRef, useState } from "react";
 
 export default function VirtualizedWorkGrid() {
+    const t = useTranslations('masters');
   const { data, isLoading } = useQuery({
     queryKey: ["works"],
     queryFn: () => listWorks({}),
@@ -72,7 +74,7 @@ export default function VirtualizedWorkGrid() {
               {visibleIndices.has(index) ? (
                 <Image
                   src={w.imageUrl}
-                  alt={w.caption ?? "Работа мастера"}
+                  alt={w.caption ?? t('masterWork')}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover"

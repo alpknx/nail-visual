@@ -1,12 +1,13 @@
-// apps/web/src/app/pros/me/page.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { useQuery } from "@tanstack/react-query";
 import { getProProfile, type ProProfileInput } from "@/lib/api";
 import ProProfileForm from "./pro-profile-form";
 import { useSession } from "next-auth/react";
 
 export default function ProMePage() {
+    const t = useTranslations('pro.profile');
     const { status } = useSession();
 
     // грузим профиль текущего pro
@@ -22,7 +23,7 @@ export default function ProMePage() {
     if (isError) {
         return (
             <p className="text-sm text-red-600">
-                Не удалось загрузить профиль: {String((error as Error)?.message ?? "unknown")}
+                {t('loadError')}: {String((error as Error)?.message ?? "unknown")}
             </p>
         );
     }
@@ -33,9 +34,9 @@ export default function ProMePage() {
     return (
         <section className="space-y-6 max-w-2xl">
             <header>
-                <h1 className="text-2xl font-semibold">Мой профиль (pro)</h1>
+                <h1 className="text-2xl font-semibold">{t('title')}</h1>
                 <p className="text-sm opacity-70">
-                    Заполните минимум город, минимальную цену и (по желанию) ссылку на Instagram.
+                    {t('subtitle')}
                 </p>
             </header>
 

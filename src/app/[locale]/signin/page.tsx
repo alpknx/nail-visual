@@ -69,7 +69,10 @@ export default function SignInPage() {
                         {t('signedInAs')} {session.user?.email}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                        {tCommon('role')}: {session.user?.role === "pro" ? "master" : session.user?.role}
+                        {tCommon('role')}: {session.user?.role === "pro" ? tCommon('rolePro') :
+                                            session.user?.role === "client" ? tCommon('roleClient') :
+                                            session.user?.role === "admin" ? tCommon('roleAdmin') :
+                                            tCommon('roleGuest')}
                     </p>
                     <Button
                         variant="destructive"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,6 +49,8 @@ export default function ProProfileForm({
         city: string | null;
     } | null;
 }) {
+    const t = useTranslations('pro.profile');
+    const tCommon = useTranslations('common');
     const qc = useQueryClient();
 
     const {
@@ -95,47 +98,47 @@ export default function ProProfileForm({
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
-                <label className="text-sm">Город</label>
+                <label className="text-sm">{t('cityLabel')}</label>
                 <input
                     className="border rounded-md h-9 px-2 w-full"
-                    placeholder="Например, Kraków"
+                    placeholder={t('cityExample')}
                     {...register("city")}
                 />
             </div>
 
             <div className="space-y-1">
-                <label className="text-sm">Минимальная цена (PLN)</label>
+                <label className="text-sm">{t('minPrice')}</label>
                 <input
                     type="number"
                     inputMode="numeric"
                     className="border rounded-md h-9 px-2 w-full"
-                    placeholder="например, 120"
+                    placeholder={t('minPriceExample')}
                     {...register("minPricePln")}
                 />
             </div>
 
             <div className="space-y-1">
-                <label className="text-sm">Instagram (ссылка)</label>
+                <label className="text-sm">{t('instagram')} ({t('link')})</label>
                 <input
                     className="border rounded-md h-9 px-2 w-full"
-                    placeholder="https://instagram.com/..."
+                    placeholder={t('instagramLinkPlaceholder')}
                     {...register("instagram")}
                 />
             </div>
 
             <div className="space-y-1">
-                <label className="text-sm">О себе</label>
+                <label className="text-sm">{t('about')}</label>
                 <textarea
                     rows={4}
                     className="border rounded-md px-2 py-2 w-full"
-                    placeholder="Короткое описание"
+                    placeholder={t('bioPlaceholder')}
                     {...register("bio")}
                 />
             </div>
 
             <div className="flex gap-2">
                 <Button type="submit" disabled={isSubmitting || mutation.isPending}>
-                    {mutation.isPending ? "Сохраняем..." : "Сохранить"}
+                    {mutation.isPending ? tCommon('saving') : tCommon('save')}
                 </Button>
             </div>
         </form>

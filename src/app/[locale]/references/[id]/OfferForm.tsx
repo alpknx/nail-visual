@@ -1,13 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createOffer } from "@/lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 
 export default function OfferForm({ refId }: { refId: string }) {
+    const t = useTranslations('offers.pro');
+    const tCommon = useTranslations('common');
     const qc = useQueryClient();
     const router = useRouter();
     const [price, setPrice] = useState<string>("");
@@ -23,18 +26,16 @@ export default function OfferForm({ refId }: { refId: string }) {
         onSuccess: async () => {
             setPrice("");
             setMessage("");
-            toast.success("Оффер отправлен");
+            toast.success(t('sent'));
             await qc.invalidateQueries({ queryKey: ["offers", "by-ref", refId] });
-            // Перенаправляем в каталог мастеров
             router.push("/pros");
         },
         onError: (e: unknown) => {
-            // сервер может вернуть 409 при уникальном ограничении (pro уже откликался)
             const error = e instanceof Error ? e.message : String(e);
             const msg =
                 error?.includes("409") || error?.toLowerCase?.().includes("unique")
-                    ? "Вы уже отправили оффер на этот референс"
-                    : error ?? "Не удалось отправить оффер";
+                    ? t('alreadySent')
+                    : error ?? t('error');
             toast.error(msg);
         },
     });
@@ -43,7 +44,7 @@ export default function OfferForm({ refId }: { refId: string }) {
         <div className="grid gap-2 max-w-md">
             <input
                 type="number"
-                placeholder="Цена (PLN)"
+                placeholder={t('pricePln')}
                 inputMode="numeric"
                 min={0}
                 step={1}
@@ -52,7 +53,7 @@ export default function OfferForm({ refId }: { refId: string }) {
                 className="border rounded px-3 py-2"
             />
             <textarea
-                placeholder="Сообщение для клиента (необязательно)"
+                placeholder={`${tCommon('message')} (${tCommon('optional')})`}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="border rounded px-3 py-2 min-h-20"
@@ -62,7 +63,7 @@ export default function OfferForm({ refId }: { refId: string }) {
                 disabled={m.isPending}
                 className="border rounded px-3 py-2 hover:bg-muted disabled:opacity-60"
             >
-                {m.isPending ? "Отправляем…" : "Отправить оффер"}
+                {m.isPending ? tCommon('sending') : t('sendOffer')}
             </button>
         </div>
     );

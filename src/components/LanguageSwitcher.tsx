@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useTransition } from 'react';
 import { useLocale } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { routing } from '@/i18n/routing';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 
 interface LanguageSwitcherProps {
   mobile?: boolean;
@@ -16,11 +16,21 @@ export default function LanguageSwitcher({ mobile = false }: LanguageSwitcherPro
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const switchLocale = (newLocale: string) => {
-    router.replace(pathname, { locale: newLocale });
+    if (newLocale === locale) {
+      setIsOpen(false);
+      return;
+    }
+    
     setIsOpen(false);
+    startTransition(() => {
+      // usePathname() из next-intl возвращает путь без локали (например, "/")
+      // router.replace правильно обработает это и добавит новую локаль
+      router.replace(pathname, { locale: newLocale });
+    });
   };
 
   // Закрывать попап при клике вне его
@@ -45,20 +55,34 @@ export default function LanguageSwitcher({ mobile = false }: LanguageSwitcherPro
       {mobile ? (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-lg bg-background border shadow-lg flex items-center gap-1.5 h-[40px]"
+          disabled={isPending}
+          className="p-2 rounded-lg bg-background border shadow-lg flex items-center gap-1.5 h-[40px] disabled:opacity-50"
         >
-          <span className="text-xs font-medium uppercase">{locale}</span>
-          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <span className="text-xs font-medium uppercase">{locale}</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </>
+          )}
         </button>
       ) : (
         <Button
           variant="outline"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
+          disabled={isPending}
           className="gap-2"
         >
-          <span className="text-xs font-medium uppercase">{locale}</span>
-          <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          {isPending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <>
+              <span className="text-xs font-medium uppercase">{locale}</span>
+              <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </>
+          )}
         </Button>
       )}
 
@@ -68,7 +92,8 @@ export default function LanguageSwitcher({ mobile = false }: LanguageSwitcherPro
             <button
               key={loc}
               onClick={() => switchLocale(loc)}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors uppercase ${
+              disabled={isPending || loc === locale}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed ${
                 locale === loc ? 'bg-muted font-medium' : ''
               }`}
             >

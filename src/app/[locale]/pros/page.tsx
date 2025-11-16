@@ -1,12 +1,14 @@
-// apps/web/src/app/pros/page.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { useQuery } from "@tanstack/react-query";
 import { listPros, type ProSummary } from "@/lib/api";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 
 export default function ProsPage() {
+    const t = useTranslations('masters');
+    const tCommon = useTranslations('common');
     const { data, isLoading } = useQuery({
         queryKey: ["pros"],
         queryFn: () => listPros({ limit: 50 }),
@@ -36,7 +38,7 @@ export default function ProsPage() {
                             {p.sampleUrl ? (
                                 <Image 
                                     src={p.sampleUrl} 
-                                    alt={`Мастер ${p.proId.slice(0, 6)}`}
+                                    alt={`${t('master')} ${p.proId.slice(0, 6)}`}
                                     fill
                                     sizes="48px"
                                     className="object-cover" 
@@ -44,9 +46,9 @@ export default function ProsPage() {
                             ) : null}
                         </div>
                         <div className="min-w-0">
-                            <div className="font-medium truncate">Мастер {p.proId.slice(0, 6)}</div>
+                            <div className="font-medium truncate">{t('master')} {p.proId.slice(0, 6)}</div>
                             <div className="text-xs opacity-70">
-                                {city} • работ: {p.worksCount}
+                                {city} • {t('worksCount')}: {p.worksCount}
                             </div>
                             {!!p.tags.length && (
                                 <div className="text-[11px] opacity-60 truncate">{p.tags.join(" • ")}</div>

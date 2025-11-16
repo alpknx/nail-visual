@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +8,8 @@ import { listWorks, getProProfileById } from "@/lib/api";
 import * as React from "react";
 
 export default function ProPortfolioPage() {
+    const t = useTranslations('pro.portfolio');
+    const tCommon = useTranslations('common');
     const params = useParams<{ id?: string | string[] }>();
     const proId = React.useMemo(() => {
         const raw = params?.id;
@@ -27,7 +30,7 @@ export default function ProPortfolioPage() {
 
     const isLoading = profileLoading || worksLoading;
 
-    if (!proId) return <p className="opacity-70">Загружаем…</p>;
+    if (!proId) return <p className="opacity-70">{tCommon('loadingText')}</p>;
     if (isLoading) {
         return (
             <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
@@ -39,14 +42,14 @@ export default function ProPortfolioPage() {
     }
 
     if (!works?.length) {
-        return <p className="opacity-70">Пока нет работ</p>;
+        return <p className="opacity-70">{t('noWorks')}</p>;
     }
 
     return (
         <div className="space-y-4">
             <header className="space-y-2">
                 <h1 className="text-2xl font-semibold">
-                    Портфолио {profile?.name ? `мастера ${profile.name}` : "мастера"}
+                    {t('title')} {profile?.name ? `${t('master')} ${profile.name}` : t('master')}
                 </h1>
                 {profile?.instagram && (
                     <a
@@ -64,7 +67,7 @@ export default function ProPortfolioPage() {
                     <figure key={w.id} className="rounded-2xl overflow-hidden border relative aspect-[4/5]">
                         <Image 
                             src={w.imageUrl} 
-                            alt={w.caption ?? "Работа мастера"} 
+                            alt={w.caption ?? t('masterWork')} 
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             className="object-cover"

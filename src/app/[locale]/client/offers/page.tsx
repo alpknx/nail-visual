@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -9,6 +10,8 @@ import { toast } from "sonner";
 import { listOffersByReference, patchOfferStatus, type Offer, type ClientReference } from "@/lib/api";
 
 export default function ClientOffersPage() {
+  const t = useTranslations('offers.client');
+  const tCommon = useTranslations('common');
   const { data: session } = useSession();
   const qc = useQueryClient();
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
@@ -66,36 +69,36 @@ export default function ClientOffersPage() {
     setIsProcessing(offerId);
     try {
       await patchOfferStatus(offerId, action);
-      toast.success(action === "accepted" ? "Оффер принят" : "Оффер отклонён");
+      toast.success(action === "accepted" ? t('acceptedToast') : t('declinedToast'));
       await qc.invalidateQueries({ queryKey: ["offers", selectedRef] });
       await qc.invalidateQueries({ queryKey: ["my-references", session?.user?.id] });
     } catch (e) {
-      toast.error((e as Error).message || "Ошибка при обновлении");
+      toast.error((e as Error).message || t('error'));
     } finally {
       setIsProcessing(null);
     }
   };
 
   if (!session) {
-    return <p className="text-center py-12 opacity-70">Необходимо авторизоваться</p>;
+    return <p className="text-center py-12 opacity-70">{t('needAuth')}</p>;
   }
 
   if (session.user?.role !== "client") {
-    return <p className="text-center py-12 opacity-70">Эта страница доступна только для клиентов</p>;
+    return <p className="text-center py-12 opacity-70">{t('clientsOnly')}</p>;
   }
 
   return (
     <div className="min-h-screen p-4 space-y-6 pt-16 md:pt-4">
       <div>
-        <h1 className="text-2xl font-semibold mb-2">Мои офферы</h1>
+        <h1 className="text-2xl font-semibold mb-2">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">
-          Управляй офферами от мастеров
+          {t('subtitle')}
         </p>
       </div>
 
       {/* Открытые референсы */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Открытые ({openReferences.length})</h2>
+        <h2 className="text-lg font-semibold">{t('open')} ({openReferences.length})</h2>
         
         {refsLoading ? (
           <div className="grid grid-cols-2 gap-2">
@@ -104,7 +107,7 @@ export default function ClientOffersPage() {
             ))}
           </div>
         ) : openReferences.length === 0 ? (
-          <p className="text-sm opacity-70 text-center py-8">Нет открытых референсов</p>
+          <p className="text-sm opacity-70 text-center py-8">{t('noOpen')}</p>
         ) : (
           <div className="grid grid-cols-2 gap-2">
             {openReferences.map((ref: ClientReference) => (
@@ -117,7 +120,7 @@ export default function ClientOffersPage() {
               >
                 <Image
                   src={ref.imageUrl}
-                  alt={ref.note || "Референс"}
+                  alt={ref.note || tCommon('reference')}
                   fill
                   sizes="50vw"
                   className="object-cover"
@@ -133,7 +136,7 @@ export default function ClientOffersPage() {
         {/* Офферы к выбранному референсу */}
         {selectedRef && selectedReference && (
           <div className="mt-6 space-y-4">
-            <h3 className="text-lg font-semibold">Офферы к выбранному референсу</h3>
+            <h3 className="text-lg font-semibold">{t('offersToSelected')}</h3>
             
             {offersLoading ? (
               <div className="space-y-2">
@@ -142,7 +145,7 @@ export default function ClientOffersPage() {
                 ))}
               </div>
             ) : offers.length === 0 ? (
-              <p className="text-sm opacity-70">Пока нет откликов</p>
+              <p className="text-sm opacity-70">{t('noResponses')}</p>
             ) : (
               <div className="space-y-3">
                 {offers.map((offer: Offer) => (
@@ -163,10 +166,10 @@ export default function ClientOffersPage() {
                         )}
                         <div className="flex-1">
                           <p className="text-sm font-semibold">
-                            {offer.pro?.name || `Мастер ${offer.proId.slice(0, 6)}`}
+                            {offer.pro?.name || `${t('master')} ${offer.proId.slice(0, 6)}`}
                           </p>
                           <p className="text-xs opacity-70 mt-1">
-                            {new Date(offer.createdAt).toLocaleDateString("ru-RU")}
+                            {new Date(offer.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -180,10 +183,10 @@ export default function ClientOffersPage() {
                         }`}
                       >
                         {offer.status === "accepted"
-                          ? "✅ Принят"
+                          ? `✅ ${t('statusAccepted')}`
                           : offer.status === "declined"
-                          ? "❌ Отклонён"
-                          : "Новый"}
+                          ? `❌ ${t('statusDeclined')}`
+                          : t('statusNew')}
                       </span>
                     </div>
 
@@ -193,7 +196,7 @@ export default function ClientOffersPage() {
 
                     {typeof offer.pricePln === "number" && (
                       <p className="text-sm font-semibold text-green-600">
-                        Цена: {offer.pricePln} PLN
+                        {t('price')}: {offer.pricePln} PLN
                       </p>
                     )}
 
@@ -205,7 +208,7 @@ export default function ClientOffersPage() {
                           className="flex-1"
                           size="sm"
                         >
-                          {isProcessing === offer.id ? "Принимаю..." : "Принять"}
+                          {isProcessing === offer.id ? t('accepting') : t('accept')}
                         </Button>
                         <Button
                           onClick={() => handleOfferAction(offer.id, "declined")}
@@ -214,7 +217,7 @@ export default function ClientOffersPage() {
                           className="flex-1"
                           size="sm"
                         >
-                          {isProcessing === offer.id ? "Отклоняю..." : "Отклонить"}
+                          {isProcessing === offer.id ? t('declining') : t('decline')}
                         </Button>
                       </div>
                     )}
@@ -228,10 +231,10 @@ export default function ClientOffersPage() {
 
       {/* Мэтчи */}
       <div className="space-y-4 pt-6 border-t">
-        <h2 className="text-lg font-semibold">Мэтчи ({matchedReferences.length})</h2>
+        <h2 className="text-lg font-semibold">{t('matches')} ({matchedReferences.length})</h2>
         
         {matchedReferences.length === 0 ? (
-          <p className="text-sm opacity-70 text-center py-8">Нет согласованных референсов</p>
+          <p className="text-sm opacity-70 text-center py-8">{t('noMatches')}</p>
         ) : (
           <div className="space-y-4">
             {matchedReferences.map((ref: ClientReference) => {
@@ -257,12 +260,12 @@ export default function ClientOffersPage() {
                     </div>
                     <div className="flex-1 space-y-2">
                       <div>
-                        <p className="text-sm font-medium opacity-70">Город</p>
+                        <p className="text-sm font-medium opacity-70">{t('city')}</p>
                         <p className="text-sm font-semibold">{ref.city}</p>
                       </div>
                       {ref.tags && ref.tags.length > 0 && (
                         <div>
-                          <p className="text-sm font-medium opacity-70">Теги</p>
+                          <p className="text-sm font-medium opacity-70">{t('tags')}</p>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {ref.tags.map((tag) => (
                               <span
@@ -284,7 +287,7 @@ export default function ClientOffersPage() {
                         {matchedOffer.pro?.image && (
                           <Image
                             src={matchedOffer.pro.image}
-                            alt={matchedOffer.pro.name || "Pro"}
+                            alt={matchedOffer.pro.name || t('master')}
                             width={40}
                             height={40}
                             className="rounded-full w-10 h-10 object-cover flex-shrink-0"
@@ -292,7 +295,7 @@ export default function ClientOffersPage() {
                         )}
                         <div className="flex-1">
                           <p className="text-sm font-semibold">
-                            {matchedOffer.pro?.name || `Мастер ${matchedOffer.proId.slice(0, 6)}`}
+                            {matchedOffer.pro?.name || `${t('master')} ${matchedOffer.proId.slice(0, 6)}`}
                           </p>
                           {matchedOffer.pro?.phone && (
                             <a
@@ -309,7 +312,7 @@ export default function ClientOffersPage() {
                       )}
                       {typeof matchedOffer.pricePln === "number" && (
                         <p className="text-sm font-semibold text-green-600">
-                          Цена: {matchedOffer.pricePln} PLN
+                          {t('price')}: {matchedOffer.pricePln} PLN
                         </p>
                       )}
                     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
@@ -13,6 +14,8 @@ import {
 } from "@/lib/api";
 
 export default function AdminPage() {
+    const t = useTranslations('admin');
+    const tCommon = useTranslations('common');
     // ЯВНО указываем дженерики, чтобы data имела корректный тип, а не {}
     const { data: works = [] } = useQuery<Work[]>({
         queryKey: ["works"],
@@ -46,14 +49,14 @@ export default function AdminPage() {
     return (
         <section className="space-y-6">
             <header className="flex items-end gap-3">
-                <h1 className="text-2xl font-semibold">Admin</h1>
+                <h1 className="text-2xl font-semibold">{t('title')}</h1>
                 <div className="ml-auto flex gap-2">
                     <select
                         className="border rounded-md h-9 px-2"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                     >
-                        <option value="">Все города</option>
+                        <option value="">{tCommon('allCities')}</option>
                         {CITIES.map((c) => (
                             <option key={c} value={c}>
                                 {c}
@@ -65,10 +68,10 @@ export default function AdminPage() {
                         value={tag}
                         onChange={(e) => setTag(e.target.value)}
                     >
-                        <option value="">Все теги</option>
-                        {TAGS.map((t) => (
-                            <option key={t} value={t}>
-                                {t}
+                        <option value="">{t('allTags')}</option>
+                        {TAGS.map((tag) => (
+                            <option key={tag} value={tag}>
+                                {tag}
                             </option>
                         ))}
                     </select>
@@ -76,9 +79,9 @@ export default function AdminPage() {
             </header>
 
             <section className="space-y-3">
-                <h2 className="text-lg font-semibold">Работы ({fWorks.length})</h2>
+                <h2 className="text-lg font-semibold">{t('works')} ({fWorks.length})</h2>
                 {!fWorks.length ? (
-                    <p className="opacity-70">Нет работ</p>
+                    <p className="opacity-70">{t('noWorks')}</p>
                 ) : (
                     <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
                         {fWorks.map((w) => (
@@ -96,9 +99,9 @@ export default function AdminPage() {
             </section>
 
             <section className="space-y-3">
-                <h2 className="text-lg font-semibold">Референсы ({fRefs.length})</h2>
+                <h2 className="text-lg font-semibold">{t('references')} ({fRefs.length})</h2>
                 {!fRefs.length ? (
-                    <p className="opacity-70">Нет референсов</p>
+                    <p className="opacity-70">{t('noReferences')}</p>
                 ) : (
                     <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
                         {fRefs.map((r) => (

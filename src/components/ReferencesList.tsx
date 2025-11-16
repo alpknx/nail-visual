@@ -1,8 +1,9 @@
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import CitySelect from "@/components/CitySelect";
 import { type City } from "@/lib/api";
@@ -18,6 +19,8 @@ interface Reference {
 }
 
 export default function ReferencesList() {
+  const t = useTranslations('references.gallery');
+  const tCommon = useTranslations('common');
   const searchParams = useSearchParams();
   const initialCity = (searchParams.get("city") as City | null) || undefined;
   const [selectedCity, setSelectedCity] = useState<City | undefined>(initialCity);
@@ -33,7 +36,7 @@ export default function ReferencesList() {
       const url = new URL("/api/references", window.location.origin);
       if (selectedCity) url.searchParams.set("city", selectedCity);
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error("Не удалось загрузить референсы");
+      if (!res.ok) throw new Error(t('loadError'));
       const json = await res.json();
       return json.data || [];
     },
@@ -57,12 +60,12 @@ export default function ReferencesList() {
         <CitySelect
           value={selectedCity}
           onChange={handleCityChange}
-          placeholder="Все города"
+          placeholder={tCommon('allCities')}
         />
       </div>
 
       {refs.length === 0 ? (
-        <p className="text-center opacity-70 py-12">Нет референсов в этом городе</p>
+        <p className="text-center opacity-70 py-12">{t('noReferencesInCity')}</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {refs.map((ref: Reference) => (
@@ -74,7 +77,7 @@ export default function ReferencesList() {
               <div className="relative h-48 bg-muted">
                 <Image
                   src={ref.imageUrl}
-                  alt={ref.note || "Референс"}
+                  alt={ref.note || tCommon('reference')}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover group-hover:scale-105 transition"
@@ -82,8 +85,9 @@ export default function ReferencesList() {
                 
                 {/* Статус бэйдж */}
                 <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                  {ref.status === "open" && "🟢 Open"}
-                  {ref.status === "matched" && "✅ Matched"}
+                  {ref.status === "open" && tCommon('openStatus')}
+                  {ref.status === "matched" && tCommon('matchedStatus')}
+                  {ref.status === "closed" && tCommon('closedStatus')}
                 </div>
               </div>
 

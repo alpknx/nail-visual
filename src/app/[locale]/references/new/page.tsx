@@ -5,7 +5,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from 'next-intl';
+import { useRouter } from "@/i18n/routing";
 import { useMutation } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -17,19 +18,21 @@ import { CITIES, TAGS, type City, type Tag, createReference } from "@/lib/api";
 import { toast } from "sonner";
 import { posthog } from "@/lib/analytics";
 
-// --- Zod enums из tuple литералов, чтобы получить строгие City/Tag ---
-const CityEnum = z.enum(CITIES as unknown as [typeof CITIES[number], ...typeof CITIES[number][]]);
-const TagEnum  = z.enum(TAGS as unknown  as [typeof TAGS[number],  ...typeof TAGS[number][]]);
-
-const schema = z.object({
-    note: z.string().max(200).optional().or(z.literal("")),
-    city: CityEnum, // <- теперь это строго City
-    tags: z.array(TagEnum).min(1, "Добавь хотя бы один тег"), // <- строго Tag[]
-});
-type FormData = z.infer<typeof schema>;
-
 export default function NewReferencePage() {
+    const t = useTranslations('references.new');
+    const tCommon = useTranslations('common');
     const router = useRouter();
+    
+    // --- Zod enums из tuple литералов, чтобы получить строгие City/Tag ---
+    const CityEnum = z.enum(CITIES as unknown as [typeof CITIES[number], ...typeof CITIES[number][]]);
+    const TagEnum  = z.enum(TAGS as unknown  as [typeof TAGS[number],  ...typeof TAGS[number][]]);
+
+    const schema = z.object({
+        note: z.string().max(200).optional().or(z.literal("")),
+        city: CityEnum,
+        tags: z.array(TagEnum).min(1, t('addAtLeastOneTag')),
+    });
+    type FormData = z.infer<typeof schema>;
     const [imageUrl, setImageUrl] = useState<string | null>(null);
 
     const {
@@ -50,17 +53,17 @@ export default function NewReferencePage() {
         mutationFn: createReference,
         onSuccess: (res) => {
             posthog.capture("create_reference", { city: res.city, tags: res.tags });
-            toast.success("Референс создан — ждём офферы от мастеров");
+            toast.success(t('created'));
             router.push("/");
         },
         onError: () => {
-            toast.error("Ошибка при отправке");
+            toast.error(t('error'));
         },
     });
 
     const onSubmit = async (data: FormData) => {
         if (!imageUrl) {
-            toast.error("Добавь фото-референс");
+            toast.error(t('addPhoto'));
             return;
         }
         try {
@@ -79,9 +82,9 @@ export default function NewReferencePage() {
         <div className="min-h-screen p-4 pb-8 pt-16 md:pt-4">
             <div className="max-w-2xl mx-auto space-y-6">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-bold">Хочу такой маникюр</h1>
+                    <h1 className="text-2xl font-bold">{t('title')}</h1>
                     <p className="text-sm text-muted-foreground">
-                        Загрузи фото желаемого маникюра
+                        {t('subtitle')}
                     </p>
                 </div>
 
@@ -89,14 +92,14 @@ export default function NewReferencePage() {
                     {/* Фото-референс */}
                     <div className="space-y-3">
                         <label className="text-sm font-medium block">
-                            Фото-референс
+                            {t('photo')}
                         </label>
                         <UtDropzone onUrl={setImageUrl} />
                         {imageUrl && (
                             <div className="relative w-full aspect-square max-w-md mx-auto rounded-lg border-2 border-primary/20 overflow-hidden">
                                 <Image
                                     src={imageUrl}
-                                    alt="Превью референса"
+                                    alt={t('preview')}
                                     fill
                                     sizes="(max-width: 768px) 100vw, 50vw"
                                     className="object-cover"
@@ -108,12 +111,12 @@ export default function NewReferencePage() {
                     {/* Город */}
                     <div className="space-y-3">
                         <label htmlFor="city" className="text-sm font-medium block">
-                            Город
+                            {t('city')}
                         </label>
                         <CitySelect
                             value={city}
                             onChange={(c) => setValue("city", c as City, { shouldValidate: true })}
-                            placeholder="Выбери город"
+                            placeholder={tCommon('selectCity')}
                         />
                         {errors.city && (
                             <p className="text-xs text-destructive font-medium">{errors.city.message}</p>
@@ -123,16 +126,16 @@ export default function NewReferencePage() {
                     {/* Теги */}
                     <div className="space-y-3">
                         <label className="text-sm font-medium block">
-                            Теги (стиль/цвет)
+                            {t('tags')}
                         </label>
                         <TagPicker
                             selected={tags as Tag[]}
-                            onToggle={(t: Tag) => {
+                            onToggle={(tag: Tag) => {
                                 const set = new Set<Tag>(tags ?? []);
-                                if (set.has(t)) {
-                                    set.delete(t);
+                                if (set.has(tag)) {
+                                    set.delete(tag);
                                 } else {
-                                    set.add(t);
+                                    set.add(tag);
                                 }
                                 setValue("tags", Array.from(set), { shouldValidate: true });
                             }}
@@ -142,7 +145,7 @@ export default function NewReferencePage() {
                         )}
                         {tags.length > 0 && (
                             <p className="text-xs text-muted-foreground">
-                                Выбрано тегов: {tags.length}
+                                {t('selectedTags')}: {tags.length}
                             </p>
                         )}
                     </div>
@@ -150,11 +153,11 @@ export default function NewReferencePage() {
                     {/* Комментарий */}
                     <div className="space-y-3">
                         <label htmlFor="note" className="text-sm font-medium block">
-                            Комментарий <span className="text-muted-foreground font-normal">(необязательно)</span>
+                            {t('comment')} <span className="text-muted-foreground font-normal">({tCommon('optional')})</span>
                         </label>
                         <Textarea
                             id="note"
-                            placeholder="Например: хочется более холодный нюд"
+                            placeholder={t('example')}
                             rows={4}
                             className="resize-none"
                             {...register("note")}
@@ -169,7 +172,7 @@ export default function NewReferencePage() {
                             className="w-full"
                             size="lg"
                         >
-                            {createRefMutation.isPending ? "Отправляем..." : "Отправить"}
+                            {createRefMutation.isPending ? t('submitting') : t('submit')}
                         </Button>
                     </div>
                 </form>

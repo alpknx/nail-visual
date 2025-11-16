@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     getReference,
@@ -16,6 +17,8 @@ import { useSession } from "next-auth/react";
 import OfferForm from "./OfferForm";
 
 export default function ReferenceDetailPage() {
+    const t = useTranslations('references.detail');
+    const tCommon = useTranslations('common');
     // безопасно вытаскиваем id из маршрута
     const params = useParams<{ id?: string | string[] }>();
     const id = React.useMemo(() => {
@@ -55,43 +58,43 @@ export default function ReferenceDetailPage() {
     const acceptMutation = useMutation({
         mutationFn: async (offer: Offer) => patchOfferStatus(offer.id, "accepted"),
         onSuccess: async () => {
-            toast.success("Отклик принят");
+            toast.success(t('accepted'));
             await Promise.all([
                 qc.invalidateQueries({ queryKey: ["offers", "by-ref", id] }),
                 qc.invalidateQueries({ queryKey: ["reference", id] }),
             ]);
         },
-        onError: (e: Error | null) => toast.error(e?.message ?? "Не удалось принять"),
+        onError: (e: Error | null) => toast.error(e?.message ?? t('acceptError')),
     });
 
     // отклонить оффер
     const declineMutation = useMutation({
         mutationFn: (offer: Offer) => patchOfferStatus(offer.id, "declined"),
         onSuccess: async () => {
-            toast.success("Отклик отклонён");
+            toast.success(t('declined'));
             await qc.invalidateQueries({ queryKey: ["offers", "by-ref", id] });
         },
-        onError: (e: Error | null) => toast.error(e?.message ?? "Не удалось отклонить"),
+        onError: (e: Error | null) => toast.error(e?.message ?? t('declineError')),
     });
 
     // удалить оффер (только для мастера)
     const deleteOfferMutation = useMutation({
         mutationFn: async (offerId: string) => {
             const res = await fetch(`/api/offers/${offerId}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Не удалось удалить оффер");
+            if (!res.ok) throw new Error(t('deleteError'));
             return res.json();
         },
         onSuccess: async () => {
-            toast.success("Оффер удален");
+            toast.success(t('deleted'));
             await qc.invalidateQueries({ queryKey: ["offers", "by-ref", id] });
         },
         onError: (e: Error) => toast.error(e.message),
     });
 
-    if (!id) return <p className="opacity-70">Загружаем…</p>;
+    if (!id) return <p className="opacity-70">{t('loading')}</p>;
     if (refLoading) return <div className="h-64 rounded-2xl border animate-pulse" />;
-    if (refError) return <p className="text-red-600">Ошибка загрузки референса</p>;
-    if (!ref) return <p className="opacity-70">Референс не найден</p>;
+    if (refError) return <p className="text-red-600">{t('loadingError')}</p>;
+    if (!ref) return <p className="opacity-70">{t('notFound')}</p>;
 
     const isClient = role === "client";
     const isPro = role === "pro";
@@ -106,10 +109,9 @@ export default function ReferenceDetailPage() {
             <header className="flex gap-4 items-start justify-between">
                 <div className="flex gap-4 items-start flex-1">
                     <div className="relative w-48 h-60 rounded-xl overflow-hidden border bg-muted">
-                        {/* убедись, что домен картинки добавлен в next.config.js -> images.domains */}
                         <Image 
                             src={ref.imageUrl} 
-                            alt="Изображение референса" 
+                            alt={t('title')} 
                             fill
                             sizes="192px"
                             className="object-cover"
@@ -118,10 +120,10 @@ export default function ReferenceDetailPage() {
                     </div>
 
                     <div className="space-y-1 flex-1">
-                        <h1 className="text-xl font-semibold">Референс #{ref.id.slice(0, 6)}</h1>
+                        <h1 className="text-xl font-semibold">{t('referenceNumber')}{ref.id.slice(0, 6)}</h1>
                         <p className="text-sm opacity-70">
-                            {ref.city} • {(ref.tags?.length ? ref.tags.join(" • ") : "без тегов")} • статус: {ref.status}
-                            {(refFetching || offFetching) && " • обновляем…"}
+                            {ref.city} • {(ref.tags?.length ? ref.tags.join(" • ") : t('withoutTags'))} • {t('status')}: {ref.status}
+                            {(refFetching || offFetching) && ` • ${t('updating')}`}
                         </p>
                         {ref.note && <p className="text-sm">{ref.note}</p>}
                     </div>
@@ -131,13 +133,13 @@ export default function ReferenceDetailPage() {
             {/* Форма оффера — только для мастера и только пока референс открыт */}
             {isPro && ref.status === "open" && (
                 <section className="space-y-2">
-                    <h2 className="text-lg font-semibold">Сделать оффер</h2>
+                    <h2 className="text-lg font-semibold">{t('makeOffer')}</h2>
                     <OfferForm refId={id} />
                 </section>
             )}
 
             <section className="space-y-3">
-                <h2 className="text-lg font-semibold">Отклики мастеров</h2>
+                <h2 className="text-lg font-semibold">{t('masterResponses')}</h2>
 
                 {offLoading ? (
                     <div className="grid gap-3">
@@ -146,9 +148,9 @@ export default function ReferenceDetailPage() {
                         ))}
                     </div>
                 ) : offError ? (
-                    <p className="text-red-600">Ошибка загрузки откликов</p>
+                    <p className="text-red-600">{t('responsesError')}</p>
                 ) : !offers?.length ? (
-                    <p className="opacity-70">Пока нет откликов</p>
+                    <p className="opacity-70">{t('noResponses')}</p>
                 ) : (
                     <ul className="space-y-2">
                         {offers.map((offer) => {
@@ -163,14 +165,14 @@ export default function ReferenceDetailPage() {
                                         <div className="text-sm font-medium">
                                             {isAccepted && offer.pro?.name
                                                 ? `${offer.pro.name}`
-                                                : `Мастер ${offer.proId.slice(0, 6)}`}
+                                                : `${t('master')} ${offer.proId.slice(0, 6)}`}
                                         </div>
                                         <div className="text-xs opacity-70">
-                                            {formatDateTime(offer.createdAt)} • статус: {offer.status}
+                                            {formatDateTime(offer.createdAt)} • {t('status')}: {offer.status}
                                         </div>
                                         {offer.message && <div className="text-sm mt-1">{offer.message}</div>}
                                         {typeof offer.pricePln === "number" && (
-                                            <div className="text-sm mt-1 opacity-80">Цена: {offer.pricePln} PLN</div>
+                                            <div className="text-sm mt-1 opacity-80">{t('price')}: {offer.pricePln} PLN</div>
                                         )}
                                         
                                         {/* Показываем контакты при matched статусе ТОЛЬКО ДЛЯ СОБСТВЕННИКА РЕФЕРЕНСА */}
@@ -178,7 +180,7 @@ export default function ReferenceDetailPage() {
                                             <div className="mt-2 pt-2 border-t space-y-1">
                                                 {offer.pro.phone && (
                                                     <div className="text-sm">
-                                                        <span className="opacity-70">Телефон: </span>
+                                                        <span className="opacity-70">{t('phoneLabel')}: </span>
                                                         <a href={`tel:${offer.pro.phone}`} className="font-medium hover:underline">
                                                             {offer.pro.phone}
                                                         </a>
@@ -188,7 +190,7 @@ export default function ReferenceDetailPage() {
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Image
                                                             src={offer.pro.image}
-                                                            alt={offer.pro.name || "Мастер"}
+                                                            alt={offer.pro.name || t('master')}
                                                             width={24}
                                                             height={24}
                                                             className="rounded-full"
@@ -210,7 +212,7 @@ export default function ReferenceDetailPage() {
                                                     aria-disabled={disabled}
                                                     className="whitespace-nowrap"
                                                 >
-                                                    Принять
+                                                    {t('accept')}
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -219,7 +221,7 @@ export default function ReferenceDetailPage() {
                                                     aria-disabled={disabled}
                                                     className="whitespace-nowrap"
                                                 >
-                                                    Отклонить
+                                                    {t('decline')}
                                                 </Button>
                                             </>
                                         )}
@@ -231,7 +233,7 @@ export default function ReferenceDetailPage() {
                                                 onClick={() => deleteOfferMutation.mutate(offer.id)}
                                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                             >
-                                                {deleteOfferMutation.isPending ? "Удаляю..." : "🗑️ Удалить оффер"}
+                                                {deleteOfferMutation.isPending ? t('deleting') : `🗑️ ${t('deleteOffer')}`}
                                             </Button>
                                         )}
                                     </div>

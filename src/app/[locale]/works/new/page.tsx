@@ -1,9 +1,9 @@
-// apps/web/src/app/works/new/page.tsx
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from 'next-intl';
+import { useRouter } from "@/i18n/routing";
 import Image from "next/image";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -21,16 +21,18 @@ import { posthog } from "@/lib/analytics";
 
 import { type City, type Tag, TAGS, createWorkViaApi } from "@/lib/api";
 
-const schema = z.object({
-    caption: z.string().max(200).optional().or(z.literal("")),
-    city: z.string().min(1, "Укажи город"),
-    tags: z.array(z.string()).min(1, "Добавь хотя бы один тег"),
-});
-type FormData = z.infer<typeof schema>;
-
 export default function NewWorkPage() {
+    const t = useTranslations('works.new');
+    const tCommon = useTranslations('common');
     const router = useRouter();
     const qc = useQueryClient();
+    
+    const schema = z.object({
+        caption: z.string().max(200).optional().or(z.literal("")),
+        city: z.string().min(1, t('cityRequired')),
+        tags: z.array(z.string()).min(1, t('tagsRequired')),
+    });
+    type FormData = z.infer<typeof schema>;
 
     const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -64,18 +66,18 @@ export default function NewWorkPage() {
                 tags: created.tags,
             });
             await qc.invalidateQueries({ queryKey: ["works"] });
-            toast.success("Работа добавлена");
+            toast.success(t('added'));
             router.push("/");
         },
         onError: (e: unknown) => {
-            const msg = e instanceof Error ? e.message : "Ошибка при сохранении";
+            const msg = e instanceof Error ? e.message : t('saveError');
             toast.error(msg);
         },
     });
 
     const onSubmit = async (data: FormData) => {
         if (!imageUrl) {
-            toast.error("Сначала загрузи фото");
+            toast.error(t('uploadPhotoFirst'));
             return;
         }
         await createWorkMutation.mutateAsync({
@@ -88,14 +90,14 @@ export default function NewWorkPage() {
 
     return (
         <section className="max-w-2xl mx-auto space-y-6">
-            <h1 className="text-2xl font-semibold">Загрузка работы</h1>
+            <h1 className="text-2xl font-semibold">{t('title')}</h1>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Фото */}
                 <div className="space-y-2">
-                    <label className="text-sm">Фото</label>
+                    <label className="text-sm">{t('photo')}</label>
                     <UtDropzone onUrl={(url: string) => setImageUrl(url)} />
-                    <p className="text-xs text-muted-foreground">JPG/PNG, до 8MB</p>
+                    <p className="text-xs text-muted-foreground">{t('photoFormat')}</p>
 
                     {imageUrl && (
                         <div className="relative w-48 h-60 rounded-xl overflow-hidden border bg-muted">
@@ -106,11 +108,11 @@ export default function NewWorkPage() {
 
                 {/* Город */}
                 <div className="space-y-2">
-                    <label className="text-sm">Город</label>
+                    <label className="text-sm">{t('city')}</label>
                     <CitySelect
                         value={(watch("city") as string) || ""}
                         onChange={(c: string) => setValue("city", c as City)}
-                        placeholder="Выбери город"
+                        placeholder={tCommon('selectCity')}
                     />
                     {errors.city && (
                         <p className="text-xs text-red-500">{errors.city.message}</p>
@@ -119,15 +121,15 @@ export default function NewWorkPage() {
 
                 {/* Теги */}
                 <div className="space-y-2">
-                    <label className="text-sm">Теги (стили/цвета)</label>
+                    <label className="text-sm">{t('tags')}</label>
                     <TagPicker
                         selected={selectedTags}
-                        onToggle={(t: Tag) => {
+                        onToggle={(tag: Tag) => {
                             const set = new Set<Tag>(selectedTags);
-                            if (set.has(t)) {
-                                set.delete(t);
+                            if (set.has(tag)) {
+                                set.delete(tag);
                             } else {
-                                set.add(t);
+                                set.add(tag);
                             }
                             setValue("tags", Array.from(set) as unknown as string[]);
                         }}
@@ -141,9 +143,9 @@ export default function NewWorkPage() {
 
                 {/* Подпись */}
                 <div className="space-y-2">
-                    <label className="text-sm">Подпись (необязательно)</label>
+                    <label className="text-sm">{t('caption')} ({tCommon('optional')})</label>
                     <Textarea
-                        placeholder="Например: нюдовый френч"
+                        placeholder={t('captionPlaceholder')}
                         {...register("caption")}
                     />
                 </div>
@@ -153,7 +155,7 @@ export default function NewWorkPage() {
                         type="submit"
                         disabled={isSubmitting || createWorkMutation.isPending || !imageUrl}
                     >
-                        {createWorkMutation.isPending ? "Сохраняем..." : "Сохранить"}
+                        {createWorkMutation.isPending ? t('submitting') : t('submit')}
                     </Button>
                 </div>
             </form>

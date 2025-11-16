@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useTranslations } from 'next-intl';
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export default function ProProfilePage() {
+  const t = useTranslations('pro.profile');
+  const tCommon = useTranslations('common');
   const { data: session, update: updateSession } = useSession();
   const user = session?.user as { id: string; name?: string; email?: string; image?: string; phone?: string; city?: string; role: string };
 
@@ -47,11 +50,11 @@ export default function ProProfilePage() {
   }, [proProfile]);
 
   if (!session) {
-    return <p className="text-center py-12 opacity-70">Необходимо авторизоваться</p>;
+    return <p className="text-center py-12 opacity-70">{t('needAuth')}</p>;
   }
 
   if (session.user?.role !== "pro") {
-    return <p className="text-center py-12 opacity-70">Эта страница доступна только для мастеров</p>;
+    return <p className="text-center py-12 opacity-70">{t('prosOnly')}</p>;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +71,7 @@ export default function ProProfilePage() {
           city: formData.city,
         }),
       });
-      if (!res1.ok) throw new Error("Не удалось обновить профиль");
+      if (!res1.ok) throw new Error(t('updateError'));
 
       // Обновить профиль мастера
       const res2 = await fetch("/api/pros/me", {
@@ -80,9 +83,9 @@ export default function ProProfilePage() {
           minPricePln: formData.minPricePln ? parseInt(formData.minPricePln) : null,
         }),
       });
-      if (!res2.ok) throw new Error("Не удалось обновить профиль мастера");
+      if (!res2.ok) throw new Error(t('updateProError'));
 
-      toast.success("Профиль обновлен");
+      toast.success(t('updated'));
       await updateSession();
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -94,45 +97,45 @@ export default function ProProfilePage() {
 
   return (
     <section className="max-w-md mx-auto py-8 pt-16 md:pt-8 px-4">
-      <h1 className="text-2xl font-semibold mb-6">Мой профиль мастера</h1>
+      <h1 className="text-2xl font-semibold mb-6">{t('title')}</h1>
 
-      {profileLoading && <p className="opacity-70">Загружаем...</p>}
+      {profileLoading && <p className="opacity-70">{t('loading')}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Имя</label>
+          <label className="block text-sm font-medium mb-1">{t('nameLabel')}</label>
           <Input
             type="text"
-            placeholder="Ваше имя"
+            placeholder={t('namePlaceholder')}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Телефон</label>
+          <label className="block text-sm font-medium mb-1">{t('phoneLabel')}</label>
           <Input
             type="tel"
-            placeholder="+48 XX XXX XXXX"
+            placeholder={t('phonePlaceholder')}
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Город</label>
+          <label className="block text-sm font-medium mb-1">{t('cityLabel')}</label>
           <Input
             type="text"
-            placeholder="Город"
+            placeholder={t('cityPlaceholder')}
             value={formData.city}
             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">О себе</label>
+          <label className="block text-sm font-medium mb-1">{t('about')}</label>
           <Textarea
-            placeholder="Расскажите о вашем опыте и стиле..."
+            placeholder={t('aboutPlaceholder')}
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             className="h-24"
@@ -140,20 +143,20 @@ export default function ProProfilePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Instagram</label>
+          <label className="block text-sm font-medium mb-1">{t('instagram')}</label>
           <Input
             type="text"
-            placeholder="@username"
+            placeholder={t('instagramPlaceholder')}
             value={formData.instagram}
             onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Минимальная цена (PLN)</label>
+          <label className="block text-sm font-medium mb-1">{t('minPrice')}</label>
           <Input
             type="number"
-            placeholder="100"
+            placeholder={t('minPricePlaceholder')}
             value={formData.minPricePln}
             onChange={(e) => setFormData({ ...formData, minPricePln: e.target.value })}
           />
@@ -165,7 +168,7 @@ export default function ProProfilePage() {
             disabled={isUpdating}
             className="w-full"
           >
-            {isUpdating ? "Сохранение..." : "Сохранить"}
+            {isUpdating ? tCommon('saving') : tCommon('save')}
           </Button>
         </div>
 

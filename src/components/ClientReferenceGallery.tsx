@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import FlipModal from "@/components/FlipModal";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,12 @@ import TagPicker from "@/components/TagPicker";
 import { listReferences, createReference, type City, type Tag, type ClientReference } from "@/lib/api";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { Heart } from "lucide-react";
 
 export default function ClientReferenceGallery() {
+  const t = useTranslations('references.gallery');
+  const tCommon = useTranslations('common');
   const { data: session } = useSession();
   const router = useRouter();
   const [selectedRef, setSelectedRef] = useState<ClientReference | null>(null);
@@ -46,12 +49,12 @@ export default function ClientReferenceGallery() {
 
   const handleSubmit = async () => {
     if (!selectedRef || !formData.city || formData.tags.length === 0) {
-      toast.error("Заполни город и выбери хотя бы один тег");
+      toast.error(t('fillCityAndTags'));
       return;
     }
 
     if (!session) {
-      toast.error("Необходимо войти");
+      toast.error(tCommon('needAuth'));
       router.push("/signin");
       return;
     }
@@ -64,12 +67,12 @@ export default function ClientReferenceGallery() {
         tags: formData.tags,
         note: formData.note || undefined,
       });
-      toast.success("Референс создан!");
+      toast.success(t('created'));
       setSelectedRef(null);
       // Обновить список
       window.location.reload();
     } catch (error) {
-      toast.error("Ошибка при создании референса");
+      toast.error(t('error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -96,11 +99,11 @@ export default function ClientReferenceGallery() {
           >
             <Image
               src={ref.imageUrl}
-              alt={ref.note || "Референс"}
+              alt={ref.note || tCommon('reference')}
               fill
               sizes="50vw"
               className="object-cover"
-              priority={index === 0}
+              priority={index < 2}
             />
             {/* Кнопка ХОЧУ */}
             <button
@@ -109,7 +112,7 @@ export default function ClientReferenceGallery() {
                 e.stopPropagation();
                 handleOpenModal(ref);
               }}
-              aria-label="Хочу"
+              aria-label={t('want')}
             >
               <Heart className="w-5 h-5 fill-current" />
             </button>
@@ -129,23 +132,23 @@ export default function ClientReferenceGallery() {
           isOpen={!!selectedRef}
           onClose={handleCloseModal}
           imageUrl={selectedRef.imageUrl}
-          title="Хочу такой маникюр"
+          title={t('wantTitle')}
           onSubmit={handleSubmit}
-          submitLabel="Отправить"
+          submitLabel={tCommon('submit')}
           submitDisabled={isSubmitting}
         >
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Город</label>
+              <label className="text-sm font-medium mb-2 block">{t('city')}</label>
               <CitySelect
                 value={formData.city}
                 onChange={(city) => setFormData({ ...formData, city: city as City })}
-                placeholder="Выбери город"
+                placeholder={tCommon('selectCity')}
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Теги (стиль/цвет)</label>
+              <label className="text-sm font-medium mb-2 block">{t('tags')}</label>
               <TagPicker
                 selected={formData.tags}
                 onToggle={(tag: Tag) => {
@@ -162,10 +165,10 @@ export default function ClientReferenceGallery() {
 
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Описание (необязательно)
+                {t('description')} <span className="text-muted-foreground font-normal">({tCommon('optional')})</span>
               </label>
               <Textarea
-                placeholder="Например: хочется более холодный нюд"
+                placeholder={t('example')}
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                 rows={3}

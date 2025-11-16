@@ -148,7 +148,10 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
                   <p className="font-medium">
                     {t('role')}:{" "}
                     <span className="capitalize text-foreground">
-                      {role === "pro" ? "master" : role}
+                      {role === "pro" ? t('rolePro') :
+                       role === "client" ? t('roleClient') :
+                       role === "admin" ? t('roleAdmin') :
+                       t('roleGuest')}
                     </span>
                   </p>
                   {session.user?.email && (
@@ -174,7 +177,12 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
             {mounted && session && (
               <div className="text-xs text-muted-foreground">
                 <p className="font-medium">
-                  {t('role')}: <span className="capitalize text-foreground">{role === "pro" ? "master" : role}</span>
+                  {t('role')}: <span className="capitalize text-foreground">
+                    {role === "pro" ? t('rolePro') :
+                     role === "client" ? t('roleClient') :
+                     role === "admin" ? t('roleAdmin') :
+                     t('roleGuest')}
+                  </span>
                 </p>
                 {session.user?.email && (
                   <p className="mt-1 truncate">{session.user.email}</p>

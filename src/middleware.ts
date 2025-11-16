@@ -7,8 +7,6 @@ import { routing } from './i18n/routing';
 const intlMiddleware = createMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-    const token = await getToken({ req: request });
-
     // Handle internationalization first
     const response = intlMiddleware(request);
 
@@ -33,11 +31,16 @@ export async function middleware(request: NextRequest) {
         pathWithoutLocale.startsWith(path)
     );
 
-    // Redirect to signin if accessing protected route without authentication
-    if (isProtected && !token) {
-        const url = new URL(`/${locale}/signin`, request.url);
-        url.searchParams.set("callbackUrl", pathWithoutLocale);
-        return NextResponse.redirect(url);
+    // Only check authentication for protected routes
+    if (isProtected) {
+        const token = await getToken({ req: request });
+        
+        // Redirect to signin if accessing protected route without authentication
+        if (!token) {
+            const url = new URL(`/${locale}/signin`, request.url);
+            url.searchParams.set("callbackUrl", pathWithoutLocale);
+            return NextResponse.redirect(url);
+        }
     }
 
     return response;

@@ -1,11 +1,13 @@
 "use client";
+import { useTranslations } from 'next-intl';
 import { useQuery } from "@tanstack/react-query";
 import { listWorks } from "@/lib/api";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { usePrefetchPro } from "@/lib/usePrefetch";
 
 export default function WorkGrid() {
+    const t = useTranslations('masters');
     const { data, isLoading, isFetching } = useQuery({
         queryKey: ["works"],
         queryFn: () => listWorks({}),
@@ -39,11 +41,11 @@ export default function WorkGrid() {
                     <figure className="relative aspect-[4/5]">
                         <Image 
                             src={w.imageUrl} 
-                            alt={w.caption ?? "Работа мастера"} 
+                            alt={w.caption ?? t('masterWork')} 
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             className="object-cover"
-                            priority={index === 0}
+                            priority={index < 4}
                         />
                         <figcaption className="absolute bottom-0 left-0 right-0 p-2 text-sm opacity-70 flex items-center gap-2 bg-gradient-to-t from-black/50 to-transparent">
                             <span>{w.tags?.length ? w.tags.join(" • ") : "—"}</span>

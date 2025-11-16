@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -29,6 +30,8 @@ interface Offer {
 }
 
 export default function ProOrdersPage() {
+  const t = useTranslations('pro.orders');
+  const tCommon = useTranslations('common');
   const { data: session } = useSession();
   const qc = useQueryClient();
   const [filter, setFilter] = useState<"all" | "matched" | "open">("all");
@@ -79,22 +82,22 @@ export default function ProOrdersPage() {
       const res = await fetch(`/api/offers/${offerId}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Не удалось удалить");
-      toast.success("Оффер удален");
+      if (!res.ok) throw new Error(t('deleteError'));
+      toast.success(t('deleted'));
       await qc.invalidateQueries({ queryKey: ["my-offers", session?.user?.id] });
     } catch {
-      toast.error("Ошибка при удалении");
+      toast.error(t('deleteError'));
     }
   };
 
   const isLoading = offersLoading || refsLoading;
 
   if (!session) {
-    return <p className="text-center py-12 opacity-70">Необходимо авторизоваться</p>;
+    return <p className="text-center py-12 opacity-70">{t('needAuth')}</p>;
   }
 
   if (session.user?.role !== "pro") {
-    return <p className="text-center py-12 opacity-70">Эта страница доступна только для мастеров</p>;
+    return <p className="text-center py-12 opacity-70">{t('prosOnly')}</p>;
   }
 
   const handleOpenModal = (refId: string) => {
@@ -108,9 +111,9 @@ export default function ProOrdersPage() {
   return (
     <div className="min-h-screen p-4 pb-8 space-y-6 pt-16 md:pt-4">
       <div>
-        <h1 className="text-2xl font-bold mb-2">Мои заказы</h1>
+        <h1 className="text-2xl font-bold mb-2">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">
-          Все референсы, где у вас есть офферы
+          {t('subtitle')}
         </p>
       </div>
 
@@ -121,21 +124,21 @@ export default function ProOrdersPage() {
           size="sm"
           onClick={() => setFilter("all")}
         >
-          Все ({myReferences.length})
+          {t('all')} ({myReferences.length})
         </Button>
         <Button
           variant={filter === "open" ? "default" : "outline"}
           size="sm"
           onClick={() => setFilter("open")}
         >
-          Открытые ({myReferences.filter((r: Reference) => r.status === "open").length})
+          {t('open')} ({myReferences.filter((r: Reference) => r.status === "open").length})
         </Button>
         <Button
           variant={filter === "matched" ? "default" : "outline"}
           size="sm"
           onClick={() => setFilter("matched")}
         >
-          Согласованные ({myReferences.filter((r: Reference) => r.status === "matched").length})
+          {t('matched')} ({myReferences.filter((r: Reference) => r.status === "matched").length})
         </Button>
       </div>
 
@@ -148,9 +151,9 @@ export default function ProOrdersPage() {
         </div>
       ) : filteredReferences.length === 0 ? (
         <p className="text-center py-12 text-sm text-muted-foreground">
-          {filter === "all" && "У вас пока нет офферов"}
-          {filter === "open" && "Нет открытых референсов с вашими офферами"}
-          {filter === "matched" && "Нет согласованных референсов"}
+          {filter === "all" && t('noOffers')}
+          {filter === "open" && t('noOpenWithOffers')}
+          {filter === "matched" && t('noMatched')}
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-2">
@@ -162,14 +165,14 @@ export default function ProOrdersPage() {
             >
               <Image
                 src={ref.imageUrl}
-                alt={ref.note || "Референс"}
+                alt={ref.note || tCommon('reference')}
                 fill
                 sizes="50vw"
                 className="object-cover"
               />
               {/* Статус бейдж */}
               <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded bg-black/50 text-white text-xs font-medium">
-                {ref.status === "open" ? "🟢 Open" : "✅ Matched"}
+                {ref.status === "open" ? t('openStatus') : t('matchedStatus')}
               </div>
               {/* Город и теги */}
               <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
@@ -189,29 +192,29 @@ export default function ProOrdersPage() {
           isOpen={!!selectedReference}
           onClose={handleCloseModal}
           imageUrl={selectedReference.imageUrl}
-          title={`Референс #${selectedReference.id.slice(0, 6)}`}
+          title={`${t('referenceNumber')}${selectedReference.id.slice(0, 6)}`}
         >
           <div className="space-y-4">
             {/* Статус */}
             <div>
-              <p className="text-xs font-medium opacity-70 mb-1">Статус</p>
+              <p className="text-xs font-medium opacity-70 mb-1">{t('status')}</p>
               <p className={`text-sm font-semibold ${
                 selectedReference.status === "open" ? "text-green-600" : "text-blue-600"
               }`}>
-                {selectedReference.status === "open" ? "🟢 Open" : "✅ Matched"}
+                {selectedReference.status === "open" ? t('openStatus') : t('matchedStatus')}
               </p>
             </div>
 
             {/* Локация */}
             <div>
-              <p className="text-xs font-medium opacity-70 mb-1">Локация</p>
+              <p className="text-xs font-medium opacity-70 mb-1">{t('location')}</p>
               <p className="text-sm font-medium">{selectedReference.city}</p>
             </div>
 
             {/* Теги */}
             {selectedReference.tags && selectedReference.tags.length > 0 && (
               <div>
-                <p className="text-xs font-medium opacity-70 mb-1">Теги</p>
+                <p className="text-xs font-medium opacity-70 mb-1">{t('tags')}</p>
                 <div className="flex flex-wrap gap-1">
                   {selectedReference.tags.map((tag: string) => (
                     <span
@@ -228,17 +231,17 @@ export default function ProOrdersPage() {
             {/* Заметка клиента */}
             {selectedReference.note && (
               <div>
-                <p className="text-xs font-medium opacity-70 mb-1">Заметка клиента</p>
+                <p className="text-xs font-medium opacity-70 mb-1">{t('clientNote')}</p>
                 <p className="text-sm p-3 bg-muted rounded-lg">{selectedReference.note}</p>
               </div>
             )}
 
             {/* Ваш оффер */}
             <div className="pt-4 border-t space-y-3">
-              <h3 className="text-sm font-semibold">Ваш оффер</h3>
+              <h3 className="text-sm font-semibold">{t('yourOffer')}</h3>
 
               {selectedOffers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Оффер не найден</p>
+                <p className="text-sm text-muted-foreground">{t('notFound')}</p>
               ) : (
                 <div className="space-y-2">
                   {selectedOffers.map((offer: Offer) => (
@@ -248,8 +251,12 @@ export default function ProOrdersPage() {
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-xs font-medium opacity-70">Статус</p>
-                          <p className="text-sm font-semibold capitalize">{offer.status}</p>
+                          <p className="text-xs font-medium opacity-70">{t('status')}</p>
+                          <p className="text-sm font-semibold capitalize">
+                            {offer.status === "offer" ? t('statusOffer') :
+                             offer.status === "accepted" ? t('statusAccepted') :
+                             offer.status === "declined" ? t('statusDeclined') : offer.status}
+                          </p>
                         </div>
                         {offer.status === "offer" && (
                           <Button
@@ -258,28 +265,28 @@ export default function ProOrdersPage() {
                             onClick={() => handleDeleteOffer(offer.id)}
                             className="text-destructive hover:text-destructive"
                           >
-                            Удалить
+                            {t('delete')}
                           </Button>
                         )}
                       </div>
 
                       <div>
-                        <p className="text-xs font-medium opacity-70">Создан</p>
+                        <p className="text-xs font-medium opacity-70">{t('created')}</p>
                         <p className="text-sm">
-                          {new Date(offer.createdAt).toLocaleDateString("ru-RU")}
+                          {new Date(offer.createdAt).toLocaleDateString()}
                         </p>
                       </div>
 
                       {offer.message && (
                         <div>
-                          <p className="text-xs font-medium opacity-70 mb-1">Сообщение</p>
+                          <p className="text-xs font-medium opacity-70 mb-1">{t('message')}</p>
                           <p className="text-sm">{offer.message}</p>
                         </div>
                       )}
 
                       {typeof offer.pricePln === "number" && (
                         <div>
-                          <p className="text-xs font-medium opacity-70 mb-1">Цена</p>
+                          <p className="text-xs font-medium opacity-70 mb-1">{t('price')}</p>
                           <p className="text-sm font-semibold text-green-600">
                             💰 {offer.pricePln} PLN
                           </p>

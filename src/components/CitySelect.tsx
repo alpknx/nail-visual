@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from 'next-intl';
 import { useQuery } from "@tanstack/react-query";
 import { fetchCities } from "@/lib/meta";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,18 +7,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function CitySelect({
     value,
     onChange,
-    placeholder = "Город",
+    placeholder,
 }: {
     value?: string;
     onChange?: (v: string) => void;
     placeholder?: string;
 }) {
+    const tCommon = useTranslations('common');
+    const defaultPlaceholder = placeholder || tCommon('selectCity');
     const { data: cities = [] } = useQuery({ queryKey: ["cities"], queryFn: fetchCities });
 
     return (
         <Select value={value || ""} onValueChange={(v) => onChange?.(v)}>
             <SelectTrigger className="w-full">
-                <SelectValue placeholder={placeholder} />
+                <SelectValue placeholder={defaultPlaceholder} />
             </SelectTrigger>
             <SelectContent>
                 {cities.map((c) => (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import FlipModal from "@/components/FlipModal";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ import { toast } from "sonner";
 import { CheckCircle } from "lucide-react";
 
 export default function ProOrdersGallery() {
+  const t = useTranslations('offers.pro');
+  const tCommon = useTranslations('common');
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const initialCity = (searchParams.get("city") as City | null) || undefined;
@@ -53,7 +56,7 @@ export default function ProOrdersGallery() {
     if (!selectedRef) return;
 
     if (!session) {
-      toast.error("Необходимо войти");
+      toast.error(t('needSignIn'));
       return;
     }
 
@@ -64,12 +67,12 @@ export default function ProOrdersGallery() {
         message: formData.message || undefined,
         pricePln: formData.pricePln ? parseInt(formData.pricePln, 10) : undefined,
       });
-      toast.success("Оффер отправлен!");
+      toast.success(t('sent'));
       setSelectedRef(null);
       // Обновить список
       window.location.reload();
     } catch (error) {
-      toast.error("Ошибка при отправке оффера");
+      toast.error(t('error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -82,7 +85,7 @@ export default function ProOrdersGallery() {
           <CitySelect
             value={selectedCity}
             onChange={(city) => setSelectedCity(city as City)}
-            placeholder="Все города"
+            placeholder={tCommon('allCities')}
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -102,14 +105,14 @@ export default function ProOrdersGallery() {
           <CitySelect
             value={selectedCity}
             onChange={(city) => setSelectedCity(city as City)}
-            placeholder="Все города"
+            placeholder={tCommon('allCities')}
           />
         </div>
 
         {/* Галерея заказов */}
         {openReferences.length === 0 ? (
           <p className="text-center py-12 opacity-70">
-            Нет открытых заказов в этом городе
+            {t('noOpenOrders')}
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-2 pb-4">
@@ -121,11 +124,11 @@ export default function ProOrdersGallery() {
               >
                 <Image
                   src={ref.imageUrl}
-                  alt={ref.note || "Заказ"}
+                  alt={ref.note || tCommon('order')}
                   fill
                   sizes="50vw"
                   className="object-cover"
-                  priority={index === 0}
+                  priority={index < 2}
                 />
                 {/* Кнопка МОГУ */}
                 <button
@@ -134,7 +137,7 @@ export default function ProOrdersGallery() {
                     e.stopPropagation();
                     handleOpenModal(ref);
                   }}
-                  aria-label="Могу"
+                  aria-label={t('canDo')}
                 >
                   <CheckCircle className="w-5 h-5 fill-current" />
                 </button>
@@ -156,16 +159,16 @@ export default function ProOrdersGallery() {
           isOpen={!!selectedRef}
           onClose={handleCloseModal}
           imageUrl={selectedRef.imageUrl}
-          title="Могу сделать"
+          title={t('title')}
           onSubmit={handleSubmit}
-          submitLabel="Отправить"
+          submitLabel={tCommon('submit')}
           submitDisabled={isSubmitting}
         >
           <div className="space-y-4">
             {selectedRef.note && (
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Описание заказа
+                  {t('orderDescription')}
                 </label>
                 <p className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
                   {selectedRef.note}
@@ -175,11 +178,11 @@ export default function ProOrdersGallery() {
 
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Цена (PLN)
+                {t('pricePln')}
               </label>
               <Input
                 type="number"
-                placeholder="Например: 150"
+                placeholder={t('priceExample')}
                 value={formData.pricePln}
                 onChange={(e) =>
                   setFormData({ ...formData, pricePln: e.target.value })
@@ -190,10 +193,10 @@ export default function ProOrdersGallery() {
 
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Описание (могу)
+                {t('description')}
               </label>
               <Textarea
-                placeholder="Например: могу сделать такой маникюр, есть опыт работы с этим стилем..."
+                placeholder={t('descriptionExample')}
                 value={formData.message}
                 onChange={(e) =>
                   setFormData({ ...formData, message: e.target.value })
