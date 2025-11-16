@@ -49,7 +49,7 @@ export default function GeolocationDisplay() {
     <>
       <button
         onClick={handleOpenDialog}
-        className="md:hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 px-3 rounded-lg bg-background border shadow-lg flex items-center gap-2 h-[40px] max-w-[200px] hover:bg-muted transition-colors cursor-pointer"
+        className="px-3 rounded-lg bg-background border shadow-lg flex items-center gap-2 h-[40px] max-w-[200px] hover:bg-muted transition-colors cursor-pointer"
       >
         <MapPin className="w-4 h-4 flex-shrink-0 text-foreground" />
         <div className="flex-1 min-w-0 flex flex-col justify-center">

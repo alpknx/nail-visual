@@ -18,6 +18,8 @@ interface BurgerMenuProps {
 export default function BurgerMenu({ children }: BurgerMenuProps) {
   const t = useTranslations('common');
   const [isOpen, setIsOpen] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,6 +60,31 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
       document.removeEventListener("touchend", handleTouchEnd);
     };
   }, [mounted, isOpen]);
+
+  // Обработка скролла для скрытия/показа верхней панели
+  useEffect(() => {
+    if (!mounted) return;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Показываем панель, если пользователь в начале страницы
+      if (currentScrollY < 10) {
+        setIsHeaderVisible(true);
+      } else {
+        // Скрываем при прокрутке вниз, показываем при прокрутке вверх
+        setIsHeaderVisible(currentScrollY < lastScrollY);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [mounted, lastScrollY]);
 
   const handleNavigation = (path: string) => {
     setIsOpen(false);
@@ -110,19 +137,27 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
       {/* Кнопка бургер-меню */}
       <button
         onClick={() => setIsOpen(true)}
-        className="md:hidden fixed top-2 left-2 z-50 p-2 rounded-lg bg-background border shadow-lg"
+        className={`md:hidden fixed top-2 left-2 z-50 p-2 rounded-lg bg-background border shadow-lg transition-transform duration-300 ${
+          isHeaderVisible ? 'translate-y-0' : '-translate-y-16'
+        }`}
         aria-label={t('openMenu')}
       >
         <Menu className="w-6 h-6" />
       </button>
 
       {/* Кнопка переключения языка для мобильной версии */}
-      <div className="md:hidden fixed top-2 right-2 z-50">
+      <div className={`md:hidden fixed top-2 right-2 z-50 transition-transform duration-300 ${
+        isHeaderVisible ? 'translate-y-0' : '-translate-y-16'
+      }`}>
         <LanguageSwitcher mobile />
       </div>
 
       {/* Отображение геолокации посередине (только для мобильной версии) */}
-      <GeolocationDisplay />
+      <div className={`md:hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 transition-transform duration-300 ${
+        isHeaderVisible ? 'translate-y-0' : '-translate-y-16'
+      }`}>
+        <GeolocationDisplay />
+      </div>
 
       {/* Desktop navigation */}
       <header className="hidden md:block sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
