@@ -2,8 +2,11 @@
 import { UploadDropzone } from "@uploadthing/react";
 import "@uploadthing/react/styles.css";
 import type { OurFileRouter } from "@/app/api/uploadthing/core";
+import { useTranslations } from 'next-intl';
 
 export default function UtDropzone({ onUrl }: { onUrl: (url: string) => void }) {
+    const t = useTranslations('common');
+    
     return (
         <div className="rounded-lg border-2 border-dashed border-input p-6 transition-colors hover:border-primary/50">
             <UploadDropzone<OurFileRouter, "imageUploader">
@@ -19,6 +22,11 @@ export default function UtDropzone({ onUrl }: { onUrl: (url: string) => void }) 
                     if (url) onUrl(url);
                 }}
                 onUploadError={(e) => alert(e.message)}
+                content={{
+                    label: t('uploadLabel'),
+                    allowedContent: t('uploadAllowedContent'),
+                    button: t('uploadButton'),
+                }}
             />
         </div>
     );
