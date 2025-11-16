@@ -142,6 +142,8 @@
       "offerServices": "Offer services",
       "password": "Password",
       "confirmPassword": "Confirm password",
+      "phone": "Phone",
+      "externalLink": "External link",
       "submit": "Sign Up",
       "submitting": "Signing up...",
       "hasAccount": "Already have an account?",
@@ -306,6 +308,7 @@
       "price": "Price",
       "error": "Error updating",
       "needAuth": "Authentication required",
+      "showContacts": "Show contacts",
       "clientsOnly": "This page is only available for clients",
       "offerDetails": "Offer Details",
       "masterMessage": "Master's Message",
@@ -392,7 +395,16 @@
       "cityExample": "For example, Kraków",
       "link": "link",
       "instagramLinkPlaceholder": "https://instagram.com/...",
-      "bioPlaceholder": "Short description"
+      "bioPlaceholder": "Short description",
+      "facebook": "Facebook",
+      "facebookPlaceholder": "Facebook link",
+      "whatsapp": "WhatsApp",
+      "whatsappPlaceholder": "+48 XX XXX XXXX",
+      "telegram": "Telegram",
+      "telegramPlaceholder": "@username",
+      "phoneInProfile": "Phone (in profile)",
+      "phoneInProfileDescription": "Phone number in master profile (displayed after clicking \"Show contacts\")",
+      "externalLink": "External link"
     },
     "orders": {
       "title": "My Orders",
@@ -447,6 +459,8 @@
     }
   },
   "masters": {
+    "showContacts": "Show contacts",
+    "externalLink": "External link",
     "title": "Masters",
     "subtitle": "Select a master to view their works",
     "master": "Master",
@@ -461,7 +475,8 @@
     "from": "from",
     "cities": "Cities",
     "noWorks": "Master has no works yet",
-    "masterWork": "Master work"
+    "masterWork": "Master work",
+    "mastersInCity": "Masters in"
   },
   "privacy": {
     "title": "Privacy Policy",
@@ -526,7 +541,14 @@
     "noMastersInCity": "No masters yet who make this design in {city}",
     "noMasters": "No masters yet who make this design",
     "onlyClientsCanOrder": "Only clients can create orders",
-    "canStillOrder": "You can still create an order. Masters will see your request and can respond."
+    "canStillOrder": "You can still create an order. Masters will see your request and can respond.",
+    "findMasters": "Find masters",
+    "showAllMasters": "Show all masters",
+    "save": "Save",
+    "saved": "Saved",
+    "removedFromSaved": "Removed from saved",
+    "noMastersNearby": "No masters found nearby. Check out similar designs.",
+    "similarDesigns": "Similar designs"
   },
   "favorites": {
     "title": "Favorites",

@@ -105,12 +105,12 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
     ...(mounted && session
       ? [{ label: t('profile'), href: profilePath }]
       : []),
-    ...(mounted && session
-      ? [{ label: t('favorites') || 'Избранное', href: "/favorites" }]
-      : []),
-    ...(mounted && isClient
-      ? [{ label: t('want'), href: "/references/new" }]
-      : []),
+    // Избранное доступно всем без регистрации (localStorage)
+    { label: t('favorites') || 'Избранное', href: "/favorites" },
+    // Отключено на MVP: загрузка референсов для клиентов
+    // ...(mounted && isClient
+    //   ? [{ label: t('want'), href: "/references/new" }]
+    //   : []),
     ...(mounted && isMaster
       ? [
           { label: t('addWork') || 'Добавить работу', href: "/works/new" },

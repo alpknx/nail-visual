@@ -8,6 +8,7 @@ import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { getProProfileById, listWorks, type Work } from "@/lib/api";
 import WorkFlipModal from "@/components/WorkFlipModal";
+import { Button } from "@/components/ui/button";
 
 export default function ProDetailPage() {
     const t = useTranslations('masters');
@@ -64,6 +65,7 @@ export default function ProDetailPage() {
     
     const { data: session } = useSession();
     const [selectedWork, setSelectedWork] = React.useState<Work | null>(null);
+    const [showContacts, setShowContacts] = React.useState(false);
 
     // Intersection Observer для автоматической загрузки при скролле
     React.useEffect(() => {
@@ -105,11 +107,27 @@ export default function ProDetailPage() {
     if (worksError) return <p className="text-red-600">{t('worksError')}</p>;
     if (!profile) return <p className="opacity-70">{t('profileNotFound')}</p>;
 
-    // нормализуем ссылку на инстаграм (разрешим как @handle, так и url)
+    // нормализуем ссылки на соцсети
     const instagramHref = profile.instagram
         ? profile.instagram.startsWith("http")
             ? profile.instagram
             : `https://instagram.com/${profile.instagram.replace(/^@/, "")}`
+        : null;
+    
+    const facebookHref = profile.facebook
+        ? profile.facebook.startsWith("http")
+            ? profile.facebook
+            : `https://facebook.com/${profile.facebook}`
+        : null;
+    
+    const whatsappHref = profile.whatsapp
+        ? `https://wa.me/${profile.whatsapp.replace(/[^0-9]/g, "")}`
+        : null;
+    
+    const telegramHref = profile.telegram
+        ? profile.telegram.startsWith("http")
+            ? profile.telegram
+            : `https://t.me/${profile.telegram.replace(/^@/, "")}`
         : null;
 
     return (
@@ -139,6 +157,70 @@ export default function ProDetailPage() {
                     {!!profile.cities?.length && (
                         <p className="text-xs opacity-60">{t('cities')}: {profile.cities.join(" • ")}</p>
                     )}
+                    
+                    {/* Контакты мастера */}
+                    <div className="mt-4 space-y-2">
+                        {!showContacts ? (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowContacts(true)}
+                            >
+                                {t('showContacts') || 'Показать контакты'}
+                            </Button>
+                        ) : (
+                            <div className="space-y-2">
+                                {profile.phone && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">{tCommon('phone')}:</span>
+                                        <a href={`tel:${profile.phone}`} className="text-sm text-blue-600 hover:underline">
+                                            {profile.phone}
+                                        </a>
+                                    </div>
+                                )}
+                                {instagramHref && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">Instagram:</span>
+                                        <a href={instagramHref} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
+                                            {profile.instagram}
+                                        </a>
+                                    </div>
+                                )}
+                                {facebookHref && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">Facebook:</span>
+                                        <a href={facebookHref} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
+                                            {profile.facebook}
+                                        </a>
+                                    </div>
+                                )}
+                                {whatsappHref && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">WhatsApp:</span>
+                                        <a href={whatsappHref} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
+                                            {profile.whatsapp}
+                                        </a>
+                                    </div>
+                                )}
+                                {telegramHref && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">Telegram:</span>
+                                        <a href={telegramHref} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
+                                            {profile.telegram}
+                                        </a>
+                                    </div>
+                                )}
+                                {profile.externalLink && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">{t('externalLink') || 'Внешняя ссылка'}:</span>
+                                        <a href={profile.externalLink} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
+                                            {profile.externalLink}
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </header>
             </div>
 

@@ -31,6 +31,11 @@ export default function ProProfilePage() {
     city: user?.city || "",
     bio: "",
     instagram: "",
+    facebook: "",
+    whatsapp: "",
+    telegram: "",
+    phoneProfile: "",
+    externalLink: "",
     minPricePln: "",
   });
 
@@ -56,6 +61,11 @@ export default function ProProfilePage() {
         ...prev,
         bio: proProfile.data?.bio || "",
         instagram: proProfile.data?.instagram || "",
+        facebook: proProfile.data?.facebook || "",
+        whatsapp: proProfile.data?.whatsapp || "",
+        telegram: proProfile.data?.telegram || "",
+        phoneProfile: proProfile.data?.phone || "",
+        externalLink: proProfile.data?.externalLink || "",
         minPricePln: proProfile.data?.minPricePln || "",
       }));
     }
@@ -107,6 +117,11 @@ export default function ProProfilePage() {
         body: JSON.stringify({
           bio: formData.bio || null,
           instagram: formData.instagram || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
+          telegram: formData.telegram || null,
+          phone: formData.phoneProfile || null,
+          externalLink: formData.externalLink || null,
           minPricePln: formData.minPricePln ? parseInt(formData.minPricePln) : null,
         }),
       });
@@ -135,7 +150,7 @@ export default function ProProfilePage() {
           className="gap-2"
         >
           <Plus className="w-4 h-4" />
-          {t('addWork') || 'Добавить работу'}
+          {t('addWork')}
         </Button>
       </div>
 
@@ -219,6 +234,59 @@ export default function ProProfilePage() {
             placeholder={t('instagramPlaceholder')}
             value={formData.instagram}
             onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">{t('facebook')}</label>
+          <Input
+            type="text"
+            placeholder={t('facebookPlaceholder')}
+            value={formData.facebook}
+            onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">{t('whatsapp')}</label>
+          <Input
+            type="tel"
+            placeholder={t('whatsappPlaceholder')}
+            value={formData.whatsapp}
+            onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">{t('telegram')}</label>
+          <Input
+            type="text"
+            placeholder={t('telegramPlaceholder')}
+            value={formData.telegram}
+            onChange={(e) => setFormData({ ...formData, telegram: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">{t('phoneInProfile')}</label>
+          <Input
+            type="tel"
+            placeholder={t('phonePlaceholder')}
+            value={formData.phoneProfile}
+            onChange={(e) => setFormData({ ...formData, phoneProfile: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            {t('phoneInProfileDescription')}
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">{t('externalLink')}</label>
+          <Input
+            type="url"
+            placeholder="https://..."
+            value={formData.externalLink}
+            onChange={(e) => setFormData({ ...formData, externalLink: e.target.value })}
           />
         </div>
 

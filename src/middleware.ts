@@ -27,9 +27,12 @@ export async function middleware(request: NextRequest) {
     const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
     
     const protectedPaths = getProtectedPaths();
-    const isProtected = protectedPaths.some((path) =>
-        pathWithoutLocale.startsWith(path)
-    );
+    const isProtected = protectedPaths.some((path) => {
+        // Check if path exactly matches or starts with the protected path followed by '/' or end of string
+        // This prevents /pros from matching /pro
+        return pathWithoutLocale === path || 
+               pathWithoutLocale.startsWith(path + '/');
+    });
 
     // Only check authentication for protected routes
     if (isProtected) {

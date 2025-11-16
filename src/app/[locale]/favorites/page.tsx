@@ -2,67 +2,67 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from 'next-intl';
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { useGeolocationContext } from "@/contexts/GeolocationContext";
 import DesignFlipModal from "@/components/DesignFlipModal";
 import { useState } from "react";
 import type { Design } from "@/app/[locale]/designs/page";
+import { getFavoritesFromStorage, removeFavoriteFromStorage } from "@/lib/localStorageFavorites";
 
 export default function FavoritesPage() {
   const t = useTranslations('favorites');
   const tCommon = useTranslations('common');
-  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { detectedCity } = useGeolocationContext();
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
 
-  const { data: favorites = [], isLoading } = useQuery({
-    queryKey: ["favorites"],
-    queryFn: async () => {
-      const res = await fetch("/api/favorites");
-      if (!res.ok) return [];
-      const json = await res.json();
-      return json.data || [];
-    },
-    enabled: !!session?.user?.id,
+  // Загружаем ID избранных из localStorage
+  const { data: favoriteIds = [], isLoading: idsLoading } = useQuery<string[]>({
+    queryKey: ["favorites", "ids", "local"],
+    queryFn: () => getFavoritesFromStorage(),
+    staleTime: Infinity,
   });
 
-  const toggleFavorite = async (designId: string) => {
-    // Оптимистичное обновление UI - удаляем дизайн из списка сразу
-    queryClient.setQueryData<any[]>(["favorites"], (old = []) => {
-      return old.filter((f: any) => f.design?.id !== designId);
-    });
+  // Загружаем дизайны по ID из localStorage
+  const { data: designs = [], isLoading: designsLoading } = useQuery<Design[]>({
+    queryKey: ["favorites", "designs", favoriteIds.join(",")],
+    queryFn: async () => {
+      if (favoriteIds.length === 0) return [];
+      // Загружаем дизайны по ID из API
+      const allDesigns: Design[] = [];
+      let offset = 0;
+      const limit = 100;
+      
+      while (true) {
+        const res = await fetch(`/api/designs?limit=${limit}&offset=${offset}`);
+        if (!res.ok) break;
+        const json = await res.json();
+        const pageDesigns = json.data || [];
+        if (pageDesigns.length === 0) break;
+        allDesigns.push(...pageDesigns);
+        offset += limit;
+        if (pageDesigns.length < limit) break;
+      }
+      
+      // Фильтруем только избранные
+      return allDesigns.filter(d => favoriteIds.includes(d.id));
+    },
+    enabled: favoriteIds.length > 0,
+  });
 
-    // Также обновляем кэш избранных ID
-    queryClient.setQueryData<string[]>(["favorites", "ids"], (old = []) => {
-      return old.filter(id => id !== designId);
-    });
-    queryClient.setQueryData<string[]>(["favorites", "ids", "home"], (old = []) => {
-      return old.filter(id => id !== designId);
-    });
+  const isLoading = idsLoading || designsLoading;
 
-    try {
-      await fetch(`/api/favorites?designId=${designId}`, { method: "DELETE" });
-      // Обновляем кэш избранного
-      await queryClient.invalidateQueries({ queryKey: ["favorites"] });
-    } catch (error) {
-      // В случае ошибки откатываем оптимистичное обновление
-      await queryClient.invalidateQueries({ queryKey: ["favorites"] });
-    }
+  const toggleFavorite = (designId: string) => {
+    // Удаляем из localStorage
+    removeFavoriteFromStorage(designId);
+    
+    // Обновляем кэш React Query
+    const updated = favoriteIds.filter(id => id !== designId);
+    queryClient.setQueryData<string[]>(["favorites", "ids", "local"], updated);
+    queryClient.setQueryData<string[]>(["favorites", "ids", "home", "local"], updated);
+    queryClient.setQueryData<string[]>(["favorites", "ids", "designs", "local"], updated);
   };
-
-  if (!session) {
-    return (
-      <div className="space-y-4 px-4 pt-16 md:pt-4">
-        <h1 className="text-2xl font-semibold mb-2">{t('title') || 'Избранное'}</h1>
-        <p className="text-center py-12 opacity-70">
-          {t('needAuth') || tCommon('needAuth') || 'Необходимо войти в систему'}
-        </p>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -78,8 +78,6 @@ export default function FavoritesPage() {
       </div>
     );
   }
-
-  const designs = favorites.map((f: any) => f.design);
 
   return (
     <>
@@ -133,7 +131,10 @@ export default function FavoritesPage() {
           design={selectedDesign}
           city={detectedCity || undefined}
           onClose={() => setSelectedDesign(null)}
-          session={session}
+          session={null}
+          onSelectSimilar={(similarDesign) => {
+            setSelectedDesign(similarDesign);
+          }}
         />
       )}
     </>

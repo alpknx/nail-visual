@@ -10,12 +10,16 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { createReference, type City } from "@/lib/api";
 import type { Design } from "@/app/[locale]/designs/page";
+import { Heart, Search } from "lucide-react";
+import { addFavoriteToStorage, removeFavoriteFromStorage, getFavoritesFromStorage } from "@/lib/localStorageFavorites";
+import Image from "next/image";
 
 interface DesignFlipModalProps {
   design: Design;
   city?: City;
   onClose: () => void;
   session: Session | null;
+  onSelectSimilar?: (design: Design) => void; // Callback для открытия похожего дизайна
 }
 
 export default function DesignFlipModal({
@@ -23,6 +27,7 @@ export default function DesignFlipModal({
   city,
   onClose,
   session,
+  onSelectSimilar,
 }: DesignFlipModalProps) {
   const t = useTranslations('designs');
   const tCommon = useTranslations('common');
@@ -34,22 +39,48 @@ export default function DesignFlipModal({
   const isClient = userRole === "client" || userRole === "admin";
   const canCreateOrder = isClient;
 
-  // Загружаем matching мастеров
-  const { data: matchingData, isLoading: matchingLoading } = useQuery({
-    queryKey: ["design-matching", design.id, city],
+  // Проверяем, сохранен ли дизайн
+  const [isSaved, setIsSaved] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const favorites = getFavoritesFromStorage();
+    return favorites.includes(design.id);
+  });
+
+  const handleFindMasters = () => {
+    if (city) {
+      router.push(`/pros?city=${encodeURIComponent(city)}`);
+      onClose();
+    } else {
+      router.push("/pros");
+      onClose();
+    }
+  };
+
+  // Загружаем похожие дизайны (случайные, исключая текущий)
+  const { data: similarDesigns = [] } = useQuery<Design[]>({
+    queryKey: ["similar-designs", design.id],
     queryFn: async () => {
-      const url = new URL(`/api/designs/${design.id}/matching`, window.location.origin);
-      if (city) {
-        url.searchParams.set("city", city);
-      }
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error("Failed to fetch matching");
-      return res.json();
+      const res = await fetch(`/api/designs?limit=20&offset=0`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      const allDesigns = json.data || [];
+      // Исключаем текущий дизайн и берем первые 10
+      return allDesigns.filter((d: Design) => d.id !== design.id).slice(0, 10);
     },
     enabled: !!design.id,
   });
 
-  const matchingCount = matchingData?.count || 0;
+  const handleSave = () => {
+    if (isSaved) {
+      removeFavoriteFromStorage(design.id);
+      setIsSaved(false);
+      toast.success(t('removedFromSaved') || "Удалено из сохраненных");
+    } else {
+      addFavoriteToStorage(design.id);
+      setIsSaved(true);
+      toast.success(t('saved') || "Сохранено");
+    }
+  };
 
   const handleCreateOrder = async () => {
     if (!session) {
@@ -93,46 +124,26 @@ export default function DesignFlipModal({
       submitDisabled={canCreateOrder ? (isCreatingOrder || !city) : true}
     >
       <div className="space-y-4">
-        {/* Описание и теги */}
-        {design.description && (
-          <div>
-            <label className="text-sm font-medium mb-2 block">{tCommon('description') || 'Описание'}</label>
-            <p className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
-              {design.description}
-            </p>
-          </div>
-        )}
-
-        {/* Matching информация */}
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-          {matchingLoading ? (
-            <p className="text-sm text-muted-foreground">{t('loadingMatching') || 'Поиск мастеров...'}</p>
-          ) : matchingCount > 0 ? (
-            <>
-              <p className="text-sm font-medium">
-                {city 
-                  ? t('mastersInCity', { count: matchingCount, city }) || `${matchingCount} мастеров могут сделать такие ногти в ${city}`
-                  : t('mastersAvailable', { count: matchingCount }) || `${matchingCount} мастеров могут сделать такие ногти`
-                }
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t('matchingDescription') || 'Мастера найдены по совпадению тегов. Отправьте заказ, и они смогут ответить вам.'}
-              </p>
-            </>
-          ) : city ? (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                {t('noMastersInCity', { city }) || `Пока нет мастеров, которые делают такой дизайн в ${city}`}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t('canStillOrder') || "Вы все равно можете создать заказ. Мастера увидят ваш запрос и смогут ответить."}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t('noMasters') || "Пока нет мастеров, которые делают такой дизайн"}
-            </p>
-          )}
+        {/* Кнопки Save и Find masters */}
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSave}
+            variant={isSaved ? "default" : "outline"}
+            size="lg"
+            className="flex-1"
+          >
+            <Heart className={`w-4 h-4 mr-2 ${isSaved ? "fill-current" : ""}`} />
+            {isSaved ? (t('saved') || "Сохранено") : (t('save') || "Сохранить")}
+          </Button>
+          <Button
+            onClick={handleFindMasters}
+            variant="default"
+            size="lg"
+            className="flex-1"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            {t('findMasters') || "Найти мастеров"}
+          </Button>
         </div>
 
         {!city && canCreateOrder && (
@@ -140,21 +151,32 @@ export default function DesignFlipModal({
             {t('selectCityToOrder') || "Выберите город, чтобы создать заказ"}
           </p>
         )}
-        
-        {!canCreateOrder && (
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground text-center p-2 bg-muted rounded-lg">
-              {t('onlyClientsCanOrder') || "Только клиенты могут создавать заказы"}
-            </p>
-            {!session && (
-              <Button
-                onClick={() => router.push("/signup?role=client")}
-                className="w-full"
-                size="lg"
-              >
-                {tCommon('signUp') || "Зарегистрироваться как клиент"}
-              </Button>
-            )}
+
+        {/* Similar designs - горизонтальный скролл */}
+        {similarDesigns.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">{t('similarDesigns') || "Похожие дизайны"}</h3>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+              {similarDesigns.map((similarDesign) => (
+                <button
+                  key={similarDesign.id}
+                  onClick={() => {
+                    if (onSelectSimilar) {
+                      onSelectSimilar(similarDesign);
+                    }
+                  }}
+                  className="relative flex-shrink-0 w-24 h-32 rounded-lg overflow-hidden border hover:border-foreground transition-colors"
+                >
+                  <Image
+                    src={similarDesign.imageUrl}
+                    alt={similarDesign.description || "Similar design"}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                  />
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

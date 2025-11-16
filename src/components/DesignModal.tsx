@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from 'next-intl';
 import { useRouter } from "@/i18n/routing";
@@ -25,22 +24,15 @@ export default function DesignModal({ design, city, onClose }: DesignModalProps)
   const router = useRouter();
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
-  // Загружаем matching мастеров
-  const { data: matchingData, isLoading: matchingLoading } = useQuery({
-    queryKey: ["design-matching", design.id, city],
-    queryFn: async () => {
-      const url = new URL(`/api/designs/${design.id}/matching`, window.location.origin);
-      if (city) {
-        url.searchParams.set("city", city);
-      }
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error("Failed to fetch matching");
-      return res.json();
-    },
-  });
-
-  const matchingCount = matchingData?.count || 0;
-  const matchingPros = matchingData?.data || [];
+  const handleFindMasters = () => {
+    if (city) {
+      router.push(`/pros?city=${encodeURIComponent(city)}`);
+      onClose();
+    } else {
+      router.push("/pros");
+      onClose();
+    }
+  };
 
   const handleCreateOrder = async () => {
     if (!session) {
@@ -119,44 +111,27 @@ export default function DesignModal({ design, city, onClose }: DesignModalProps)
             </div>
           )}
 
-          {/* Matching информация */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-            {matchingLoading ? (
-              <p className="text-sm text-muted-foreground">{t('loadingMatching') || 'Поиск мастеров...'}</p>
-            ) : matchingCount > 0 ? (
-              <>
-                <p className="text-sm font-medium">
-                  {city 
-                    ? t('mastersInCity', { count: matchingCount, city }) || `${matchingCount} мастеров могут сделать такие ногти в ${city}`
-                    : t('mastersAvailable', { count: matchingCount }) || `${matchingCount} мастеров могут сделать такие ногти`
-                  }
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t('matchingDescription') || 'Мастера найдены по совпадению тегов. Отправьте заказ, и они смогут ответить вам.'}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {city
-                  ? t('noMastersInCity', { city }) || `Пока нет мастеров, которые делают такой дизайн в ${city}`
-                  : t('noMasters') || "Пока нет мастеров, которые делают такой дизайн"
-                }
-              </p>
-            )}
-          </div>
-
-          {/* Кнопка создания заказа */}
+          {/* Кнопки Find masters и Create order */}
           <div className="flex gap-2">
             <Button
-              onClick={handleCreateOrder}
-              disabled={isCreatingOrder || !city || matchingCount === 0}
+              onClick={handleFindMasters}
+              variant="default"
               className="flex-1"
             >
-              {isCreatingOrder
-                ? tCommon('sending') || "Отправка..."
-                : t('createOrder') || "Создать заказ"
-              }
+              {t('findMasters') || "Найти мастеров"}
             </Button>
+            {session && (session.user.role === "client" || session.user.role === "admin") && (
+              <Button
+                onClick={handleCreateOrder}
+                disabled={isCreatingOrder || !city}
+                className="flex-1"
+              >
+                {isCreatingOrder
+                  ? tCommon('sending') || "Отправка..."
+                  : t('createOrder') || "Создать заказ"
+                }
+              </Button>
+            )}
             <Button variant="outline" onClick={onClose}>
               {tCommon('close') || "Закрыть"}
             </Button>

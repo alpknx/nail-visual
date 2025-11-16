@@ -5,12 +5,16 @@ import { useQuery } from "@tanstack/react-query";
 import { listPros, type ProSummary } from "@/lib/api";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
+import { useSearchParams } from "next/navigation";
 
 export default function ProsPage() {
     const t = useTranslations('masters');
+    const searchParams = useSearchParams();
+    const city = searchParams.get("city");
+    
     const { data, isLoading } = useQuery({
-        queryKey: ["pros"],
-        queryFn: () => listPros({ limit: 50 }),
+        queryKey: ["pros", city],
+        queryFn: () => listPros({ city: city || undefined, limit: 50 }),
     });
 
     if (isLoading) {
@@ -30,12 +34,15 @@ export default function ProsPage() {
             <div>
                 <h1 className="text-2xl font-semibold mb-2">{t('title') || 'Мастера'}</h1>
                 <p className="text-sm text-muted-foreground">
-                    {t('subtitle') || 'Выберите мастера, чтобы посмотреть его работы'}
+                    {city 
+                        ? `${t('mastersInCity') || 'Мастера в'} ${city}`
+                        : (t('subtitle') || 'Выберите мастера, чтобы посмотреть его работы')
+                    }
                 </p>
             </div>
             <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {data?.map((p: ProSummary) => {
-                const city = p.cities?.[0] ?? "—";
+                const masterCity = p.cities?.[0] ?? "—";
                 return (
                     <Link
                         key={p.proId}
@@ -62,7 +69,7 @@ export default function ProsPage() {
                         <div className="p-3 space-y-1">
                             <div className="font-medium text-sm truncate">{t('master')} {p.proId.slice(0, 6)}</div>
                             <div className="text-xs opacity-70">
-                                {city} • {p.worksCount} {t('works') || 'работ'}
+                                {masterCity} • {p.worksCount} {t('works') || 'работ'}
                             </div>
                             {!!p.tags.length && (
                                 <div className="text-[11px] opacity-60 truncate">{p.tags.slice(0, 2).join(" • ")}</div>

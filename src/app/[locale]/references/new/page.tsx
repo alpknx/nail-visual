@@ -26,6 +26,20 @@ export default function NewReferencePage() {
     const sessionResult = useSession();
     const session = sessionResult?.data ?? null;
     
+    // Отключено на MVP: загрузка референсов для клиентов
+    if (session?.user?.role === "client") {
+        return (
+            <div className="min-h-screen p-4 flex items-center justify-center">
+                <div className="w-full max-w-md space-y-4 text-center">
+                    <p className="text-lg font-semibold">Функция временно недоступна</p>
+                    <p className="text-sm text-muted-foreground">
+                        Загрузка референсов временно отключена. Вы можете создавать заказы из каталога дизайнов или работ мастеров.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    
     // --- Zod enums из tuple литералов, чтобы получить строгие City/Tag ---
     const CityEnum = z.enum(CITIES as unknown as [typeof CITIES[number], ...typeof CITIES[number][]]);
     const TagEnum  = z.enum(TAGS as unknown  as [typeof TAGS[number],  ...typeof TAGS[number][]]);

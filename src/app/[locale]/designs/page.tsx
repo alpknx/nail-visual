@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import DesignFlipModal from "@/components/DesignFlipModal";
+import { addFavoriteToStorage, removeFavoriteFromStorage } from "@/lib/localStorageFavorites";
 
 export type Design = {
   id: string;
@@ -80,59 +81,47 @@ export default function DesignsPage() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Загружаем избранное для текущего пользователя
+  // Загружаем избранное из localStorage
   const { data: favoriteIds = [] } = useQuery<string[]>({
-    queryKey: ["favorites", "ids", "designs"],
-    queryFn: async () => {
-      if (!session?.user?.id || designs.length === 0) return [];
-      const designIds = designs.map(d => d.id).join(",");
-      const res = await fetch(`/api/favorites/check?designIds=${designIds}`);
-      if (!res.ok) return [];
-      const json = await res.json();
-      return json.data || [];
+    queryKey: ["favorites", "ids", "designs", "local"],
+    queryFn: () => {
+      if (typeof window === "undefined") return [];
+      try {
+        const stored = localStorage.getItem("saved_designs_v1");
+        return stored ? JSON.parse(stored) : [];
+      } catch {
+        return [];
+      }
     },
-    enabled: !!session?.user?.id && designs.length > 0,
+    staleTime: Infinity, // localStorage не меняется через API
   });
 
-  const toggleFavorite = async (designId: string, isFavorite: boolean) => {
-    if (!session) {
-      return;
-    }
-
-    // Оптимистичное обновление UI
-    const queryKey = ["favorites", "ids", "designs"];
-    queryClient.setQueryData<string[]>(queryKey, (old = []) => {
-      if (isFavorite) {
-        return old.filter(id => id !== designId);
-      } else {
-        return [...old, designId];
-      }
-    });
+  const toggleFavorite = (designId: string, isFavorite: boolean) => {
+    // Обновляем localStorage
+    if (typeof window === "undefined") return;
     
-    // Также обновляем кэш для главной страницы
-    queryClient.setQueryData<string[]>(["favorites", "ids", "home"], (old = []) => {
-      if (isFavorite) {
-        return old.filter(id => id !== designId);
-      } else {
-        return [...old, designId];
-      }
-    });
-
     try {
+      const stored = localStorage.getItem("saved_designs_v1");
+      const favorites = stored ? JSON.parse(stored) : [];
+      
+      let updated: string[];
       if (isFavorite) {
-        await fetch(`/api/favorites?designId=${designId}`, { method: "DELETE" });
+        updated = favorites.filter((id: string) => id !== designId);
       } else {
-        await fetch("/api/favorites", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ designId }),
-        });
+        if (!favorites.includes(designId)) {
+          updated = [...favorites, designId];
+        } else {
+          updated = favorites;
+        }
       }
-      // Обновляем кэш избранного
-      await queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      
+      localStorage.setItem("saved_designs_v1", JSON.stringify(updated));
+      
+      // Обновляем кэш React Query
+      queryClient.setQueryData<string[]>(["favorites", "ids", "designs", "local"], updated);
+      queryClient.setQueryData<string[]>(["favorites", "ids", "home", "local"], updated);
     } catch (error) {
-      // В случае ошибки откатываем оптимистичное обновление
-      await queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      console.error("Error updating favorites:", error);
     }
   };
 
@@ -182,23 +171,21 @@ export default function DesignsPage() {
                     priority={index < 4}
                     loading={index < 4 ? "eager" : "lazy"}
                   />
-                  {/* Кнопка Like */}
-                  {session && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(design.id, isFavorite);
-                      }}
-                      className={`absolute top-2 right-2 z-10 p-2 rounded-full transition-colors ${
-                        isFavorite
-                          ? "bg-red-500 text-white"
-                          : "bg-white/80 text-gray-600 hover:bg-white"
-                      }`}
-                      aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                    >
-                      <Heart className={`w-4 h-4 ${isFavorite ? "fill-current" : ""}`} />
-                    </button>
-                  )}
+                  {/* Кнопка Like - доступна для всех */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(design.id, isFavorite);
+                    }}
+                    className={`absolute top-2 right-2 z-10 p-2 rounded-full transition-colors ${
+                      isFavorite
+                        ? "bg-red-500 text-white"
+                        : "bg-white/80 text-gray-600 hover:bg-white"
+                    }`}
+                    aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    <Heart className={`w-4 h-4 ${isFavorite ? "fill-current" : ""}`} />
+                  </button>
                 </div>
               );
             })}
@@ -222,6 +209,9 @@ export default function DesignsPage() {
           city={detectedCity || undefined}
           onClose={() => setSelectedDesign(null)}
           session={session}
+          onSelectSimilar={(similarDesign) => {
+            setSelectedDesign(similarDesign);
+          }}
         />
       )}
     </>

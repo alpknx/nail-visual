@@ -31,7 +31,16 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { bio, instagram, minPricePln } = body;
+    const { 
+        bio, 
+        instagram, 
+        facebook,
+        whatsapp,
+        telegram,
+        phone,
+        externalLink,
+        minPricePln 
+    } = body;
 
     // Проверить, существует ли профиль
     const existing = await db
@@ -47,6 +56,11 @@ export async function POST(req: Request) {
             .set({
                 bio: bio || null,
                 instagram: instagram || null,
+                facebook: facebook || null,
+                whatsapp: whatsapp || null,
+                telegram: telegram || null,
+                phone: phone || null,
+                externalLink: externalLink || null,
                 minPricePln: minPricePln || null,
             })
             .where(eq(proProfiles.userId, session.user.id))
@@ -59,6 +73,11 @@ export async function POST(req: Request) {
                 userId: session.user.id,
                 bio: bio || null,
                 instagram: instagram || null,
+                facebook: facebook || null,
+                whatsapp: whatsapp || null,
+                telegram: telegram || null,
+                phone: phone || null,
+                externalLink: externalLink || null,
                 minPricePln: minPricePln || null,
             })
             .returning();

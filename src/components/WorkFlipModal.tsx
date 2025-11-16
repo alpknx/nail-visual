@@ -139,23 +139,6 @@ export default function WorkFlipModal({
             {tDesigns('selectCityToOrder') || "Выберите город, чтобы создать заказ"}
           </p>
         )}
-        
-        {!canCreateOrder && (
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground text-center p-2 bg-muted rounded-lg">
-              {tDesigns('onlyClientsCanOrder') || "Только клиенты могут создавать заказы"}
-            </p>
-            {!session && (
-              <Button
-                onClick={() => router.push("/signup?role=client")}
-                className="w-full"
-                size="lg"
-              >
-                {tCommon('signUp') || "Зарегистрироваться как клиент"}
-              </Button>
-            )}
-          </div>
-        )}
       </div>
     </FlipModal>
   );

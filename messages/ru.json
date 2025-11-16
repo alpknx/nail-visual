@@ -141,6 +141,8 @@
       "offerServices": "Предложить услуги",
       "password": "Пароль",
       "confirmPassword": "Подтвердите пароль",
+      "phone": "Телефон",
+      "externalLink": "Внешняя ссылка",
       "submit": "Зарегистрироваться",
       "submitting": "Регистрация...",
       "hasAccount": "Уже есть аккаунт?",
@@ -277,6 +279,7 @@
       "price": "Цена",
       "error": "Ошибка при обновлении",
       "needAuth": "Необходимо авторизоваться",
+      "showContacts": "Показать контакты",
       "clientsOnly": "Эта страница доступна только для клиентов",
       "offerDetails": "Детали оффера",
       "masterMessage": "Сообщение мастера",
@@ -350,7 +353,16 @@
       "cityExample": "Например, Kraków",
       "link": "ссылка",
       "instagramLinkPlaceholder": "https://instagram.com/...",
-      "bioPlaceholder": "Короткое описание"
+      "bioPlaceholder": "Короткое описание",
+      "facebook": "Facebook",
+      "facebookPlaceholder": "Ссылка на Facebook",
+      "whatsapp": "WhatsApp",
+      "whatsappPlaceholder": "+48 XX XXX XXXX",
+      "telegram": "Telegram",
+      "telegramPlaceholder": "@username",
+      "phoneInProfile": "Телефон (в профиле)",
+      "phoneInProfileDescription": "Телефон в профиле мастера (отображается после нажатия \"Показать контакты\")",
+      "externalLink": "Внешняя ссылка"
     },
     "orders": {
       "title": "Мои заказы",
@@ -416,7 +428,9 @@
       "masterWork": "Работа мастера"
     }
   },
-  "masters": {
+    "masters": {
+        "showContacts": "Показать контакты",
+        "externalLink": "Внешняя ссылка",
     "title": "Мастера",
     "subtitle": "Выберите мастера, чтобы посмотреть его работы",
     "master": "Мастер",
@@ -431,7 +445,8 @@
     "from": "от",
     "cities": "Города",
     "noWorks": "У мастера пока нет работ",
-    "masterWork": "Работа мастера"
+    "masterWork": "Работа мастера",
+    "mastersInCity": "Мастера в"
   },
   "privacy": {
     "title": "Политика конфиденциальности",
@@ -496,7 +511,14 @@
     "noMastersInCity": "Пока нет мастеров, которые делают такой дизайн в {city}",
     "noMasters": "Пока нет мастеров, которые делают такой дизайн",
     "onlyClientsCanOrder": "Только клиенты могут создавать заказы",
-    "canStillOrder": "Вы все равно можете создать заказ. Мастера увидят ваш запрос и смогут ответить."
+    "canStillOrder": "Вы все равно можете создать заказ. Мастера увидят ваш запрос и смогут ответить.",
+    "findMasters": "Найти мастеров",
+    "showAllMasters": "Показать всех мастеров",
+    "save": "Сохранить",
+    "saved": "Сохранено",
+    "removedFromSaved": "Удалено из сохраненных",
+    "noMastersNearby": "Не нашли мастеров рядом. Посмотрите похожие дизайны.",
+    "similarDesigns": "Похожие дизайны"
   },
   "favorites": {
     "title": "Избранное",

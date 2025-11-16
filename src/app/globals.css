@@ -131,4 +131,14 @@
   perspective: 1000px;
   -webkit-perspective: 1000px;
 }
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
 /* stylelint-enable at-rule-no-unknown */

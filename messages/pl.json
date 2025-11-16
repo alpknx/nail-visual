@@ -140,6 +140,8 @@
       "offerServices": "Oferować usługi",
       "password": "Hasło",
       "confirmPassword": "Potwierdź hasło",
+      "phone": "Telefon",
+      "externalLink": "Link zewnętrzny",
       "submit": "Zarejestruj się",
       "submitting": "Rejestracja...",
       "hasAccount": "Masz już konto?",
@@ -304,6 +306,7 @@
       "price": "Cena",
       "error": "Błąd aktualizacji",
       "needAuth": "Wymagana autoryzacja",
+      "showContacts": "Pokaż kontakty",
       "clientsOnly": "Ta strona jest dostępna tylko dla klientów",
       "offerDetails": "Szczegóły oferty",
       "masterMessage": "Wiadomość od mistrza",
@@ -390,7 +393,16 @@
       "cityExample": "Na przykład, Kraków",
       "link": "link",
       "instagramLinkPlaceholder": "https://instagram.com/...",
-      "bioPlaceholder": "Krótki opis"
+      "bioPlaceholder": "Krótki opis",
+      "facebook": "Facebook",
+      "facebookPlaceholder": "Link do Facebook",
+      "whatsapp": "WhatsApp",
+      "whatsappPlaceholder": "+48 XX XXX XXXX",
+      "telegram": "Telegram",
+      "telegramPlaceholder": "@username",
+      "phoneInProfile": "Telefon (w profilu)",
+      "phoneInProfileDescription": "Numer telefonu w profilu mistrza (wyświetlany po kliknięciu \"Pokaż kontakty\")",
+      "externalLink": "Link zewnętrzny"
     },
     "orders": {
       "title": "Moje zamówienia",
@@ -445,6 +457,8 @@
     }
   },
   "masters": {
+    "showContacts": "Pokaż kontakty",
+    "externalLink": "Link zewnętrzny",
     "title": "Mistrzowie",
     "subtitle": "Wybierz mistrza, aby zobaczyć jego prace",
     "master": "Mistrz",
@@ -459,7 +473,8 @@
     "from": "od",
     "cities": "Miasta",
     "noWorks": "Mistrz nie ma jeszcze prac",
-    "masterWork": "Praca mistrza"
+    "masterWork": "Praca mistrza",
+    "mastersInCity": "Mistrzowie w"
   },
   "privacy": {
     "title": "Polityka prywatności",
@@ -524,7 +539,14 @@
     "noMastersInCity": "Jeszcze nie ma mistrzów, którzy wykonują taki wzór w {city}",
     "noMasters": "Jeszcze nie ma mistrzów, którzy wykonują taki wzór",
     "onlyClientsCanOrder": "Tylko klienci mogą tworzyć zamówienia",
-    "canStillOrder": "Nadal możesz utworzyć zamówienie. Mistrzowie zobaczą Twoje zapytanie i będą mogli odpowiedzieć."
+    "canStillOrder": "Nadal możesz utworzyć zamówienie. Mistrzowie zobaczą Twoje zapytanie i będą mogli odpowiedzieć.",
+    "findMasters": "Znajdź mistrzów",
+    "showAllMasters": "Pokaż wszystkich mistrzów",
+    "save": "Zapisz",
+    "saved": "Zapisano",
+    "removedFromSaved": "Usunięto z zapisanych",
+    "noMastersNearby": "Nie znaleziono mistrzów w pobliżu. Sprawdź podobne wzory.",
+    "similarDesigns": "Podobne wzory"
   },
   "favorites": {
     "title": "Ulubione",

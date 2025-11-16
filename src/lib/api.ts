@@ -252,7 +252,7 @@ export async function listPros(params?: { city?: string; limit?: number }): Prom
 export type ProProfile = {
     id: string;
     name: string | null;
-    email: string | null;
+    // email не включен - это приватная информация
     image: string | null;
     city: string | null;
     instagram: string | null;

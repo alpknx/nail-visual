@@ -40,6 +40,11 @@ export const proProfiles = pgTable("pro_profiles", {
         .references(() => users.id, { onDelete: "cascade" }),
     bio: text("bio"),
     instagram: varchar("instagram", { length: 200 }),
+    facebook: varchar("facebook", { length: 200 }),
+    whatsapp: varchar("whatsapp", { length: 40 }),
+    telegram: varchar("telegram", { length: 200 }),
+    phone: varchar("phone", { length: 40 }),
+    externalLink: varchar("external_link", { length: 500 }),
     minPricePln: integer("min_price_pln"),
     isVerified: boolean("is_verified").notNull().default(false),
 });

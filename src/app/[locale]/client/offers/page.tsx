@@ -19,6 +19,7 @@ export default function ClientOffersPage() {
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [selectedMatchedRef, setSelectedMatchedRef] = useState<ClientReference | null>(null);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  const [showContacts, setShowContacts] = useState<{ [offerId: string]: boolean }>({});
 
   // Загрузить все референсы клиента
   const { data: myReferences = [], isLoading: refsLoading } = useQuery({
@@ -408,12 +409,25 @@ export default function ClientOffersPage() {
                     {new Date(selectedOffer.createdAt).toLocaleDateString()}
                   </p>
                   {selectedOffer.pro?.phone && (
-                    <a
-                      href={`tel:${selectedOffer.pro.phone}`}
-                      className="text-sm text-blue-600 hover:underline mt-1 block"
-                    >
-                      {selectedOffer.pro.phone}
-                    </a>
+                    <>
+                      {showContacts[selectedOffer.id] ? (
+                        <a
+                          href={`tel:${selectedOffer.pro.phone}`}
+                          className="text-sm text-blue-600 hover:underline mt-1 block"
+                        >
+                          {selectedOffer.pro.phone}
+                        </a>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowContacts(prev => ({ ...prev, [selectedOffer.id]: true }))}
+                          className="mt-2"
+                        >
+                          {t('showContacts') || 'Показать контакты'}
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
                 <span
@@ -528,12 +542,25 @@ export default function ClientOffersPage() {
                         {matchedOffer.pro?.name || `${t('master')} ${matchedOffer.proId.slice(0, 6)}`}
                       </p>
                       {matchedOffer.pro?.phone && (
-                        <a
-                          href={`tel:${matchedOffer.pro.phone}`}
-                          className="text-sm text-blue-600 hover:underline mt-1 block"
-                        >
-                          {matchedOffer.pro.phone}
-                        </a>
+                        <>
+                          {showContacts[`matched-${selectedMatchedRef.id}`] ? (
+                            <a
+                              href={`tel:${matchedOffer.pro.phone}`}
+                              className="text-sm text-blue-600 hover:underline mt-1 block"
+                            >
+                              {matchedOffer.pro.phone}
+                            </a>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowContacts(prev => ({ ...prev, [`matched-${selectedMatchedRef.id}`]: true }))}
+                              className="mt-2"
+                            >
+                              {t('showContacts') || 'Показать контакты'}
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                     <span className="text-xs font-medium px-2 py-1 rounded bg-green-100 text-green-700 flex-shrink-0">

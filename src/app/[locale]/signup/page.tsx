@@ -1,31 +1,20 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent } from "react";
 import { useTranslations } from 'next-intl';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SignUpPage() {
     const t = useTranslations('auth.signUp');
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [role, setRole] = useState<"client" | "pro">("client");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-
-    // Читаем роль из query параметров
-    useEffect(() => {
-        const roleParam = searchParams.get('role');
-        if (roleParam === 'client' || roleParam === 'pro') {
-            setRole(roleParam);
-        }
-    }, [searchParams]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -47,7 +36,7 @@ export default function SignUpPage() {
             const res = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password, role }),
+                body: JSON.stringify({ email, password, role: "pro" }),
             });
 
             const data = await res.json();
@@ -111,23 +100,8 @@ export default function SignUpPage() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label htmlFor="role" className="text-sm font-medium">
-                                {t('iWant')}
-                            </label>
-                            <Select
-                                value={role}
-                                onValueChange={(value) => setRole(value as "client" | "pro")}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="client">{t('findMaster')}</SelectItem>
-                                    <SelectItem value="pro">{t('offerServices')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        {/* Роль скрыта - только регистрация как мастер */}
+                        <input type="hidden" name="role" value="pro" />
 
                         <div className="space-y-2">
                             <label htmlFor="password" className="text-sm font-medium">

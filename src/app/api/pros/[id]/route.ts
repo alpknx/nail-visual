@@ -15,7 +15,7 @@ export async function GET(
         columns: {
             id: true,
             name: true,
-            email: true,
+            // email не возвращаем - это приватная информация
             image: true,
             city: true,
             role: true,
@@ -31,6 +31,11 @@ export async function GET(
         where: (t, { eq }) => eq(t.userId, id),
         columns: {
             instagram: true,
+            facebook: true,
+            whatsapp: true,
+            telegram: true,
+            phone: true,
+            externalLink: true,
             bio: true,
             minPricePln: true,
             isVerified: true,
@@ -87,10 +92,15 @@ export async function GET(
         data: {
             id: u.id,
             name: u.name ?? null,
-            email: u.email ?? null,
+            // email не возвращаем - это приватная информация
             image: u.image ?? null,
             city: u.city ?? null,
             instagram: prof?.instagram ?? null,
+            facebook: prof?.facebook ?? null,
+            whatsapp: prof?.whatsapp ?? null,
+            telegram: prof?.telegram ?? null,
+            phone: prof?.phone ?? null,
+            externalLink: prof?.externalLink ?? null,
             minPricePln: prof?.minPricePln ?? null,
             isVerified: prof?.isVerified ?? false,
             worksCount: Number(a.worksCount ?? 0),

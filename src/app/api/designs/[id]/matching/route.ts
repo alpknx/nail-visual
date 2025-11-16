@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { designCatalog, proWorks } from "@/db/schema";
+import { designCatalog, proWorks, users, proProfiles } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export async function GET(
@@ -46,9 +46,57 @@ export async function GET(
       .orderBy(sql`COUNT(*) DESC`)
       .limit(20);
 
+    // Загружаем полную информацию о мастерах
+    const proIds = matchingPros.map(p => p.proId);
+    if (proIds.length === 0) {
+      return NextResponse.json({ data: [], count: 0 });
+    }
+
+    // Получаем превью работ для каждого мастера (последняя работа каждого мастера)
+    const sampleWorksRaw = await db.execute(sql`
+      SELECT DISTINCT ON (pro_id) 
+        pro_id as "proId",
+        image_url as "sampleUrl"
+      FROM ${proWorks}
+      WHERE pro_id = ANY(${proIds}::text[])
+      ORDER BY pro_id, created_at DESC
+    `);
+    
+    const sampleWorks = (sampleWorksRaw.rows || []).map((row: any) => ({
+      proId: row.proId,
+      sampleUrl: row.sampleUrl,
+    }));
+
+    const prosWithProfiles = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        image: users.image,
+        phone: users.phone,
+        city: users.city,
+        bio: proProfiles.bio,
+        instagram: proProfiles.instagram,
+        minPricePln: proProfiles.minPricePln,
+        isVerified: proProfiles.isVerified,
+      })
+      .from(users)
+      .leftJoin(proProfiles, eq(users.id, proProfiles.userId))
+      .where(sql`${users.id} = ANY(${proIds}::text[])`);
+
+    // Объединяем данные
+    const result = prosWithProfiles.map(pro => {
+      const matching = matchingPros.find(m => m.proId === pro.id);
+      const sample = sampleWorks.find(s => s.proId === pro.id);
+      return {
+        ...pro,
+        matchingWorksCount: matching?.matchingWorksCount || 0,
+        sampleUrl: sample?.sampleUrl || null,
+      };
+    }).sort((a, b) => b.matchingWorksCount - a.matchingWorksCount);
+
     const response = NextResponse.json({
-      data: matchingPros,
-      count: matchingPros.length,
+      data: result,
+      count: result.length,
     });
     
     response.headers.set(

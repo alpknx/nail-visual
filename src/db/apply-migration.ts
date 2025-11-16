@@ -18,7 +18,7 @@ const client = postgres(process.env.DATABASE_URL, {
 async function applyMigration() {
     try {
         const migrationSQL = readFileSync(
-            join(process.cwd(), "drizzle", "0007_nifty_the_captain.sql"),
+            join(process.cwd(), "drizzle", "0008_premium_pride.sql"),
             "utf-8"
         );
 
@@ -37,9 +37,14 @@ async function applyMigration() {
 
         console.log("✅ Migration applied successfully!");
     } catch (error: any) {
-        // Игнорируем ошибки "already exists"
-        if (error.message?.includes("already exists") || error.code === "42P07") {
-            console.log("⚠️  Tables already exist, skipping...");
+        // Игнорируем ошибки "already exists" или "duplicate column"
+        if (
+            error.message?.includes("already exists") || 
+            error.code === "42P07" || 
+            error.code === "42701" || // duplicate column
+            error.message?.includes("duplicate column")
+        ) {
+            console.log("⚠️  Column already exists, skipping...");
         } else {
             throw error;
         }
