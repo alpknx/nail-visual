@@ -23,6 +23,7 @@ export default function ProProfilePage() {
   const sessionResult = useSession();
   const session = sessionResult?.data ?? null;
   const updateSession = sessionResult?.update;
+  const isLoadingSession = sessionResult?.status === "loading";
   const user = session?.user as { id: string; name?: string; email?: string; image?: string; phone?: string; city?: string; role: string };
 
   const [formData, setFormData] = useState({
@@ -44,14 +45,19 @@ export default function ProProfilePage() {
   const router = useRouter();
 
   // Загрузить профиль мастера
-  const { data: proProfile, isLoading: profileLoading } = useQuery({
+  const { data: proProfile, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: ["pro-profile", session?.user?.id],
     queryFn: async () => {
       const res = await fetch("/api/pros/me");
-      if (!res.ok) return null;
+      if (!res.ok) {
+        // Log error but don't throw - allow form to render with empty fields
+        console.error("Failed to load pro profile:", res.status, res.statusText);
+        return null;
+      }
       return res.json();
     },
     enabled: !!session?.user?.id,
+    retry: false, // Don't retry on 401/403 errors
   });
 
   // Заполнить форму данными из профиля мастера
@@ -85,6 +91,11 @@ export default function ProProfilePage() {
     }
   }, [detectedCity]);
 
+
+  // Show loading state while session is being checked
+  if (isLoadingSession) {
+    return <p className="text-center py-12 opacity-70">{t('loading') || 'Loading...'}</p>;
+  }
 
   if (!session) {
     return <p className="text-center py-12 opacity-70">{t('needAuth')}</p>;
@@ -155,6 +166,13 @@ export default function ProProfilePage() {
       </div>
 
       {profileLoading && <p className="opacity-70">{t('loading')}</p>}
+      {profileError && (
+        <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            {t('loadError') || 'Failed to load profile data. You can still edit and save your profile.'}
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Предупреждение о местоположении вне Польши */}

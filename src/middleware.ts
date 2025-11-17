@@ -7,7 +7,19 @@ import { routing } from './i18n/routing';
 const intlMiddleware = createMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-    // Handle internationalization first
+    const pathname = request.nextUrl.pathname;
+    
+    // Skip static files early - check for file extensions
+    // This includes manifest.webmanifest, favicon.ico, etc.
+    const staticFileExtensions = ['.webmanifest', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.css', '.js', '.json', '.xml', '.txt', '.woff', '.woff2', '.ttf', '.eot', '.map'];
+    const hasStaticExtension = staticFileExtensions.some(ext => pathname.endsWith(ext));
+    
+    // Skip if it's a static file - let Next.js handle it
+    if (hasStaticExtension) {
+        return NextResponse.next();
+    }
+    
+    // Handle internationalization
     const response = intlMiddleware(request);
 
     // If intlMiddleware already redirected, return it immediately
@@ -16,7 +28,6 @@ export async function middleware(request: NextRequest) {
     }
 
     // Get all protected paths (excluding locale prefix)
-    const pathname = request.nextUrl.pathname;
     const locale = pathname.split('/')[1];
     
     // Skip if locale is not valid (shouldn't happen, but safety check)
