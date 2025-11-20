@@ -55,10 +55,22 @@ export async function middleware(request: NextRequest) {
 
     // Only check authentication for protected routes
     if (isProtected) {
-        const token = await getToken({ req: request });
-        
-        // Redirect to signin if accessing protected route without authentication
-        if (!token) {
+        try {
+            const token = await getToken({ 
+                req: request,
+                secret: process.env.NEXTAUTH_SECRET,
+            });
+            
+            // Redirect to signin if accessing protected route without authentication
+            if (!token) {
+                const url = new URL(`/${locale}/signin`, request.url);
+                url.searchParams.set("callbackUrl", pathWithoutLocale);
+                return NextResponse.redirect(url);
+            }
+        } catch (error) {
+            // Log error for debugging
+            console.error('Middleware auth error:', error);
+            // On error, still redirect to signin to be safe
             const url = new URL(`/${locale}/signin`, request.url);
             url.searchParams.set("callbackUrl", pathWithoutLocale);
             return NextResponse.redirect(url);
