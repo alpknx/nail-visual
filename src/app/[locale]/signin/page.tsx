@@ -4,6 +4,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, FormEvent, useEffect } from "react";
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
+import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -12,6 +13,7 @@ export default function SignInPage() {
     const tCommon = useTranslations('common');
     const { data: session } = useSession();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
@@ -53,7 +55,9 @@ export default function SignInPage() {
                 localStorage.removeItem("nail_visual_email");
             }
 
-            router.push("/");
+            // Перенаправить на callbackUrl или на главную страницу
+            const callbackUrl = searchParams.get('callbackUrl') || '/';
+            router.push(callbackUrl);
         } catch {
             setError(t('error'));
         } finally {
