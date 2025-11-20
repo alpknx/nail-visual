@@ -25,6 +25,23 @@ export default function ProProfilePage() {
   const updateSession = sessionResult?.update;
   const isLoadingSession = sessionResult?.status === "loading";
   const user = session?.user as { id: string; name?: string; email?: string; image?: string; phone?: string; city?: string; role: string };
+  
+  // Safe wrapper for translations with fallbacks
+  const safeT = (key: string, fallback?: string) => {
+    try {
+      return t(key);
+    } catch {
+      return fallback || key;
+    }
+  };
+  
+  const safeTCommon = (key: string, fallback?: string) => {
+    try {
+      return tCommon(key);
+    } catch {
+      return fallback || key;
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -93,15 +110,15 @@ export default function ProProfilePage() {
 
   // Show loading state while session is being checked
   if (isLoadingSession) {
-    return <p className="text-center py-12 opacity-70">{t('loading') || 'Loading...'}</p>;
+    return <p className="text-center py-12 opacity-70">{safeT('loading', 'Loading...')}</p>;
   }
 
   if (!session) {
-    return <p className="text-center py-12 opacity-70">{t('needAuth')}</p>;
+    return <p className="text-center py-12 opacity-70">{safeT('needAuth', 'Authentication required')}</p>;
   }
 
   if (session.user?.role !== "pro") {
-    return <p className="text-center py-12 opacity-70">{t('prosOnly')}</p>;
+    return <p className="text-center py-12 opacity-70">{safeT('prosOnly', 'This page is only available for masters')}</p>;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,7 +134,7 @@ export default function ProProfilePage() {
           city: formData.city,
         }),
       });
-      if (!res1.ok) throw new Error(t('updateError'));
+      if (!res1.ok) throw new Error(safeT('updateError', 'Failed to update profile'));
 
       // Обновить профиль мастера
       const res2 = await fetch("/api/pros/me", {
@@ -134,9 +151,9 @@ export default function ProProfilePage() {
           minPricePln: formData.minPricePln ? parseInt(formData.minPricePln) : null,
         }),
       });
-      if (!res2.ok) throw new Error(t('updateProError'));
+      if (!res2.ok) throw new Error(safeT('updateProError', 'Failed to update master profile'));
 
-      toast.success(t('updated'));
+      toast.success(safeT('updated', 'Profile updated'));
       if (updateSession) {
         await updateSession();
       }
@@ -148,10 +165,16 @@ export default function ProProfilePage() {
     }
   };
 
+  // Fallback translations to prevent errors
+  const title = safeT('title', 'Master Profile');
+  const addWorkText = safeT('addWork', 'Add Work');
+  const loadingText = safeT('loading', 'Loading...');
+  const loadErrorText = safeT('loadError', 'Failed to load profile data. You can still edit and save your profile.');
+
   return (
     <section className="max-w-md mx-auto space-y-6 pt-16 md:pt-4 px-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{title}</h1>
         <Button
           variant="outline"
           size="sm"
@@ -159,15 +182,15 @@ export default function ProProfilePage() {
           className="gap-2"
         >
           <Plus className="w-4 h-4" />
-          {t('addWork')}
+          {addWorkText}
         </Button>
       </div>
 
-      {profileLoading && <p className="opacity-70">{t('loading')}</p>}
+      {profileLoading && <p className="opacity-70">{loadingText}</p>}
       {profileError && (
         <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            {t('loadError') || 'Failed to load profile data. You can still edit and save your profile.'}
+            {loadErrorText}
           </p>
         </div>
       )}
@@ -184,17 +207,17 @@ export default function ProProfilePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                  {t('locationOutsidePolandTitle') || tCommon('locationOutsidePolandTitle') || 'Location outside Poland'}
+                  {safeT('locationOutsidePolandTitle') || safeTCommon('locationOutsidePolandTitle') || 'Location outside Poland'}
                 </p>
                 <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                  {t('locationOutsidePolandMessage') || tCommon('locationOutsidePolandMessage') || `Your location was detected as ${locationWarning.city}, ${locationWarning.country}. This service is available only for Polish cities. Please select a city from the list below.`}
+                  {safeT('locationOutsidePolandMessage') || safeTCommon('locationOutsidePolandMessage') || `Your location was detected as ${locationWarning?.city}, ${locationWarning?.country}. This service is available only for Polish cities. Please select a city from the list below.`}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={clearWarning}
                 className="flex-shrink-0 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200"
-                aria-label={tCommon('close') || 'Close'}
+                aria-label={safeTCommon('close', 'Close')}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -205,27 +228,27 @@ export default function ProProfilePage() {
         )}
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('nameLabel')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('nameLabel', 'Name')}</label>
           <Input
             type="text"
-            placeholder={t('namePlaceholder')}
+            placeholder={safeT('namePlaceholder', 'Your name')}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('cityLabel')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('cityLabel', 'City')}</label>
           <CitySelect
             value={formData.city}
             onChange={(city) => setFormData({ ...formData, city })}
-            placeholder={t('cityPlaceholder') || tCommon('selectCity')}
+            placeholder={safeT('cityPlaceholder') || safeTCommon('selectCity', 'Select city')}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('about')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('about', 'About')}</label>
           <Textarea
-            placeholder={t('aboutPlaceholder')}
+            placeholder={safeT('aboutPlaceholder', 'Tell us about your experience and style...')}
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             className="h-24"
@@ -233,60 +256,60 @@ export default function ProProfilePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('instagram')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('instagram', 'Instagram')}</label>
           <Input
             type="text"
-            placeholder={t('instagramPlaceholder')}
+            placeholder={safeT('instagramPlaceholder', '@username')}
             value={formData.instagram}
             onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('facebook')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('facebook', 'Facebook')}</label>
           <Input
             type="text"
-            placeholder={t('facebookPlaceholder')}
+            placeholder={safeT('facebookPlaceholder', 'Facebook link')}
             value={formData.facebook}
             onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('whatsapp')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('whatsapp', 'WhatsApp')}</label>
           <Input
             type="tel"
-            placeholder={t('whatsappPlaceholder')}
+            placeholder={safeT('whatsappPlaceholder', '+48 XX XXX XXXX')}
             value={formData.whatsapp}
             onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('telegram')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('telegram', 'Telegram')}</label>
           <Input
             type="text"
-            placeholder={t('telegramPlaceholder')}
+            placeholder={safeT('telegramPlaceholder', '@username')}
             value={formData.telegram}
             onChange={(e) => setFormData({ ...formData, telegram: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('phoneInProfile')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('phoneInProfile', 'Phone (in profile)')}</label>
           <Input
             type="tel"
-            placeholder={t('phonePlaceholder')}
+            placeholder={safeT('phonePlaceholder', '+48 XX XXX XXXX')}
             value={formData.phoneProfile}
             onChange={(e) => setFormData({ ...formData, phoneProfile: e.target.value })}
           />
           <p className="text-xs text-muted-foreground mt-1">
-            {t('phoneInProfileDescription')}
+            {safeT('phoneInProfileDescription', 'Phone number in master profile (displayed after clicking "Show contacts")')}
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('externalLink')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('externalLink', 'External link')}</label>
           <Input
             type="url"
             placeholder="https://..."
@@ -296,10 +319,10 @@ export default function ProProfilePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('minPrice')}</label>
+          <label className="block text-sm font-medium mb-1">{safeT('minPrice', 'Minimum price (PLN)')}</label>
           <Input
             type="number"
-            placeholder={t('minPricePlaceholder')}
+            placeholder={safeT('minPricePlaceholder', '100')}
             value={formData.minPricePln}
             onChange={(e) => setFormData({ ...formData, minPricePln: e.target.value })}
           />
@@ -311,7 +334,7 @@ export default function ProProfilePage() {
             disabled={isUpdating}
             className="w-full"
           >
-            {isUpdating ? tCommon('saving') : tCommon('save')}
+            {isUpdating ? safeTCommon('saving', 'Saving...') : safeTCommon('save', 'Save')}
           </Button>
         </div>
 
