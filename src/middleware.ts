@@ -11,11 +11,19 @@ export async function middleware(request: NextRequest) {
     
     // Skip static files early - check for file extensions
     // This includes manifest.webmanifest, favicon.ico, etc.
+    // This must happen BEFORE intlMiddleware to avoid authentication checks
     const staticFileExtensions = ['.webmanifest', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.css', '.js', '.json', '.xml', '.txt', '.woff', '.woff2', '.ttf', '.eot', '.map'];
     const hasStaticExtension = staticFileExtensions.some(ext => pathname.endsWith(ext));
     
-    // Skip if it's a static file - let Next.js handle it
-    if (hasStaticExtension) {
+    // Also check for common static file paths (even if matcher didn't catch them)
+    const isStaticFile = hasStaticExtension || 
+                         pathname === '/manifest.webmanifest' ||
+                         pathname === '/favicon.ico' ||
+                         pathname.startsWith('/icons/') ||
+                         pathname.startsWith('/images/');
+    
+    // Skip if it's a static file - let Next.js handle it without any processing
+    if (isStaticFile) {
         return NextResponse.next();
     }
     
@@ -62,12 +70,16 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        // Match all pathnames except for
-        // - … if they start with `/api`, `/_next` or `/_vercel`
-        // - … the ones containing a dot (e.g. `favicon.ico`)
-        '/((?!api|_next|_vercel|.*\\..*).*)',
-        // Optional: only run on root (/) URL
-        // '/'
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - _vercel (Vercel internals)
+         * - favicon.ico, manifest.webmanifest, and other static files
+         * - files with extensions (images, fonts, etc.)
+         */
+        '/((?!api|_next/static|_next/image|_vercel|favicon.ico|manifest.webmanifest|.*\\.(?:ico|png|jpg|jpeg|gif|svg|css|js|json|xml|txt|woff|woff2|ttf|eot|map|webmanifest)).*)',
     ],
 };
 
