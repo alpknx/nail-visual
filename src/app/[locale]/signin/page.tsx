@@ -31,6 +31,14 @@ export default function SignInPage() {
         }
     }, []);
 
+    // Перенаправить авторизованного пользователя на callbackUrl или главную
+    useEffect(() => {
+        if (session) {
+            const callbackUrl = searchParams.get('callbackUrl') || '/';
+            router.push(callbackUrl);
+        }
+    }, [session, searchParams, router]);
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError("");
@@ -78,16 +86,9 @@ export default function SignInPage() {
                                             session.user?.role === "admin" ? tCommon('roleAdmin') :
                                             tCommon('roleGuest')}
                     </p>
-                    <Button
-                        variant="destructive"
-                        onClick={async () => {
-                            await signOut({ redirect: false });
-                            router.push('/signin');
-                        }}
-                        className="w-full"
-                    >
-                        {t('signOut')}
-                    </Button>
+                    <p className="text-xs text-muted-foreground animate-pulse">
+                        Redirecting...
+                    </p>
                 </div>
             </div>
         );

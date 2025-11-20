@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from 'next-intl';
 import { useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useRouter } from '@/i18n/routing';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CitySelect from "@/components/CitySelect";
@@ -19,7 +20,9 @@ export default function ClientProfilePage() {
   const tCommon = useTranslations('common');
   const sessionResult = useSession();
   const session = sessionResult?.data ?? null;
+  const isLoadingSession = sessionResult?.status === "loading";
   const updateSession = sessionResult?.update;
+  const router = useRouter();
   const user = session?.user as { id: string; name?: string; email?: string; image?: string; phone?: string; city?: string; role: string };
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -67,8 +70,25 @@ export default function ClientProfilePage() {
     updateMutation.mutate(formData);
   };
 
+  // Перенаправить мастеров на их профиль
+  useEffect(() => {
+    if (!isLoadingSession && session?.user?.role === 'pro') {
+      router.push('/pro/profile');
+    }
+  }, [session?.user?.role, isLoadingSession, router]);
+
+  // Показывать загрузку пока проверяется сессия
+  if (isLoadingSession) {
+    return <p className="text-center py-12 opacity-70">{tCommon('loading') || 'Loading...'}</p>;
+  }
+
   if (!session) {
     return <p className="text-center py-12 opacity-70">{t('needAuth')}</p>;
+  }
+
+  // Показывать сообщение о перенаправлении для мастеров
+  if (session.user?.role === 'pro') {
+    return <p className="text-center py-12 opacity-70">Redirecting to master profile...</p>;
   }
 
   return (
