@@ -22,6 +22,7 @@
     "email": "Email",
     "password": "Пароль",
     "city": "Город",
+    "language": "Язык",
     "price": "Цена",
     "message": "Сообщение",
     "description": "Описание",

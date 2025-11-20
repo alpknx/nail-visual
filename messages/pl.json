@@ -22,6 +22,7 @@
     "email": "Email",
     "password": "Hasło",
     "city": "Miasto",
+    "language": "Język",
     "price": "Cena",
     "message": "Wiadomość",
     "description": "Opis",

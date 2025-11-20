@@ -145,24 +145,18 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
         <Menu className="w-6 h-6" />
       </button>
 
-      {/* Кнопка переключения языка для мобильной версии */}
-      <div className={`md:hidden fixed top-2 right-2 z-50 transition-transform duration-300 ${
-        isHeaderVisible ? 'translate-y-0' : '-translate-y-16'
-      }`}>
-        <LanguageSwitcher mobile />
-      </div>
-
-      {/* Отображение геолокации посередине (только для мобильной версии) */}
-      <div className={`md:hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 transition-transform duration-300 ${
-        isHeaderVisible ? 'translate-y-0' : '-translate-y-16'
-      }`}>
-        <GeolocationDisplay />
-      </div>
 
       {/* Desktop navigation */}
       <header className="hidden md:block sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsOpen(true)}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              aria-label={t('openMenu')}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
             <Link href="/" className="font-semibold tracking-tight">
               Nail Visual
             </Link>
@@ -182,6 +176,7 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
+            <GeolocationDisplay />
             <Link
               href="/privacy"
               className="text-xs text-muted-foreground hover:text-foreground"
@@ -251,23 +246,44 @@ export default function BurgerMenu({ children }: BurgerMenuProps) {
               ))}
             </div>
 
-            <div className="p-4 border-t space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-xs opacity-70"
-                onClick={() => handleNavigation("/privacy")}
-              >
-                {t('privacy')}
-              </Button>
-              {mounted && session && (
+            <div className="p-4 border-t space-y-3">
+              {/* Язык и город */}
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground font-medium px-2">
+                  {t('language') || 'Language'}
+                </div>
+                <div className="px-2">
+                  <LanguageSwitcher mobile />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground font-medium px-2">
+                  {t('city') || 'City'}
+                </div>
+                <div className="px-2">
+                  <GeolocationDisplay />
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start text-destructive"
-                  onClick={handleSignOut}
+                  className="w-full justify-start text-xs opacity-70"
+                  onClick={() => handleNavigation("/privacy")}
                 >
-                  {t('signOut')}
+                  {t('privacy')}
                 </Button>
-              )}
+                {mounted && session && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-destructive"
+                    onClick={handleSignOut}
+                  >
+                    {t('signOut')}
+                  </Button>
+                )}
+              </div>
             </div>
           </nav>
         </SheetContent>

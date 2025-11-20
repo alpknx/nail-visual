@@ -28,7 +28,6 @@ export default function ProProfilePage() {
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
-    phone: user?.phone || "",
     city: user?.city || "",
     bio: "",
     instagram: "",
@@ -115,7 +114,6 @@ export default function ProProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.name,
-          phone: formData.phone,
           city: formData.city,
         }),
       });
@@ -215,17 +213,6 @@ export default function ProProfilePage() {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
         </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">{t('phoneLabel')}</label>
-          <Input
-            type="tel"
-            placeholder={t('phonePlaceholder')}
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          />
-        </div>
-
         <div>
           <label className="block text-sm font-medium mb-1">{t('cityLabel')}</label>
           <CitySelect
