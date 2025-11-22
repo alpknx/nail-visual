@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1760733015766,
-      "tag": "0000_high_ender_wiggin",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1760794336744,
-      "tag": "0001_pink_jackal",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1760905800000,
-      "tag": "0002_add_password",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1761838109695,
-      "tag": "0003_new_lockheed",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1761838268066,
-      "tag": "0004_third_layla_miller",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1761838555361,
-      "tag": "0005_lying_mephisto",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1763303675896,
-      "tag": "0007_nifty_the_captain",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1763317324776,
-      "tag": "0008_premium_pride",
+      "when": 1763814411401,
+      "tag": "0000_lean_purple_man",
       "breakpoints": true
     }
   ]
