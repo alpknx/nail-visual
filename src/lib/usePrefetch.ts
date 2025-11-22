@@ -36,36 +36,3 @@ export function usePrefetchPro() {
 
   return { prefetch };
 }
-
-export function usePrefetchReference() {
-  const queryClient = useQueryClient();
-
-  const prefetch = useCallback(
-    (refId: string) => {
-      queryClient.prefetchQuery({
-        queryKey: ["reference", refId],
-        queryFn: async () => {
-          const res = await fetch(`/api/references/${refId}`);
-          if (!res.ok) throw new Error("Failed to fetch reference");
-          return res.json();
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-
-      // Также загружаем офферы
-      queryClient.prefetchQuery({
-        queryKey: ["offers", "by-ref", refId],
-        queryFn: async () => {
-          const res = await fetch(`/api/offers?referenceId=${refId}`);
-          if (!res.ok) throw new Error("Failed to fetch offers");
-          const data = await res.json();
-          return data.data;
-        },
-        staleTime: 2 * 60 * 1000,
-      });
-    },
-    [queryClient]
-  );
-
-  return { prefetch };
-}
