@@ -1,34 +1,31 @@
 import type { DefaultSession, DefaultUser } from "next-auth";
-import type { JWT } from "next-auth/jwt";
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { compare } from "bcryptjs";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
+import { users } from "@/db/schema";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
-      role: "client" | "pro" | "admin";
-      phone?: string | null;
-      city?: string | null;
+      role: "user" | "master";
     } & DefaultSession["user"];
   }
 
   interface User extends DefaultUser {
-    role: "client" | "pro" | "admin";
-    phone?: string | null;
-    city?: string | null;
+    role: "user" | "master";
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    role: "client" | "pro" | "admin";
-    phone?: string | null;
-    city?: string | null;
+    role: "user" | "master";
   }
 }
 
@@ -38,27 +35,31 @@ const credentialsSchema = z.object({
 });
 
 export const authOptions: NextAuthOptions = {
+  adapter: DrizzleAdapter(db) as any, // Type cast to avoid version mismatch issues
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
   },
-  cookies: {
-    sessionToken: {
-      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production" || process.env.VERCEL === "1",
-        maxAge: 30 * 24 * 60 * 60,
-      },
-    },
+  pages: {
+    signIn: "/signin",
+    newUser: "/onboarding", // Redirect here after signup if needed, but we handle it in callbacks
   },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          role: "master", // Default role, can be updated later
+        };
+      },
+    }),
     Credentials({
-      name: "Email & Password",
+      name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "your@email.com" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -68,74 +69,51 @@ export const authOptions: NextAuthOptions = {
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
-        const lowercaseEmail = email.toLowerCase().trim();
 
-        try {
-          const existing = await (db.query.users.findFirst as any)({
-            where: (t: any, { eq }: any) => eq(t.email, lowercaseEmail),
-          });
+        const user = await db.query.users.findFirst({
+          where: eq(users.email, email),
+        });
 
-          if (!existing || !existing.password) return null;
+        if (!user || !user.passwordHash) return null;
 
-          const isPasswordValid = await compare(password, existing.password);
-          if (!isPasswordValid) return null;
+        const isValid = await compare(password, user.passwordHash);
+        if (!isValid) return null;
 
-          return {
-            id: existing.id,
-            email: existing.email!,
-            name: existing.name ?? undefined,
-            image: existing.image ?? undefined,
-            phone: existing.phone ?? undefined,
-            city: existing.city ?? undefined,
-            role: existing.role as "client" | "pro" | "admin",
-          };
-        } catch (error) {
-          console.error("Auth error:", error);
-          return null;
-        }
+        return {
+          id: user.id,
+          email: user.email!,
+          name: user.name,
+          role: user.role as "user" | "master",
+        };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
         token.sub = user.id;
-        token.phone = (user as any).phone ?? null;
-        token.city = (user as any).city ?? null;
       }
-      
-      // Обновляем данные из базы при каждом запросе сессии (например, после updateSession)
-      if (trigger === "update" || !token.city) {
-        try {
-          const dbUser = await (db.query.users.findFirst as any)({
-            where: (t: any, { eq }: any) => eq(t.id, token.sub),
-          });
-          
-          if (dbUser) {
-            token.phone = dbUser.phone ?? null;
-            token.city = dbUser.city ?? null;
-            token.role = dbUser.role as "client" | "pro" | "admin";
-          }
-        } catch (error) {
-          console.error("Error updating JWT token:", error);
-        }
+
+      if (trigger === "update" && session?.user) {
+        token.role = session.user.role;
       }
-      
+
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;
-        session.user.role = token.role as typeof session.user.role;
-        (session.user as any).phone = token.phone ?? null;
-        (session.user as any).city = token.city ?? null;
+        session.user.role = token.role;
       }
       return session;
     },
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: "/signin",
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
 };

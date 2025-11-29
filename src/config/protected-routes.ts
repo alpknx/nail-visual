@@ -3,7 +3,7 @@
  * Defines which routes require authentication and which roles can access them
  */
 
-export type UserRole = "client" | "pro" | "admin";
+export type UserRole = "master";
 
 export interface ProtectedRoute {
   path: string;
@@ -13,18 +13,18 @@ export interface ProtectedRoute {
 
 export const PROTECTED_ROUTES: ProtectedRoute[] = [
   {
-    path: "/references",
-    roles: ["client", "admin"],
+    path: "/dashboard",
+    roles: ["master"],
     requiresAuth: true,
   },
   {
-    path: "/admin",
-    roles: ["admin"],
+    path: "/onboarding",
+    roles: ["master"],
     requiresAuth: true,
   },
   {
-    path: "/pro",
-    roles: ["pro", "admin"],
+    path: "/upload",
+    roles: ["master"],
     requiresAuth: true,
   },
 ];

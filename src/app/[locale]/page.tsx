@@ -1,80 +1,117 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
-import ProOrdersGallery from "@/components/ProOrdersGallery";
-import DesignsGrid from "@/components/DesignsGrid";
-
-// Сохраняем роль в sessionStorage для сохранения при переключении языка
-const ROLE_STORAGE_KEY = 'user_role';
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { getFeedPosts } from "@/app/actions";
+import { useInView } from "react-intersection-observer";
+import { useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { MapPin, Search, Heart } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
-  const t = useTranslations('home');
-  const { data: session, status } = useSession();
-  
-  // Инициализируем роль только из сессии (для SSR совместимости)
-  const [role, setRole] = useState<string | undefined>(session?.user?.role);
-  const [isHydrated, setIsHydrated] = useState(false);
-  
-  // После гидратации восстанавливаем роль из sessionStorage
+  const { ref, inView } = useInView();
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+  } = useInfiniteQuery({
+    queryKey: ["feed"],
+    queryFn: ({ pageParam }) => getFeedPosts({ pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+
   useEffect(() => {
-    setIsHydrated(true);
-    if (typeof window !== 'undefined') {
-      const storedRole = sessionStorage.getItem(ROLE_STORAGE_KEY);
-      if (storedRole) {
-        setRole(storedRole);
-      }
+    if (inView && hasNextPage) {
+      fetchNextPage();
     }
-  }, []);
-  
-  // Сохраняем роль при изменении сессии
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role) {
-      const newRole = session.user.role;
-      setRole(newRole);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(ROLE_STORAGE_KEY, newRole);
-      }
-    } else if (status === 'unauthenticated') {
-      setRole(undefined);
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(ROLE_STORAGE_KEY);
-      }
-    } else if (status === 'loading' && isHydrated && typeof window !== 'undefined') {
-      // Во время загрузки используем сохраненную роль только после гидратации
-      const storedRole = sessionStorage.getItem(ROLE_STORAGE_KEY);
-      if (storedRole) {
-        setRole(storedRole);
-      }
-    }
-  }, [session, status, isHydrated]);
+  }, [inView, fetchNextPage, hasNextPage]);
 
   return (
-    <main className="min-h-screen pb-4">
-      {role === "pro" ? (
-        <div className="space-y-4">
-          <div className="px-4 pt-16 md:pt-4">
-            <h1 className="text-2xl font-semibold mb-2">{t('pro.title')}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t('pro.subtitle')}
-            </p>
+    <div className="min-h-screen pb-20">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b p-4 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-full text-sm font-medium">
+            <MapPin className="w-4 h-4 text-primary" />
+            <span>New York</span>
           </div>
-          <ProOrdersGallery />
-        </div>
-      ) : (
-        // Для клиентов и гостей показываем каталог дизайнов
-        <div className="space-y-4">
-          <div className="px-4 pt-16 md:pt-4">
-            <h1 className="text-2xl font-semibold mb-2">{t('guest.title')}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t('guest.subtitle') || "Я просто листала красивые ноготочки и нашла мастера в своём районе"}
-            </p>
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="pl-9 h-9 bg-muted/50 border-none"
+            />
           </div>
-          <DesignsGrid />
         </div>
-      )}
-    </main>
+
+        {/* Filters */}
+        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {["Trending", "New", "French", "Art", "Minimal", "3D"].map((filter) => (
+            <Badge
+              key={filter}
+              variant="secondary"
+              className="whitespace-nowrap px-4 py-1.5 rounded-full cursor-pointer hover:bg-primary/10"
+            >
+              {filter}
+            </Badge>
+          ))}
+        </div>
+      </header>
+
+      {/* Feed */}
+      <div className="p-2 columns-2 gap-2 space-y-2">
+        {status === "pending" ? (
+          <div className="col-span-2 text-center py-10">Loading...</div>
+        ) : status === "error" ? (
+          <div className="col-span-2 text-center py-10 text-destructive">
+            Error loading feed
+          </div>
+        ) : (
+          data?.pages.map((page, i) => (
+            <div key={i} className="contents">
+              {page.data.map((post) => (
+                <Link key={post.id} href={`/post/${post.id}`} className="block break-inside-avoid mb-2 group relative">
+                  <div className="relative rounded-xl overflow-hidden bg-muted aspect-[4/5]">
+                    <Image
+                      src={post.imageUrl}
+                      alt={post.description || "Nail Art"}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                      sizes="(max-width: 768px) 50vw, 33vw"
+                    />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm">
+                            <Heart className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-xs font-medium truncate">{post.master?.businessName}</p>
+                        {post.price && <p className="text-xs opacity-90">{post.price} {post.currency}</p>}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Loading More */}
+      <div ref={ref} className="py-8 text-center text-sm text-muted-foreground">
+        {isFetchingNextPage
+          ? "Loading more..."
+          : hasNextPage
+          ? "Load more"
+          : "You've seen it all!"}
+      </div>
+    </div>
   );
 }
-

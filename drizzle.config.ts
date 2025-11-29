@@ -10,4 +10,5 @@ export default defineConfig({
     dbCredentials: { url: process.env.DATABASE_URL! },
     verbose: true,
     strict: true,
+    tablesFilter: ["!spatial_ref_sys"],
 });

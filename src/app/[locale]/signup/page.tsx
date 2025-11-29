@@ -6,6 +6,8 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { User, Sparkles } from "lucide-react";
 
 export default function SignUpPage() {
     const t = useTranslations('auth.signUp');
@@ -25,7 +27,7 @@ export default function SignUpPage() {
             return;
         }
 
-        if (password.length < 6) {
+        if (password.length < 8) {
             setError(t('passwordMinLength'));
             return;
         }
@@ -36,7 +38,7 @@ export default function SignUpPage() {
             const res = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password, role: "pro" }),
+                body: JSON.stringify({ email, password }),
             });
 
             const data = await res.json();
@@ -54,7 +56,7 @@ export default function SignUpPage() {
             });
 
             if (result?.ok) {
-                router.push("/");
+                router.push("/onboarding");
             } else {
                 setError(t('signInAfterRegistrationError'));
             }
@@ -83,6 +85,7 @@ export default function SignUpPage() {
                     )}
 
                     <div className="space-y-3">
+
                         <div className="space-y-2">
                             <label htmlFor="email" className="text-sm font-medium">
                                 {t('email')}
@@ -100,9 +103,6 @@ export default function SignUpPage() {
                             />
                         </div>
 
-                        {/* Роль скрыта - только регистрация как мастер */}
-                        <input type="hidden" name="role" value="pro" />
-
                         <div className="space-y-2">
                             <label htmlFor="password" className="text-sm font-medium">
                                 {t('password')}
@@ -113,7 +113,7 @@ export default function SignUpPage() {
                                 type="password"
                                 autoComplete="new-password"
                                 required
-                                placeholder={t('passwordMinLength')}
+                                placeholder="Min 8 characters"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full"
