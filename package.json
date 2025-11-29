@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:studio": "drizzle-kit studio",
-    "db:fresh": "tsx src/db/reset.ts && drizzle-kit migrate"
+    "db:fresh": "tsx src/db/reset.ts && drizzle-kit migrate && tsx src/db/seed.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.0",

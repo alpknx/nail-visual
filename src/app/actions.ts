@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
-import { masterProfiles, posts } from "@/db/schema";
+import { masterProfiles, posts, postTags } from "@/db/schema";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { eq, desc, sql } from "drizzle-orm";
@@ -59,7 +59,7 @@ export async function getFeedPosts({ pageParam = 0 }: { pageParam?: number }) {
 
   const feedPosts = await db.query.posts.findMany({
     with: {
-      master: true,
+      author: true,
     },
     limit: LIMIT,
     offset: OFFSET,
@@ -177,3 +177,53 @@ export async function getMatchingMasters(postId: string) {
 }
 
 
+
+const createPostSchema = z.object({
+  imageUrl: z.string().url(),
+  description: z.string().optional(),
+  price: z.number().optional(),
+  durationMinutes: z.number().optional(),
+  tagIds: z.array(z.number()),
+});
+
+export async function createPost(data: z.infer<typeof createPostSchema>) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user || session.user.role !== "master") {
+    throw new Error("Unauthorized");
+  }
+
+  const validated = createPostSchema.parse(data);
+
+  // 1. Create Post
+  const [newPost] = await db.insert(posts).values({
+    masterId: session.user.id,
+    imageUrl: validated.imageUrl,
+    description: validated.description,
+    price: validated.price ? Math.round(validated.price * 100) : null, // Convert to cents
+    currency: "PLN", // Default for now
+    durationMinutes: validated.durationMinutes,
+  }).returning();
+
+  // 2. Link Tags
+  if (validated.tagIds.length > 0) {
+    await db.insert(postTags).values(
+      validated.tagIds.map((tagId) => ({
+        postId: newPost.id,
+        tagId: tagId,
+      }))
+    );
+  }
+
+  redirect("/dashboard");
+}
+
+export async function getTags() {
+  const allTags = await db.query.tags.findMany({
+    with: {
+      category: true,
+    },
+    orderBy: (tags, { asc }) => [asc(tags.slug)],
+  });
+  return allTags;
+}

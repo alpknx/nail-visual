@@ -8,4 +8,6 @@ const config: Config = {
   ],
 };
 
-export default config;
+import { withUt } from "uploadthing/tw";
+
+export default withUt(config);
