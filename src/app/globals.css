@@ -146,4 +146,9 @@
     display: none;
   }
 }
+
+/* Hide Tabbar internal container div */
+.pl-safe-4.pr-safe-4.h-11.justify-between.flex.relative.items-center.w-full {
+  display: none !important;
+}
 /* stylelint-enable at-rule-no-unknown */
