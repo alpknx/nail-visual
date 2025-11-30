@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft, MapPin, Clock, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getMatchingMasters } from "@/app/actions";
+import MatchingMastersList from "@/components/MatchingMastersList";
 
 interface PostDetailPageProps {
   params: Promise<{ id: string }>;
@@ -88,46 +89,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         {/* Matching Masters Carousel */}
         <div className="overflow-x-auto pb-2 no-scrollbar">
           <div className="flex gap-3">
-            {matchingMasters.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">
-                No matching masters found nearby.
-              </p>
-            ) : (
-              matchingMasters.map((match) => (
-                <Link
-                  key={match.masterId}
-                  href={`/master/${match.masterId}`}
-                  className="flex-shrink-0 w-48 rounded-lg border bg-card p-3 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="relative h-32 rounded-md overflow-hidden mb-2 bg-muted">
-                    {match.matchingImageUrl && (
-                      <Image
-                        src={match.matchingImageUrl}
-                        alt={match.businessName}
-                        fill
-                        className="object-cover"
-                      />
-                    )}
-                  </div>
-                  <h3 className="font-medium text-sm truncate">
-                    {match.businessName}
-                  </h3>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                    <MapPin className="h-3 w-3" />
-                    <span>{match.distance.toFixed(1)} km</span>
-                  </div>
-                  {match.price && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <DollarSign className="h-3 w-3" />
-                      <span>{match.price} PLN</span>
-                    </div>
-                  )}
-                  <div className="mt-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-md">
-                    Match Score: {match.score}
-                  </div>
-                </Link>
-              ))
-            )}
+            <MatchingMastersList matches={matchingMasters} />
           </div>
         </div>
       </div>

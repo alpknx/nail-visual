@@ -157,6 +157,9 @@ export async function getMatchingMasters(postId: string) {
       return {
         masterId: master.userId,
         businessName: master.businessName,
+        phoneNumber: master.phoneNumber,
+        phoneCountryCode: master.phoneCountryCode,
+        avatarUrl: master.avatarUrl,
         score,
         distance,
         matchingImageUrl: matchingPost?.imageUrl || null,
@@ -226,4 +229,12 @@ export async function getTags() {
     orderBy: (tags, { asc }) => [asc(tags.slug)],
   });
   return allTags;
+}
+
+export async function trackConversionClick(masterId: string, type: 'sms' | 'call') {
+  // TODO: Implement actual analytics tracking
+  console.log(`[Analytics] Conversion click: ${type} for master ${masterId}`);
+
+  // In a real implementation, we would insert into a 'conversions' table
+  // await db.insert(conversions).values({ masterId, type, timestamp: new Date() });
 }
