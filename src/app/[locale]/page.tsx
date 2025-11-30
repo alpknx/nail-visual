@@ -6,10 +6,11 @@ import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Page, Navbar, Searchbar, Block, Chip, Sheet, List, ListItem } from "konsta/react";
+import { Page, Navbar, Searchbar, Block, Link as KonstaLink, Sheet, List, ListItem, Toolbar, ToolbarPane } from "konsta/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/use-debounce";
 import { searchTags, getTagById } from "@/app/actions";
+import { X } from "lucide-react";
 
 export default function Home() {
   const { ref, inView } = useInView();
@@ -110,17 +111,27 @@ export default function Home() {
         backdrop={true}
         onBackdropClick={() => setIsSheetOpen(false)}
       >
+        <Toolbar top className="ios:pt-4">
+          <ToolbarPane>
+            <Searchbar
+              value={searchQuery}
+              onInput={(e: any) => setSearchQuery(e.target.value)}
+              placeholder="Search tags..."
+              clearButton
+              onClear={() => setSearchQuery("")}
+            />
+          </ToolbarPane>
+          <ToolbarPane>
+            <KonstaLink onClick={() => setIsSheetOpen(false)}>
+              <X />
+            </KonstaLink>
+          </ToolbarPane>
+        </Toolbar>
+
         <div className="p-4 border-b">
-          <Searchbar
-            value={searchQuery}
-            onInput={(e: any) => setSearchQuery(e.target.value)}
-            placeholder="Search tags..."
-            clearButton
-            onClear={() => setSearchQuery("")}
-            disableButton={false}
-          />
+
         </div>
-        <div className="overflow-y-auto h-[90vh]">
+        <div className="overflow-y-auto h-[85vh]">
           {searchResults.length > 0 ? (
             <List strong inset>
               {searchResults.map((tag) => (
