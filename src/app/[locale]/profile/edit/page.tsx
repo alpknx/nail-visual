@@ -1,16 +1,41 @@
 "use client";
 
-import { useState } from "react";
-import { completeOnboarding } from "@/app/actions";
-import { Page, Navbar, List, ListInput, Button, Block, BlockTitle } from "konsta/react";
+import { useState, useEffect } from "react";
+import { getProfile, updateProfile } from "@/app/actions";
+import { Page, Navbar, List, ListInput, Button, Block, BlockTitle, NavbarBackLink } from "konsta/react";
+import { useRouter } from "next/navigation";
 
-export default function OnboardingPage() {
+export default function EditProfilePage() {
+  const router = useRouter();
   const [businessName, setBusinessName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [city, setCity] = useState("");
   const [addressText, setAddressText] = useState("");
+  const [bio, setBio] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profile = await getProfile();
+        if (profile) {
+          setBusinessName(profile.businessName);
+          setPhoneNumber(profile.phoneNumber);
+          setCity(profile.city || "");
+          setAddressText(profile.addressText || "");
+          setBio(profile.bio || "");
+        }
+      } catch (e) {
+        console.error(e);
+        setError("Failed to load profile");
+      } finally {
+        setFetching(false);
+      }
+    };
+    loadProfile();
+  }, []);
 
   const handleSubmit = async () => {
     setError("");
@@ -27,12 +52,14 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      await completeOnboarding({
+      await updateProfile({
         businessName,
         phoneNumber,
         city,
         addressText,
+        bio,
       });
+      router.push("/profile");
     } catch (e) {
       console.error(e);
       setError("Something went wrong. Please try again.");
@@ -41,11 +68,25 @@ export default function OnboardingPage() {
     }
   };
 
+  if (fetching) {
+    return (
+      <Page>
+        <Navbar title="Edit Profile" />
+        <Block className="text-center mt-10">Loading...</Block>
+      </Page>
+    );
+  }
+
   return (
     <Page>
-      <Navbar title="Complete your Profile" />
+      <Navbar
+        title="Edit Profile"
+        left={
+          <NavbarBackLink onClick={() => router.back()} text="Back" />
+        }
+      />
 
-      <BlockTitle>Tell us about your business to get started.</BlockTitle>
+      <BlockTitle>Update your business information</BlockTitle>
 
       <List strong inset>
         <ListInput
@@ -83,6 +124,16 @@ export default function OnboardingPage() {
           value={addressText}
           onInput={(e: any) => setAddressText(e.target.value)}
         />
+
+        <ListInput
+          outline
+          label="Bio (Optional)"
+          type="textarea"
+          placeholder="Tell us about yourself..."
+          value={bio}
+          onInput={(e: any) => setBio(e.target.value)}
+          inputClassName="!h-20 resize-none"
+        />
       </List>
 
       {error && (
@@ -93,7 +144,7 @@ export default function OnboardingPage() {
 
       <Block>
         <Button large onClick={handleSubmit} disabled={loading}>
-          {loading ? "Saving..." : "Start"}
+          {loading ? "Saving..." : "Save Changes"}
         </Button>
       </Block>
     </Page>

@@ -28,7 +28,7 @@ export function UploadForm({ allTags }: UploadFormProps) {
         tagIds: values.tagIds,
       });
 
-      // router.push("/dashboard"); // Handled by server action redirect
+      // router.push("/profile"); // Handled by server action redirect
     } catch (error) {
       console.error(error);
       setIsSubmitting(false);

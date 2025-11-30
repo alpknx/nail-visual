@@ -148,6 +148,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
           placeholder="Describe your work..."
           value={description}
           onInput={(e: any) => setDescription(e.target.value)}
+          inputClassName="!h-20 resize-none"
         />
         <div className="grid grid-cols-2 gap-4">
           <ListInput

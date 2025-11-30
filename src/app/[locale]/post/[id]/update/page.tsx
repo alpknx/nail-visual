@@ -36,7 +36,7 @@ export default async function UpdatePostPage({ params }: UpdatePostPageProps) {
 
   // Verify ownership
   if (post.masterId !== session.user.id) {
-    redirect("/dashboard");
+    redirect("/profile");
   }
 
   // Fetch all tags for selection

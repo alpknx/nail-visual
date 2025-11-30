@@ -37,7 +37,7 @@ export default function UpdatePostClient({ post, allTags }: UpdatePostClientProp
         price: data.price,
         durationMinutes: data.durationMinutes,
       });
-      // router.push("/dashboard"); 
+      // router.push("/profile"); 
     } catch (error) {
       console.error("Failed to update tags", error);
     } finally {

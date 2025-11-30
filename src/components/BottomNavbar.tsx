@@ -10,7 +10,7 @@ export default function BottomNavbar() {
   const router = useRouter();
 
   // Simple check for active state. 
-  // Note: pathname includes locale, e.g. /en/dashboard
+  // Note: pathname includes locale, e.g. /en/profile
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/en" || pathname === "/pl" || pathname === "/";
     return pathname?.includes(path);
@@ -41,8 +41,8 @@ export default function BottomNavbar() {
         label="Upload"
       />
       <TabbarLink
-        active={isActive("/dashboard")}
-        onClick={() => router.push("/dashboard")}
+        active={isActive("/profile")}
+        onClick={() => router.push("/profile")}
         icon={
           <Icon
             ios={<User className="w-7 h-7" />}

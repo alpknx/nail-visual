@@ -82,19 +82,6 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2">
-                {post.tags.map(({ tag }: any) => (
-                  <Chip
-                    key={tag.id}
-                    className="bg-gray-100 text-gray-900 border-none"
-                  >
-                    {typeof tag.nameTranslations === 'object' && tag.nameTranslations !== null
-                      ? (tag.nameTranslations as { en?: string }).en || tag.slug
-                      : tag.slug}
-                  </Chip>
-                ))}
-              </div>
-
               <ContactButtons
                 phoneNumber={post.author.phoneNumber}
                 phoneCountryCode={post.author.phoneCountryCode}

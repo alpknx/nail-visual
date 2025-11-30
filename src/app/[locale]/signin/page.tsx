@@ -93,6 +93,7 @@ export default function SignInPage() {
       <BlockTitle>{t('subtitle')}</BlockTitle>
       <List strong inset>
         <ListInput
+          outline
           label={t('email')}
           type="email"
           placeholder="your@email.com"
@@ -100,6 +101,7 @@ export default function SignInPage() {
           onInput={(e: any) => setEmail(e.target.value)}
         />
         <ListInput
+          outline
           label={t('password')}
           type="password"
           placeholder={t('password')}

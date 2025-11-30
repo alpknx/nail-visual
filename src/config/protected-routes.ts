@@ -13,7 +13,7 @@ export interface ProtectedRoute {
 
 export const PROTECTED_ROUTES: ProtectedRoute[] = [
   {
-    path: "/dashboard",
+    path: "/profile",
     roles: ["master"],
     requiresAuth: true,
   },

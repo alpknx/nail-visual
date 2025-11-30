@@ -41,7 +41,52 @@ export async function completeOnboarding(formData: z.infer<typeof onboardingSche
     }
   });
 
-  redirect("/dashboard");
+  redirect("/profile");
+}
+
+export async function getProfile() {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user) {
+    return null;
+  }
+
+  const profile = await db.query.masterProfiles.findFirst({
+    where: eq(masterProfiles.userId, session.user.id),
+  });
+
+  return profile;
+}
+
+const updateProfileSchema = z.object({
+  businessName: z.string().min(1, "Business Name is required"),
+  phoneNumber: z.string().min(1, "Phone Number is required"),
+  addressText: z.string().optional(),
+  city: z.string().optional(),
+  bio: z.string().optional(),
+});
+
+export async function updateProfile(data: z.infer<typeof updateProfileSchema>) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user || session.user.role !== "master") {
+    throw new Error("Unauthorized");
+  }
+
+  const validated = updateProfileSchema.parse(data);
+
+  await db.update(masterProfiles)
+    .set({
+      businessName: validated.businessName,
+      phoneNumber: validated.phoneNumber,
+      addressText: validated.addressText,
+      city: validated.city,
+      bio: validated.bio,
+      updatedAt: new Date(),
+    })
+    .where(eq(masterProfiles.userId, session.user.id));
+
+  return { success: true };
 }
 
 export async function getFeedPosts({ pageParam = 0, tagId }: { pageParam?: number, tagId?: number }) {
@@ -121,9 +166,7 @@ export async function getMatchingMasters(postId: string) {
       tags: {
         with: {
           tag: {
-            with: {
-              category: true,
-            },
+
           },
         },
       },
@@ -146,9 +189,7 @@ export async function getMatchingMasters(postId: string) {
           tags: {
             with: {
               tag: {
-                with: {
-                  category: true,
-                },
+
               },
             },
           },
@@ -172,14 +213,8 @@ export async function getMatchingMasters(postId: string) {
         for (const postTag of post.tags) {
           for (const masterTag of masterPost.tags) {
             if (postTag.tag.id === masterTag.tag.id) {
-              // +3 for Design category, +2 for Shape category
-              if (postTag.tag.category.slug === "design") {
-                postScore += 3;
-              } else if (postTag.tag.category.slug === "shape") {
-                postScore += 2;
-              } else {
-                postScore += 1;
-              }
+              // Simple match count
+              postScore += 1;
             }
           }
         }
@@ -220,8 +255,6 @@ export async function getMatchingMasters(postId: string) {
   return scoredMasters;
 }
 
-
-
 const createPostSchema = z.object({
   imageUrl: z.string().url(),
   description: z.string().optional(),
@@ -244,7 +277,7 @@ export async function createPost(data: z.infer<typeof createPostSchema>) {
     masterId: session.user.id,
     imageUrl: validated.imageUrl,
     description: validated.description,
-    price: validated.price ? Math.round(validated.price * 100) : null, // Convert to cents
+    price: validated.price ? Math.round(validated.price) : null,
     currency: "PLN", // Default for now
     durationMinutes: validated.durationMinutes,
   }).returning();
@@ -259,7 +292,7 @@ export async function createPost(data: z.infer<typeof createPostSchema>) {
     );
   }
 
-  redirect("/dashboard");
+  redirect("/profile");
 }
 
 export async function getTags() {
@@ -300,7 +333,7 @@ export async function updatePostDetails(data: z.infer<typeof updatePostDetailsSc
   // Update post details
   await db.update(posts)
     .set({
-      price: validated.price ? Math.round(validated.price * 100) : null, // Convert to cents
+      price: validated.price ? Math.round(validated.price) : null,
       durationMinutes: validated.durationMinutes,
     })
     .where(eq(posts.id, validated.postId));
@@ -318,7 +351,7 @@ export async function updatePostDetails(data: z.infer<typeof updatePostDetailsSc
     );
   }
 
-  redirect("/dashboard");
+  redirect("/profile");
 }
 
 export async function deletePost(postId: string) {
@@ -341,5 +374,5 @@ export async function deletePost(postId: string) {
   await db.delete(postTags).where(eq(postTags.postId, postId));
   await db.delete(posts).where(eq(posts.id, postId));
 
-  redirect("/dashboard");
+  redirect("/profile");
 }
