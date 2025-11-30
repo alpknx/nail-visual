@@ -272,14 +272,6 @@ export async function getTags() {
   return allTags;
 }
 
-export async function trackConversionClick(masterId: string, type: 'sms' | 'call') {
-  // TODO: Implement actual analytics tracking
-  console.log(`[Analytics] Conversion click: ${type} for master ${masterId}`);
-
-  // In a real implementation, we would insert into a 'conversions' table
-  // await db.insert(conversions).values({ masterId, type, timestamp: new Date() });
-}
-
 const updatePostDetailsSchema = z.object({
   postId: z.string(),
   tagIds: z.array(z.number()),

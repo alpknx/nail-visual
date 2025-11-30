@@ -9,7 +9,6 @@ import Link from "next/link";
 import { MapPin, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import MasterContactDialog from "@/components/MasterContactDialog";
 
 interface MasterProfilePageProps {
   params: Promise<{ id: string }>;
@@ -17,7 +16,7 @@ interface MasterProfilePageProps {
 
 export default async function MasterProfilePage({ params }: MasterProfilePageProps) {
   const { id } = await params;
-  
+
   const master = await db.query.masterProfiles.findFirst({
     where: eq(masterProfiles.userId, id),
     with: {
@@ -89,7 +88,7 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
       {/* Portfolio Grid */}
       <div className="max-w-6xl mx-auto p-6">
         <h2 className="text-xl font-semibold mb-4">Portfolio</h2>
-        
+
         {masterPosts.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">
             No works uploaded yet
@@ -99,7 +98,7 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
             {masterPosts.map((post) => (
               <Link
                 key={post.id}
-                href={`/post/${post.id}`}
+                href={`/post/${post.id}?source=profile`}
                 className="group relative aspect-square rounded-lg overflow-hidden bg-muted"
               >
                 <Image

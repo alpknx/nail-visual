@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Page, Navbar, NavbarBackLink, Block, Chip, Button } from "konsta/react";
 import MatchingMastersList from "@/components/MatchingMastersList";
-import { MessageCircle, Clock } from "lucide-react";
+import { MessageCircle, Clock, Phone } from "lucide-react";
+import ContactButtons from "@/components/ContactButtons";
 
 interface PostDetailClientProps {
   post: any;
@@ -17,14 +18,7 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
   const router = useRouter();
   const isPortfolioMode = source === 'profile';
 
-  const handleBookClick = () => {
-    if (!post.author?.phoneNumber) return;
 
-    const message = `Hi ${post.author.businessName}, I saw your #${post.tags[0]?.tag?.slug || 'nail'} work (Image #${post.id}) and want to book...`;
-    const whatsappUrl = `https://wa.me/${post.author.phoneNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
-
-    window.open(whatsappUrl, '_blank');
-  };
 
   return (
     <Page className="!h-[100dvh] !overflow-hidden flex flex-col">
@@ -82,14 +76,29 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
                 </div>
               </div>
 
-              <Button
-                large
-                onClick={handleBookClick}
-                className="bg-green-500 active:bg-green-600"
-              >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Chat about this Look
-              </Button>
+              {post.description && (
+                <div className="text-sm text-gray-700">
+                  {post.description}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {post.tags.map(({ tag }: any) => (
+                  <Chip
+                    key={tag.id}
+                    className="bg-gray-100 text-gray-900 border-none"
+                  >
+                    {typeof tag.nameTranslations === 'object' && tag.nameTranslations !== null
+                      ? (tag.nameTranslations as { en?: string }).en || tag.slug
+                      : tag.slug}
+                  </Chip>
+                ))}
+              </div>
+
+              <ContactButtons
+                phoneNumber={post.author.phoneNumber}
+                phoneCountryCode={post.author.phoneCountryCode}
+              />
             </Block>
           ) : (
             <>

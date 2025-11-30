@@ -88,7 +88,7 @@ export default function Home() {
   };
 
   return (
-    <Page>
+    <Page className="pb-12">
       <Navbar
         subnavbar={
           <Searchbar
@@ -128,9 +128,6 @@ export default function Home() {
           </ToolbarPane>
         </Toolbar>
 
-        <div className="p-4 border-b">
-
-        </div>
         <div className="overflow-y-auto h-[85vh]">
           {searchResults.length > 0 ? (
             <List strong inset>
@@ -157,7 +154,7 @@ export default function Home() {
       </Sheet>
 
       {/* Feed */}
-      <div className="p-2 columns-2 gap-2 space-y-2 pb-20">
+      <div className="p-2 columns-2 gap-2 space-y-2">
         {status === "pending" ? (
           <div className="col-span-2 text-center py-10">Loading...</div>
         ) : status === "error" ? (
@@ -190,7 +187,7 @@ export default function Home() {
       </div>
 
       {/* Loading More */}
-      <div ref={ref} className="py-8 text-center text-sm text-gray-500">
+      <div ref={ref} className="py-4 text-center text-sm text-gray-500">
         {isFetchingNextPage
           ? "Loading more..."
           : hasNextPage

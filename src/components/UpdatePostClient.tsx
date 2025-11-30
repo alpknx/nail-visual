@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Page, Navbar, NavbarBackLink, Block, Button, Chip, Dialog, DialogButton, BlockTitle, List, ListInput, Link } from "konsta/react";
+import { Page, Navbar, NavbarBackLink, Link } from "konsta/react";
 import { updatePostDetails, deletePost } from "@/app/actions";
-import Image from "next/image";
+import PostForm from "@/components/PostForm";
 
 interface UpdatePostClientProps {
   post: any;
@@ -13,45 +13,34 @@ interface UpdatePostClientProps {
 
 export default function UpdatePostClient({ post, allTags }: UpdatePostClientProps) {
   const router = useRouter();
-  const [selectedTags, setSelectedTags] = useState<number[]>(
-    post.tags.map((t: any) => t.tag.id)
-  );
-  const [price, setPrice] = useState<string>(post.price ? post.price.toString() : "");
-  const [duration, setDuration] = useState<string>(post.durationMinutes ? post.durationMinutes.toString() : "");
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const toggleTag = (tagId: number) => {
-    setSelectedTags((prev) =>
-      prev.includes(tagId)
-        ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId]
-    );
-  };
+  // We need a ref or state to trigger submit from Navbar
+  // Since PostForm handles its own state, we might need to lift state up OR 
+  // simply pass a ref. But simpler: PostForm exposes data via onChange?
+  // Actually, the requirement was "Save Changes" in Navbar.
+  // PostForm has internal state. To trigger submit from Navbar, we need to control the form from here.
+  // Let's refactor PostForm to be controlled OR expose a ref.
+  // For now, let's just make PostForm accept a ref if possible, or move the state back here?
+  // Moving state back here defeats the purpose of "unifying".
+  // Better: PostForm can accept a `triggerSubmit` prop? No.
+  // Let's use a ref to call submit on the child.
 
-  // Group tags by category
-  const groupedTags = allTags.reduce((acc, tag) => {
-    const category = tag.category?.slug || "other";
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(tag);
-    return acc;
-  }, {} as Record<string, any[]>);
+  const formRef = React.useRef<{ submit: () => void }>(null);
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (data: any) => {
     setIsSubmitting(true);
     try {
       await updatePostDetails({
         postId: post.id,
-        tagIds: selectedTags,
-        price: price ? parseFloat(price) : undefined,
-        durationMinutes: duration ? parseInt(duration) : undefined,
+        tagIds: data.tagIds,
+        price: data.price,
+        durationMinutes: data.durationMinutes,
       });
-      // Redirect handled by server action, but we can also push
       // router.push("/dashboard"); 
     } catch (error) {
       console.error("Failed to update tags", error);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -66,107 +55,34 @@ export default function UpdatePostClient({ post, allTags }: UpdatePostClientProp
     }
   };
 
+  // Wrapper to trigger form submit from Navbar
+  const triggerSubmit = () => {
+    if (formRef.current) {
+      formRef.current.submit();
+    }
+  };
+
   return (
     <Page className="pb-12">
       <Navbar
         title="Edit Details"
         left={<NavbarBackLink onClick={() => router.back()} text="Cancel" />}
         right={
-          <Link onClick={handleUpdate} className={isSubmitting ? "opacity-50" : ""}>
+          <Link onClick={triggerSubmit} className={isSubmitting ? "opacity-50" : ""}>
             {isSubmitting ? "Saving..." : "Save"}
           </Link>
         }
       />
 
-      <div className="relative w-full h-64 bg-black">
-        <Image
-          src={post.imageUrl}
-          alt="Post Image"
-          fill
-          className="object-contain opacity-80"
-        />
-        <div className="absolute inset-0 flex items-center justify-center p-4 bg-black/30">
-          <p className="text-white text-center text-sm font-medium bg-black/50 p-2 rounded-lg backdrop-blur-sm">
-            To change the image, please delete and create a new post.
-          </p>
-        </div>
-      </div>
-
-      <List strong inset>
-        <ListInput
-          outline
-          label="Price (PLN)"
-          type="number"
-          placeholder="0.00"
-          value={price}
-          onInput={(e: any) => setPrice(e.target.value)}
-        />
-        <ListInput
-          outline
-          label="Duration (min)"
-          type="number"
-          placeholder="60"
-          value={duration}
-          onInput={(e: any) => setDuration(e.target.value)}
-        />
-      </List>
-
-      {Object.entries(groupedTags).map(([category, tags]) => (
-        <React.Fragment key={category}>
-          <BlockTitle className="capitalize">{category}</BlockTitle>
-          <Block strong inset>
-            <div className="flex flex-wrap gap-2">
-              {(tags as any[]).map((tag) => (
-                <Chip
-                  key={tag.id}
-                  className={`cursor-pointer capitalize ${selectedTags.includes(tag.id)
-                    ? "bg-black text-white"
-                    : "bg-gray-100 text-gray-900"
-                    }`}
-                  onClick={() => toggleTag(tag.id)}
-                >
-                  {tag.nameTranslations?.en || tag.slug}
-                </Chip>
-              ))}
-            </div>
-          </Block>
-        </React.Fragment>
-      ))}
-
-      <Block>
-        <div className="space-y-3">
-          {/* Save button moved to Navbar */}
-
-          <Button
-            large
-            outline
-            className="border-red-500 text-red-500"
-            onClick={() => setIsDeleteConfirmOpen(true)}
-            disabled={isSubmitting}
-          >
-            Delete Post
-          </Button>
-        </div>
-      </Block>
-
-      <Dialog
-        opened={isDeleteConfirmOpen}
-        onBackdropClick={() => setIsDeleteConfirmOpen(false)}
-        title="Delete Post?"
-        content="Are you sure? This will remove it from all user Favorites."
-        buttons={
-          <>
-            <DialogButton onClick={() => setIsDeleteConfirmOpen(false)}>
-              Cancel
-            </DialogButton>
-            <DialogButton
-              className="text-red-500"
-              onClick={handleDelete}
-            >
-              Delete
-            </DialogButton>
-          </>
-        }
+      <PostForm
+        mode="update"
+        initialData={post}
+        allTags={allTags}
+        onSubmit={handleUpdate}
+        onDelete={handleDelete}
+        isSubmitting={isSubmitting}
+        // @ts-ignore - we'll add useImperativeHandle to PostForm next
+        ref={formRef}
       />
     </Page>
   );
