@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { UploadDropzone } from "@/lib/uploadthing";
+import { UploadButton } from "@/lib/uploadthing";
 import { createPost } from "@/app/actions";
 import { Loader2, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { log } from "console";
 
 // --- Types & Constants ---
 
@@ -47,6 +48,8 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
+  console.log(tags);
   const {
     register,
     handleSubmit,
@@ -143,13 +146,10 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
               </button>
             </div>
           ) : (
-            <UploadDropzone
+            <UploadButton
               endpoint="imageUploader"
               onUploadBegin={(name) => {
                 console.log("Upload started:", name);
-              }}
-              onUploadProgress={(progress) => {
-                console.log("Upload progress:", progress);
               }}
               onClientUploadComplete={(res) => {
                 console.log("Upload response:", res);
@@ -170,7 +170,7 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
                 console.error("Upload error:", error);
                 alert(`ERROR! ${error.message}`);
               }}
-              className="ut-label:text-blue-500 ut-allowed-content:text-gray-400 border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg aspect-[4/5] flex items-center justify-center"
+              className="ut-button:bg-black ut-button:ut-readying:bg-black/50 ut-button:ut-uploading:bg-black/50"
             />
           )}
         </div>

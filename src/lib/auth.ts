@@ -1,7 +1,6 @@
 import type { DefaultSession, DefaultUser } from "next-auth";
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { compare } from "bcryptjs";
 import { z } from "zod";
@@ -44,18 +43,6 @@ export const authOptions: NextAuthOptions = {
     newUser: "/onboarding", // Redirect here after signup if needed, but we handle it in callbacks
   },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          role: "master", // Default role, can be updated later
-        };
-      },
-    }),
     Credentials({
       name: "Credentials",
       credentials: {

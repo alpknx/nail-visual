@@ -44,7 +44,7 @@ export default async function DashboardPage() {
           <Link href="/upload">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Upload Work
+              Upload
             </Button>
           </Link>
         </div>
@@ -54,40 +54,30 @@ export default async function DashboardPage() {
         {/* Portfolio Grid */}
         <div>
           <h2 className="text-2xl font-semibold mb-4">Your Portfolio</h2>
-          {masterPosts.length === 0 ? (
-            <Card className="p-12 text-center">
-              <p className="text-muted-foreground mb-4">
-                You haven't uploaded any work yet
-              </p>
-              <Link href="/upload">
-                <Button>Upload Your First Work</Button>
-              </Link>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {masterPosts.map((post) => (
-                <Link
-                  key={post.id}
-                  href={`/post/${post.id}`}
-                  className="group relative aspect-square rounded-lg overflow-hidden bg-muted"
-                >
-                  <Image
-                    src={post.imageUrl}
-                    alt={post.description || "Nail Art"}
-                    fill
-                    className="object-cover transition-transform group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                    <div className="text-white text-sm">
-                      {post.price && (
-                        <p className="font-medium">{post.price} {post.currency}</p>
-                      )}
-                    </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {masterPosts.map((post) => (
+              <Link
+                key={post.id}
+                href={`/post/${post.id}`}
+                className="group relative aspect-square rounded-lg overflow-hidden bg-muted"
+              >
+                <Image
+                  src={post.imageUrl}
+                  alt={post.description || "Nail Art"}
+                  fill
+                  className="object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                  <div className="text-white text-sm">
+                    {post.price && (
+                      <p className="font-medium">{post.price} {post.currency}</p>
+                    )}
                   </div>
-                </Link>
-              ))}
-            </div>
-          )}
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </div>
