@@ -23,7 +23,7 @@ export const PROTECTED_ROUTES: ProtectedRoute[] = [
     requiresAuth: true,
   },
   {
-    path: "/upload",
+    path: "/post/new",
     roles: ["master"],
     requiresAuth: true,
   },
