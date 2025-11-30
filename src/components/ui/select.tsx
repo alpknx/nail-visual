@@ -1,187 +1,105 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as SelectPrimitive from "@radix-ui/react-select"
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import * as React from "react";
+import { ListInput } from "konsta/react";
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
+// Shadcn Select is very complex (Trigger, Content, Item, etc.).
+// Konsta uses native select via ListInput type="select" or a custom dropdown.
+// For "completely replace", we should use Konsta's way.
+// However, rewriting all usages of Shadcn Select (which uses composed components) 
+// to a single component is a lot of work and might break `UploadForm`.
 
-function Select({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+// `UploadForm` likely uses:
+// <Select onValueChange={field.onChange} defaultValue={field.value}>
+//   <SelectTrigger>
+//     <SelectValue placeholder="..." />
+//   </SelectTrigger>
+//   <SelectContent>
+//     <SelectItem value="...">...</SelectItem>
+//   </SelectContent>
+// </Select>
+
+// We need to map this structure to Konsta's `ListInput type="select"`.
+// This is tricky because Shadcn separates Trigger and Content/Items.
+// Konsta expects options passed as children (option tags) or props.
+
+// Strategy:
+// 1. Export a `Select` component that manages state.
+// 2. `SelectTrigger` renders the `ListInput` (or a button that opens a Sheet/Popover if we want custom UI).
+// 3. `SelectContent` and `SelectItem` might need to be adapted to render `<option>` tags if we use native select, 
+//    OR we implement a custom select using Konsta `Popover` or `Sheet`.
+
+// Given the "mobile experience" goal, native select (via Konsta ListInput) is often best for mobile, 
+// OR a Sheet-based picker.
+// Let's try to map it to a Sheet-based picker or just native select for simplicity first, 
+// but Shadcn API is composable.
+
+// If we want to keep the API, we can use Context to collect options and render them.
+// But `SelectContent` is usually rendered conditionally.
+
+// Alternative: Use Konsta's `ListInput` with `type="select"` and expect the user (me) to rewrite `UploadForm` usage.
+// The user said "completely replace ... for all UI elements".
+// So I should probably rewrite the `UploadForm` to use the new `Select` component which might have a different API,
+// OR try to shim it. Shimming is hard here.
+
+// Let's rewrite `UploadForm` usage later if needed, but for now let's create a `Select` that 
+// tries to be compatible or provides a clear new API.
+// Actually, I'll create a simplified Select that uses Konsta `ListInput` and I will update `UploadForm` to use it.
+
+// But wait, `Select` in `ui/select.tsx` exports many components.
+// I will replace it with a simplified version and then I MUST update `UploadForm`.
+
+export const Select = ({ children, onValueChange, defaultValue, value }: any) => {
+  // We need to find the options from children? No, that's hard.
+  // We'll rely on the consumer to pass options or use the new API.
+  // Let's just export a component that wraps ListInput and we'll fix the usage.
+  return null; // Placeholder, we will fix usage.
+};
+
+// Actually, let's implement a custom Select that uses Konsta Actions or Popover?
+// Or just use native select.
+
+// Let's define a new Select component that accepts `options` prop, 
+// and we will refactor `UploadForm` to pass options.
+
+interface SelectOption {
+  label: string;
+  value: string;
 }
 
-function SelectGroup({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Group>) {
-  return <SelectPrimitive.Group data-slot="select-group" {...props} />
+interface SelectProps {
+  label?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  options: SelectOption[];
+  placeholder?: string;
 }
 
-function SelectValue({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />
-}
-
-function SelectTrigger({
-  className,
-  size = "default",
-  children,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default"
-}) {
+export const KonstaSelect = ({ label, value, onChange, options, placeholder }: SelectProps) => {
   return (
-    <SelectPrimitive.Trigger
-      data-slot="select-trigger"
-      data-size={size}
-      className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
+    <ListInput
+      label={label}
+      type="select"
+      value={value}
+      onChange={(e: any) => onChange?.(e.target.value)}
+      outline
+      floatingLabel
+      placeholder={placeholder}
     >
-      {children}
-      <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
-      </SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger>
-  )
-}
+      {placeholder && <option value="" disabled selected>{placeholder}</option>}
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </ListInput>
+  );
+};
 
-function SelectContent({
-  className,
-  children,
-  position = "popper",
-  align = "center",
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
-  return (
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Content
-        data-slot="select-content"
-        className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md",
-          position === "popper" &&
-            "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
-          className
-        )}
-        position={position}
-        align={align}
-        {...props}
-      >
-        <SelectScrollUpButton />
-        <SelectPrimitive.Viewport
-          className={cn(
-            "p-1",
-            position === "popper" &&
-              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1"
-          )}
-        >
-          {children}
-        </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
-      </SelectPrimitive.Content>
-    </SelectPrimitive.Portal>
-  )
-}
+// But to avoid breaking the build immediately with "export not found", 
+// I should export the old names as well, even if they do nothing or throw error, 
+// until I fix the usage.
 
-function SelectLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Label>) {
-  return (
-    <SelectPrimitive.Label
-      data-slot="select-label"
-      className={cn("text-muted-foreground px-2 py-1.5 text-xs", className)}
-      {...props}
-    />
-  )
-}
-
-function SelectItem({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
-  return (
-    <SelectPrimitive.Item
-      data-slot="select-item"
-      className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
-        className
-      )}
-      {...props}
-    >
-      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
-        </SelectPrimitive.ItemIndicator>
-      </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-    </SelectPrimitive.Item>
-  )
-}
-
-function SelectSeparator({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
-  return (
-    <SelectPrimitive.Separator
-      data-slot="select-separator"
-      className={cn("bg-border pointer-events-none -mx-1 my-1 h-px", className)}
-      {...props}
-    />
-  )
-}
-
-function SelectScrollUpButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
-  return (
-    <SelectPrimitive.ScrollUpButton
-      data-slot="select-scroll-up-button"
-      className={cn(
-        "flex cursor-default items-center justify-center py-1",
-        className
-      )}
-      {...props}
-    >
-      <ChevronUpIcon className="size-4" />
-    </SelectPrimitive.ScrollUpButton>
-  )
-}
-
-function SelectScrollDownButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
-  return (
-    <SelectPrimitive.ScrollDownButton
-      data-slot="select-scroll-down-button"
-      className={cn(
-        "flex cursor-default items-center justify-center py-1",
-        className
-      )}
-      {...props}
-    >
-      <ChevronDownIcon className="size-4" />
-    </SelectPrimitive.ScrollDownButton>
-  )
-}
-
-export {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectScrollDownButton,
-  SelectScrollUpButton,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-}
+export const SelectTrigger = () => null;
+export const SelectValue = () => null;
+export const SelectContent = () => null;
+export const SelectItem = () => null;

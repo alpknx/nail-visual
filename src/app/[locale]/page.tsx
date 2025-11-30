@@ -1,80 +1,199 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
-import ProOrdersGallery from "@/components/ProOrdersGallery";
-import DesignsGrid from "@/components/DesignsGrid";
-
-// Сохраняем роль в sessionStorage для сохранения при переключении языка
-const ROLE_STORAGE_KEY = 'user_role';
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { getFeedPosts } from "@/app/actions";
+import { useInView } from "react-intersection-observer";
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Page, Navbar, Searchbar, Block, Link as KonstaLink, Sheet, List, ListItem, Toolbar, ToolbarPane } from "konsta/react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useDebounce } from "@/hooks/use-debounce";
+import { searchTags, getTagById } from "@/app/actions";
+import { X } from "lucide-react";
 
 export default function Home() {
-  const t = useTranslations('home');
-  const { data: session, status } = useSession();
-  
-  // Инициализируем роль только из сессии (для SSR совместимости)
-  const [role, setRole] = useState<string | undefined>(session?.user?.role);
-  const [isHydrated, setIsHydrated] = useState(false);
-  
-  // После гидратации восстанавливаем роль из sessionStorage
+  const { ref, inView } = useInView();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const debouncedQuery = useDebounce(searchQuery, 300);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // Tag filter state from URL
+  const selectedTagId = searchParams.get("tagId");
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+  } = useInfiniteQuery({
+    queryKey: ["feed", selectedTagId], // Refetch when tag changes
+    queryFn: ({ pageParam }) => getFeedPosts({ pageParam, tagId: selectedTagId ? parseInt(selectedTagId) : undefined }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+
   useEffect(() => {
-    setIsHydrated(true);
-    if (typeof window !== 'undefined') {
-      const storedRole = sessionStorage.getItem(ROLE_STORAGE_KEY);
-      if (storedRole) {
-        setRole(storedRole);
-      }
+    if (inView && hasNextPage) {
+      fetchNextPage();
     }
-  }, []);
-  
-  // Сохраняем роль при изменении сессии
+  }, [inView, fetchNextPage, hasNextPage]);
+
+  // Fetch tag name if tagId is present
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role) {
-      const newRole = session.user.role;
-      setRole(newRole);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(ROLE_STORAGE_KEY, newRole);
+    const fetchTagName = async () => {
+      if (selectedTagId) {
+        const tag = await getTagById(parseInt(selectedTagId));
+        if (tag) {
+          setSearchQuery(tag.name);
+        }
+      } else {
+        setSearchQuery("");
       }
-    } else if (status === 'unauthenticated') {
-      setRole(undefined);
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(ROLE_STORAGE_KEY);
+    };
+    fetchTagName();
+  }, [selectedTagId]);
+
+  // Search effect
+  useEffect(() => {
+    const performSearch = async () => {
+      if (debouncedQuery.length >= 2) {
+        const results = await searchTags(debouncedQuery);
+        setSearchResults(results);
+      } else {
+        setSearchResults([]);
       }
-    } else if (status === 'loading' && isHydrated && typeof window !== 'undefined') {
-      // Во время загрузки используем сохраненную роль только после гидратации
-      const storedRole = sessionStorage.getItem(ROLE_STORAGE_KEY);
-      if (storedRole) {
-        setRole(storedRole);
-      }
+    };
+    performSearch();
+  }, [debouncedQuery]);
+
+  const handleTagSelect = (tag: any) => {
+    const params = new URLSearchParams(searchParams);
+    if (tag) {
+      params.set("tagId", tag.id.toString());
+    } else {
+      params.delete("tagId");
     }
-  }, [session, status, isHydrated]);
+    router.push(`/?${params.toString()}`);
+
+    setSearchQuery(""); // Clear search
+    setSearchResults([]);
+    setIsSheetOpen(false);
+  };
 
   return (
-    <main className="min-h-screen pb-4">
-      {role === "pro" ? (
-        <div className="space-y-4">
-          <div className="px-4 pt-16 md:pt-4">
-            <h1 className="text-2xl font-semibold mb-2">{t('pro.title')}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t('pro.subtitle')}
-            </p>
-          </div>
-          <ProOrdersGallery />
+    <Page className="pb-12">
+      <Navbar
+        subnavbar={
+          <Searchbar
+            value={searchQuery}
+            onInput={() => setIsSheetOpen(true)}
+            placeholder="Search tags..."
+            disableButton={false} // Always show search
+            onFocus={() => setIsSheetOpen(true)}
+            onClear={(e) => {
+              setSearchQuery("")
+              handleTagSelect(null)
+            }}
+          />
+        }
+      />
+
+      {/* Search Sheet */}
+      <Sheet
+        opened={isSheetOpen}
+        backdrop={true}
+        onBackdropClick={() => setIsSheetOpen(false)}
+      >
+        <Toolbar top className="ios:pt-4">
+          <ToolbarPane>
+            <Searchbar
+              value={searchQuery}
+              onInput={(e: any) => setSearchQuery(e.target.value)}
+              placeholder="Search tags..."
+              clearButton
+              onClear={() => setSearchQuery("")}
+            />
+          </ToolbarPane>
+          <ToolbarPane>
+            <KonstaLink onClick={() => setIsSheetOpen(false)}>
+              <X />
+            </KonstaLink>
+          </ToolbarPane>
+        </Toolbar>
+
+        <div className="overflow-y-auto h-[85vh]">
+          {searchResults.length > 0 ? (
+            <List strong inset>
+              {searchResults.map((tag) => (
+                <ListItem
+                  key={tag.id}
+                  title={tag.name}
+                  onClick={() => handleTagSelect(tag)}
+                  link
+                  chevron={false}
+                />
+              ))}
+            </List>
+          ) : searchQuery.length > 0 && debouncedQuery.length >= 2 ? (
+            <Block className="text-center text-gray-500 py-4">
+              No tags found
+            </Block>
+          ) : (
+            <Block className="text-center text-gray-500 py-4">
+              Type to search tags...
+            </Block>
+          )}
         </div>
-      ) : (
-        // Для клиентов и гостей показываем каталог дизайнов
-        <div className="space-y-4">
-          <div className="px-4 pt-16 md:pt-4">
-            <h1 className="text-2xl font-semibold mb-2">{t('guest.title')}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t('guest.subtitle') || "Я просто листала красивые ноготочки и нашла мастера в своём районе"}
-            </p>
+      </Sheet>
+
+      {/* Feed */}
+      <div className="p-2 columns-2 gap-2 space-y-2">
+        {status === "pending" ? (
+          <div className="col-span-2 text-center py-10">Loading...</div>
+        ) : status === "error" ? (
+          <div className="col-span-2 text-center py-10 text-red-500">
+            Error loading feed
           </div>
-          <DesignsGrid />
-        </div>
-      )}
-    </main>
+        ) : (
+          data?.pages.map((page, i) => (
+            <div key={i} className="contents">
+              {page.data.map((post) => (
+                <Link key={post.id} href={`/post/${post.id}`} className="block break-inside-avoid mb-2 group relative">
+                  <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-[4/5]">
+                    <Image
+                      src={post.imageUrl}
+                      alt={post.description || "Nail Art"}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                      sizes="(max-width: 768px) 50vw, 33vw"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent text-white">
+                      <p className="text-xs font-medium truncate">{post.author?.businessName}</p>
+                      {post.price && <p className="text-[10px] opacity-90">{post.price} {post.currency}</p>}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Loading More */}
+      <div ref={ref} className="py-4 text-center text-sm text-gray-500">
+        {isFetchingNextPage
+          ? "Loading more..."
+          : hasNextPage
+            ? "Load more"
+            : "You've seen it all!"}
+      </div>
+    </Page>
   );
 }
-

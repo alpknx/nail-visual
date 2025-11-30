@@ -5,21 +5,8 @@ import type { City, Tag, Work, ClientReference, Offer } from "@/lib/domain";
 export { CITIES, TAGS } from "@/lib/domain";
 export type { City, Tag, Work, ClientReference, Offer } from "@/lib/domain";
 
-// ---------- Локальные моки (fallback на ранний этап) ----------
-let worksMem: Work[] = [
-    { id: "w1", imageUrl: "/vercel.svg", tags: ["french","nude"], city: "Kraków", proId: "p1", createdAt: new Date().toISOString(), caption: null },
-    { id: "w2", imageUrl: "/next.svg",   tags: ["red","chrome"],  city: "Warszawa", proId: "p2", createdAt: new Date().toISOString(), caption: null },
-];
-
-let referencesMem: ClientReference[] = [];
-
-// имитация аплоада (до UploadThing/R2)
-export async function fakeUpload(file: File): Promise<string> {
-    return Promise.resolve(URL.createObjectURL(file)); // только для демо
-}
-
 // ---------- Works ----------
-export type WorkDto = {
+type WorkDto = {
     id: string;
     proId: string;
     imageUrl: string;
@@ -35,7 +22,7 @@ export async function listWorks(params?: { city?: City; tags?: Tag[]; proId?: st
 
     try {
         const url = new URL("/api/works", window.location.origin);
-        if (params?.city)  url.searchParams.set("city", params.city);
+        if (params?.city) url.searchParams.set("city", params.city);
         if (params?.proId) url.searchParams.set("proId", params.proId);
         if (params?.limit) url.searchParams.set("limit", String(params.limit));
         // простую фильтрацию по тегу можно дописать как ?tag=...
@@ -59,41 +46,12 @@ export async function listWorks(params?: { city?: City; tags?: Tag[]; proId?: st
         }));
     }
 
+    // Fallback to inspiration API if no works in database
     const inspiration = await fetchWorksInspiration(params);
-    if (inspiration.length) {
-        return inspiration;
-    }
-
-    // fallback: локальные моки + простая фильтрация
-    const city = params?.city;
-    const tags = params?.tags;
-    let data = worksMem;
-    if (city) data = data.filter(w => w.city === city);
-    if (tags?.length) data = data.filter(w => tags.every(t => w.tags.includes(t)));
-    return data;
+    return inspiration;
 }
 
-// создать работу (mock-вариант для демо; реальный API можешь добавить аналогично)
-export async function createWork(input: {
-    file: File;
-    tags: Tag[];
-    city: City;
-    caption?: string;
-    proId: string; // на MVP можно подставлять session.user.id (role=pro)
-}) {
-    const imageUrl = await fakeUpload(input.file);
-    const w: Work = {
-        id: `w_${Math.random().toString(36).slice(2, 9)}`,
-        imageUrl,
-        tags: input.tags,
-        city: input.city,
-        caption: input.caption ?? null,
-        proId: input.proId,
-        createdAt: new Date().toISOString(),
-    };
-    worksMem = [w, ...worksMem];
-    return w;
-}
+
 
 export async function createWorkViaApi(input: {
     imageUrl: string;
@@ -116,11 +74,10 @@ export async function createWorkViaApi(input: {
  * ✅ вариант А: { imageUrl, city, tags, note }
  * ✅ вариант Б: { file,     city, tags, note }  (файл будет загружен через fakeUpload)
  */
-type CreateReferenceA = { imageUrl: string; city: City; tags?: Tag[]; note?: string | null };
-type CreateReferenceB = { file: File;      city: City; tags?: Tag[]; note?: string | null };
-export async function createReference(input: CreateReferenceA | CreateReferenceB) {
-    // если пришёл файл — сначала получаем imageUrl
-    const imageUrl = "file" in input ? await fakeUpload(input.file) : input.imageUrl;
+type CreateReferenceInput = { imageUrl: string; city: City; tags?: Tag[]; note?: string | null };
+
+export async function createReference(input: CreateReferenceInput) {
+    const imageUrl = input.imageUrl;
     const city = input.city;
     const tags = (input.tags ?? []) as Tag[];
     const note = input.note ?? null;
@@ -134,33 +91,18 @@ export async function createReference(input: CreateReferenceA | CreateReferenceB
         });
         if (!res.ok) throw new Error("references api not ok");
         return res.json(); // сервер вернёт реальную запись
-    } catch {
-        // fallback: локальный mock
-        const r: ClientReference = {
-            id: `r_${Math.random().toString(36).slice(2, 9)}`,
-            clientId: "mock-client",
-            imageUrl,
-            tags,
-            city,
-            note,
-            createdAt: new Date().toISOString(),
-        };
-        referencesMem = [r, ...referencesMem];
-        return r;
+    } catch (error) {
+        throw new Error("Failed to create reference");
     }
 }
 
 export async function getReference(id: string) {
-    try {
-        const url = new URL("/api/references", window.location.origin);
-        url.searchParams.set("id", id);
-        const res = await fetch(url.toString(), { cache: "no-store" });
-        if (!res.ok) throw new Error("ref api not ok");
-        const json = await res.json();
-        return (json.data?.[0]) ?? null;
-    } catch {
-        return referencesMem.find(r => r.id === id) ?? null;
-    }
+    const url = new URL("/api/references", window.location.origin);
+    url.searchParams.set("id", id);
+    const res = await fetch(url.toString(), { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch reference");
+    const json = await res.json();
+    return (json.data?.[0]) ?? null;
 }
 
 // Список офферов по референсу
@@ -218,18 +160,6 @@ export async function deleteOffer(id: string) {
 }
 
 // ---- PROS ----
-export type Pro = {
-    id: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    city: string | null;
-    instagram: string | null;
-    minPricePln: number | null;
-    isVerified: boolean;
-    worksCount: number;
-    lastWorkAt: string | null; // приведём к ISO строке
-};
 
 export type ProSummary = {
     proId: string;

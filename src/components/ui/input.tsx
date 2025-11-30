@@ -1,21 +1,33 @@
-import * as React from "react"
+"use client";
 
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { ListInput } from "konsta/react";
+import { cn } from "@/lib/utils";
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+// Konsta ListInput is usually used within a List, but can be used standalone or we wrap it.
+// Shadcn Input is a simple <input> wrapper.
+// To maintain compatibility, we might need to wrap ListInput or use a custom styled input using Konsta classes if available.
+// However, Konsta's ListInput provides the "mobile" feel (floating labels, etc.).
+
+// Let's try to adapt ListInput to behave somewhat like the previous Input, 
+// or accept that the look will change significantly (which is the goal).
+
+const Input = React.forwardRef<
+  HTMLInputElement,
+  any // Bypass strict type check for now to allow Konsta props like 'after', 'media'
+>(({ className, type, ...props }, ref) => {
   return (
-    <input
-      type={type}
-      data-slot="input"
-      className={cn(
-        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-        className
-      )}
-      {...props}
-    />
-  )
-}
+    <div className={cn("w-full", className)}>
+      <ListInput
+        // ref={ref} // ListInput ref might not be directly forwarded to the input element in the same way
+        type={type}
+        outline
+        floatingLabel // Enable floating label for that mobile feel
+        {...props}
+      />
+    </div>
+  );
+});
+Input.displayName = "Input";
 
-export { Input }
+export { Input };

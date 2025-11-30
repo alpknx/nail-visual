@@ -1,175 +1,32 @@
-"use client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/db";
+import { masterProfiles, posts } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import DashboardClient from "@/components/DashboardClient";
 
-import { useSession } from "next-auth/react";
-import { useTranslations } from 'next-intl';
-import { useMutation } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
-import { useRouter } from '@/i18n/routing';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import CitySelect from "@/components/CitySelect";
-import { toast } from "sonner";
-import { CITIES, type City } from "@/lib/api";
-import { useGeolocationContext } from "@/contexts/GeolocationContext";
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
 
-// Prevent static generation - this page requires authentication
-export const dynamic = 'force-dynamic';
+  if (!session || !session.user || session.user.role !== "master") {
+    redirect("/signin");
+  }
 
-export default function ClientProfilePage() {
-  const t = useTranslations('profile');
-  const tCommon = useTranslations('common');
-  const sessionResult = useSession();
-  const session = sessionResult?.data ?? null;
-  const isLoadingSession = sessionResult?.status === "loading";
-  const updateSession = sessionResult?.update;
-  const router = useRouter();
-  const user = session?.user as { id: string; name?: string; email?: string; image?: string; phone?: string; city?: string; role: string };
-  const [formData, setFormData] = useState({
-    name: user?.name || "",
-    phone: user?.phone || "",
-    city: user?.city || "",
-  });
-  const { detectedCity, locationWarning, clearWarning } = useGeolocationContext();
-
-  // Автоматически установить город из профиля пользователя при загрузке
-  useEffect(() => {
-    if (user?.city && CITIES.includes(user.city as City)) {
-      setFormData(prev => ({ ...prev, city: user.city || "" }));
-    }
-  }, [user?.city]);
-
-  // Обновить форму при определении города через геолокацию
-  useEffect(() => {
-    if (detectedCity) {
-      setFormData(prev => ({ ...prev, city: detectedCity }));
-    }
-  }, [detectedCity]);
-
-  const updateMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const res = await fetch("/api/auth/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    },
-    onSuccess: async () => {
-      toast.success(t('updated'));
-      if (updateSession) {
-        await updateSession();
-      }
-    },
-    onError: (e: Error) => toast.error(e.message),
+  // Get master profile
+  const profile = await db.query.masterProfiles.findFirst({
+    where: eq(masterProfiles.userId, session.user.id),
   });
 
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateMutation.mutate(formData);
-  };
-
-  // Перенаправить мастеров на их профиль
-  useEffect(() => {
-    if (!isLoadingSession && session?.user?.role === 'pro') {
-      router.push('/pro/profile');
-    }
-  }, [session?.user?.role, isLoadingSession, router]);
-
-  // Показывать загрузку пока проверяется сессия
-  if (isLoadingSession) {
-    return <p className="text-center py-12 opacity-70">{tCommon('loading') || 'Loading...'}</p>;
+  if (!profile) {
+    redirect("/onboarding");
   }
 
-  if (!session) {
-    return <p className="text-center py-12 opacity-70">{t('needAuth')}</p>;
-  }
+  // Get master's posts
+  const masterPosts = await db.query.posts.findMany({
+    where: eq(posts.masterId, session.user.id),
+    orderBy: [desc(posts.createdAt)],
+  });
 
-  // Показывать сообщение о перенаправлении для мастеров
-  if (session.user?.role === 'pro') {
-    return <p className="text-center py-12 opacity-70">Redirecting to master profile...</p>;
-  }
-
-  return (
-    <section className="max-w-md mx-auto py-8 pt-16 md:pt-8 px-4">
-      <h1 className="text-2xl font-semibold mb-6">{t('title')}</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Предупреждение о местоположении вне Польши */}
-        {locationWarning && (
-          <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 space-y-2">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                  {t('locationOutsidePolandTitle') || tCommon('locationOutsidePolandTitle') || 'Location outside Poland'}
-                </p>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                  {t('locationOutsidePolandMessage') || tCommon('locationOutsidePolandMessage') || `Your location was detected as ${locationWarning.city}, ${locationWarning.country}. This service is available only for Polish cities. Please select a city from the list below.`}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={clearWarning}
-                className="flex-shrink-0 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200"
-                aria-label={tCommon('close') || 'Close'}
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium mb-1">{t('nameLabel')}</label>
-          <Input
-            type="text"
-            placeholder={t('namePlaceholder')}
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">{t('phoneLabel')}</label>
-          <Input
-            type="tel"
-            placeholder={t('phonePlaceholder')}
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">{t('cityLabel')}</label>
-          <CitySelect
-            value={formData.city}
-            onChange={(city) => setFormData({ ...formData, city })}
-            placeholder={t('cityPlaceholder') || tCommon('selectCity')}
-          />
-        </div>
-
-        <div className="pt-4">
-          <Button
-            type="submit"
-            disabled={updateMutation.isPending}
-            className="w-full"
-          >
-            {updateMutation.isPending ? tCommon('saving') : tCommon('save')}
-          </Button>
-        </div>
-
-        <p className="text-xs opacity-70 text-center">
-          Email: {session.user?.email}
-        </p>
-      </form>
-    </section>
-  );
+  return <DashboardClient profile={profile} masterPosts={masterPosts} />;
 }

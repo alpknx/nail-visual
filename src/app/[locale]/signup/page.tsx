@@ -1,164 +1,120 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Page, Navbar, List, ListInput, Button, Block, BlockTitle } from "konsta/react";
+import Link from "next/link";
 
 export default function SignUpPage() {
-    const t = useTranslations('auth.signUp');
-    const router = useRouter();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+  const t = useTranslations('auth.signUp');
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        setError("");
+  const handleSubmit = async () => {
+    setError("");
 
-        if (password !== confirmPassword) {
-            setError(t('passwordsNotMatch'));
-            return;
-        }
+    if (password !== confirmPassword) {
+      setError(t('passwordsNotMatch'));
+      return;
+    }
 
-        if (password.length < 6) {
-            setError(t('passwordMinLength'));
-            return;
-        }
+    if (password.length < 8) {
+      setError(t('passwordMinLength'));
+      return;
+    }
 
-        setLoading(true);
+    setLoading(true);
 
-        try {
-            const res = await fetch("/api/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password, role: "pro" }),
-            });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-            const data = await res.json();
+      const data = await res.json();
 
-            if (!res.ok) {
-                setError(data.error || t('registrationError'));
-                return;
-            }
+      if (!res.ok) {
+        setError(data.error || t('registrationError'));
+        return;
+      }
 
-            // Sign in after registration
-            const result = await signIn("credentials", {
-                email,
-                password,
-                redirect: false,
-            });
+      // Sign in after registration
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-            if (result?.ok) {
-                router.push("/");
-            } else {
-                setError(t('signInAfterRegistrationError'));
-            }
-        } catch {
-            setError(t('error'));
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (result?.ok) {
+        router.push("/onboarding");
+      } else {
+        setError(t('signInAfterRegistrationError'));
+      }
+    } catch {
+      setError(t('error'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen p-4 flex items-center justify-center bg-background">
-            <div className="w-full max-w-md space-y-6">
-                <div className="text-center space-y-2">
-                    <h1 className="text-2xl font-bold">{t('title')}</h1>
-                    <p className="text-sm text-muted-foreground">
-                        {t('subtitle')}
-                    </p>
-                </div>
+  return (
+    <Page>
+      <Navbar title={t('title')} />
 
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                    {error && (
-                        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
-                            <p className="text-sm text-destructive font-medium">{error}</p>
-                        </div>
-                    )}
+      <BlockTitle>{t('subtitle')}</BlockTitle>
+      <List strong inset>
+        <ListInput
+          outline
+          label={t('email')}
+          type="email"
+          placeholder="your@email.com"
+          value={email}
+          onInput={(e: any) => setEmail(e.target.value)}
+        />
+        <ListInput
+          outline
+          label={t('password')}
+          type="password"
+          placeholder="Min 8 characters"
+          value={password}
+          onInput={(e: any) => setPassword(e.target.value)}
+        />
+        <ListInput
+          outline
+          label={t('confirmPassword')}
+          type="password"
+          placeholder={t('confirmPassword')}
+          value={confirmPassword}
+          onInput={(e: any) => setConfirmPassword(e.target.value)}
+        />
+      </List>
 
-                    <div className="space-y-3">
-                        <div className="space-y-2">
-                            <label htmlFor="email" className="text-sm font-medium">
-                                {t('email')}
-                            </label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                placeholder="your@email.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full"
-                            />
-                        </div>
+      {error && (
+        <Block className="text-red-500 text-sm text-center">
+          {error}
+        </Block>
+      )}
 
-                        {/* Роль скрыта - только регистрация как мастер */}
-                        <input type="hidden" name="role" value="pro" />
-
-                        <div className="space-y-2">
-                            <label htmlFor="password" className="text-sm font-medium">
-                                {t('password')}
-                            </label>
-                            <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                placeholder={t('passwordMinLength')}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label htmlFor="confirm-password" className="text-sm font-medium">
-                                {t('confirmPassword')}
-                            </label>
-                            <Input
-                                id="confirm-password"
-                                name="confirm-password"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                placeholder={t('confirmPassword')}
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full"
-                            />
-                        </div>
-                    </div>
-
-                    <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full"
-                        size="lg"
-                    >
-                        {loading ? t('submitting') : t('submit')}
-                    </Button>
-
-                    <div className="text-center text-sm">
-                        <span className="text-muted-foreground">{t('hasAccount')} </span>
-                        <button
-                            type="button"
-                            onClick={() => router.push("/signin")}
-                            className="font-medium text-primary hover:underline"
-                        >
-                            {t('signIn')}
-                        </button>
-                    </div>
-                </form>
-            </div>
+      <Block>
+        <Button large onClick={handleSubmit} disabled={loading}>
+          {loading ? t('submitting') : t('submit')}
+        </Button>
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-500">
+            {t('hasAccount')}{" "}
+            <Link href="/signin" className="text-primary font-semibold">
+              {t('signIn')}
+            </Link>
+          </p>
         </div>
-    );
+      </Block>
+    </Page>
+  );
 }

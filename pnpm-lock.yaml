@@ -56,6 +56,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.6
         version: 0.44.6(@types/pg@8.15.5)(postgres@3.4.7)
+      konsta:
+        specifier: ^5.0.6
+        version: 5.0.6
       lucide-react:
         specifier: ^0.545.0
         version: 0.545.0(react@19.1.0)
@@ -89,6 +92,9 @@ importers:
       react-hook-form:
         specifier: ^7.65.0
         version: 7.65.0(react@19.1.0)
+      react-intersection-observer:
+        specifier: ^10.0.0
+        version: 10.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -2442,6 +2448,10 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
+  konsta@5.0.6:
+    resolution: {integrity: sha512-qMwBigssLnqTHDfpFnLPMYYWP329FGI6jr+qMpzVXIRsvHUwRmE9y9jxKf8IURh1n4aCAaytD/04BS6yNoKd3w==}
+    engines: {node: '>= 4.7.0'}
+
   language-subtag-registry@0.3.23:
     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
 
@@ -2852,6 +2862,15 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+
+  react-intersection-observer@10.0.0:
+    resolution: {integrity: sha512-JJRgcnFQoVXmbE5+GXr1OS1NDD1gHk0HyfpLcRf0575IbJz+io8yzs4mWVlfaqOQq1FiVjLvuYAdEEcrrCfveg==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -5429,6 +5448,10 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
+  konsta@5.0.6:
+    dependencies:
+      tailwind-merge: 3.3.1
+
   language-subtag-registry@0.3.23: {}
 
   language-tags@1.0.9:
@@ -5807,6 +5830,12 @@ snapshots:
   react-hook-form@7.65.0(react@19.1.0):
     dependencies:
       react: 19.1.0
+
+  react-intersection-observer@10.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+    dependencies:
+      react: 19.1.0
+    optionalDependencies:
+      react-dom: 19.1.0(react@19.1.0)
 
   react-is@16.13.1: {}
 
