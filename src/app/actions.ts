@@ -44,7 +44,7 @@ export async function completeOnboarding(formData: z.infer<typeof onboardingSche
   redirect("/dashboard");
 }
 
-export async function getFeedPosts({ pageParam = 0 }: { pageParam?: number }) {
+export async function getFeedPosts({ pageParam = 0, tagId }: { pageParam?: number, tagId?: number }) {
   const LIMIT = 10;
   const OFFSET = pageParam * LIMIT;
 
@@ -57,10 +57,19 @@ export async function getFeedPosts({ pageParam = 0 }: { pageParam?: number }) {
   // To implement the mix (2 local, 8 global), we would need more complex logic
   // Here we just fetch latest posts
 
+  const whereClause = tagId
+    ? sql`EXISTS (
+        SELECT 1 FROM ${postTags} pt 
+        WHERE pt.post_id = ${posts.id} 
+        AND pt.tag_id = ${tagId}
+      )`
+    : undefined;
+
   const feedPosts = await db.query.posts.findMany({
     with: {
       author: true,
     },
+    where: whereClause,
     limit: LIMIT,
     offset: OFFSET,
     orderBy: [desc(posts.createdAt)],
@@ -88,6 +97,20 @@ export async function searchTags(query: string, locale: string = 'en') {
     name: (tag.nameTranslations as any)[locale] || tag.slug,
     slug: tag.slug
   }));
+}
+
+export async function getTagById(id: number, locale: string = 'en') {
+  const tag = await db.query.tags.findFirst({
+    where: eq(tags.id, id),
+  });
+
+  if (!tag) return null;
+
+  return {
+    id: tag.id,
+    name: (tag.nameTranslations as any)[locale] || tag.slug,
+    slug: tag.slug
+  };
 }
 
 export async function getMatchingMasters(postId: string) {

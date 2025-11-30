@@ -5,6 +5,7 @@ import NextAuthProvider from "@/providers/NextAuthProvider";
 import { ReactQueryClientProvider } from "@/lib/queryClient";
 import { initPostHog } from "@/lib/analytics";
 import { App } from "konsta/react";
+import BottomNavbar from "@/components/BottomNavbar";
 
 export default function ClientShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
@@ -37,7 +38,8 @@ export default function ClientShell({ children }: { children: React.ReactNode })
         <ReactQueryClientProvider>
             <NextAuthProvider>
                 <App theme="ios" safeAreas>
-                    <main className="flex-1 p-2">{children}</main>
+                    {children}
+                    <BottomNavbar />
                 </App>
             </NextAuthProvider>
         </ReactQueryClientProvider>

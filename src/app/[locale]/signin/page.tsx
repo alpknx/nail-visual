@@ -1,12 +1,12 @@
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
-import { useState, FormEvent, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { useSearchParams } from 'next/navigation';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Page, Navbar, List, ListInput, Button, Block, BlockTitle } from "konsta/react";
+import Link from "next/link";
 
 export default function SignInPage() {
   const t = useTranslations('auth.signIn');
@@ -16,7 +16,6 @@ export default function SignInPage() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +25,6 @@ export default function SignInPage() {
       const savedEmail = localStorage.getItem("nail_visual_email");
       if (savedEmail) {
         setEmail(savedEmail);
-        setRememberMe(true);
       }
     }
   }, []);
@@ -39,8 +37,7 @@ export default function SignInPage() {
     }
   }, [session, searchParams, router]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setError("");
     setLoading(true);
 
@@ -56,10 +53,8 @@ export default function SignInPage() {
         return;
       }
 
-      if (rememberMe && typeof window !== "undefined") {
+      if (typeof window !== "undefined") {
         localStorage.setItem("nail_visual_email", email);
-      } else if (typeof window !== "undefined") {
-        localStorage.removeItem("nail_visual_email");
       }
 
       const callbackUrl = searchParams.get('callbackUrl') || '/';
@@ -73,111 +68,65 @@ export default function SignInPage() {
 
   if (session) {
     return (
-      <div className="min-h-screen p-4 flex items-center justify-center">
-        <div className="w-full max-w-md space-y-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            {t('signedInAs')} {session.user?.email}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {tCommon('role')}: {session.user?.role === "master" ? "Master" : "Client"}
-          </p>
-          <p className="text-xs text-muted-foreground animate-pulse">
-            Redirecting...
-          </p>
+      <Page>
+        <div className="min-h-screen p-4 flex items-center justify-center">
+          <div className="w-full max-w-md space-y-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t('signedInAs')} {session.user?.email}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {tCommon('role')}: {session.user?.role === "master" ? "Master" : "Client"}
+            </p>
+            <p className="text-xs text-muted-foreground animate-pulse">
+              Redirecting...
+            </p>
+          </div>
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="min-h-screen p-4 flex items-center justify-center bg-background">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('subtitle')}
+    <Page>
+      <Navbar title={t('title')} />
+
+      <BlockTitle>{t('subtitle')}</BlockTitle>
+      <List strong inset>
+        <ListInput
+          label={t('email')}
+          type="email"
+          placeholder="your@email.com"
+          value={email}
+          onInput={(e: any) => setEmail(e.target.value)}
+        />
+        <ListInput
+          label={t('password')}
+          type="password"
+          placeholder={t('password')}
+          value={password}
+          onInput={(e: any) => setPassword(e.target.value)}
+        />
+      </List>
+
+      {error && (
+        <Block className="text-red-500 text-sm text-center">
+          {error}
+        </Block>
+      )}
+
+      <Block>
+        <Button large onClick={handleSubmit} disabled={loading}>
+          {loading ? t('submitting') : t('submit')}
+        </Button>
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-500">
+            {t('noAccount')}{" "}
+            <Link href="/signup" className="text-primary font-semibold">
+              {t('register')}
+            </Link>
           </p>
         </div>
-
-        <div className="space-y-4">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {error && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
-                <p className="text-sm text-destructive font-medium">{error}</p>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  {t('email')}
-                </label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e: any) => setEmail(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">
-                  {t('password')}
-                </label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  placeholder={t('password')}
-                  value={password}
-                  onChange={(e: any) => setPassword(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="remember"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                {t('rememberMe')}
-              </label>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full"
-              size="lg"
-            >
-              {loading ? t('submitting') : t('submit')}
-            </Button>
-
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">{t('noAccount')} </span>
-              <button
-                type="button"
-                onClick={() => router.push("/signup")}
-                className="font-medium text-primary hover:underline"
-              >
-                {t('register')}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+      </Block>
+    </Page>
   );
 }
