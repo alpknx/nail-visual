@@ -279,3 +279,75 @@ export async function trackConversionClick(masterId: string, type: 'sms' | 'call
   // In a real implementation, we would insert into a 'conversions' table
   // await db.insert(conversions).values({ masterId, type, timestamp: new Date() });
 }
+
+const updatePostDetailsSchema = z.object({
+  postId: z.string(),
+  tagIds: z.array(z.number()),
+  price: z.number().optional(),
+  durationMinutes: z.number().optional(),
+});
+
+export async function updatePostDetails(data: z.infer<typeof updatePostDetailsSchema>) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user || session.user.role !== "master") {
+    throw new Error("Unauthorized");
+  }
+
+  const validated = updatePostDetailsSchema.parse(data);
+
+  // Verify ownership
+  const post = await db.query.posts.findFirst({
+    where: eq(posts.id, validated.postId),
+  });
+
+  if (!post || post.masterId !== session.user.id) {
+    throw new Error("Unauthorized or Post not found");
+  }
+
+  // Update post details
+  await db.update(posts)
+    .set({
+      price: validated.price ? Math.round(validated.price * 100) : null, // Convert to cents
+      durationMinutes: validated.durationMinutes,
+    })
+    .where(eq(posts.id, validated.postId));
+
+  // Delete existing tags
+  await db.delete(postTags).where(eq(postTags.postId, validated.postId));
+
+  // Insert new tags
+  if (validated.tagIds.length > 0) {
+    await db.insert(postTags).values(
+      validated.tagIds.map((tagId) => ({
+        postId: validated.postId,
+        tagId: tagId,
+      }))
+    );
+  }
+
+  redirect("/dashboard");
+}
+
+export async function deletePost(postId: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user || session.user.role !== "master") {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify ownership
+  const post = await db.query.posts.findFirst({
+    where: eq(posts.id, postId),
+  });
+
+  if (!post || post.masterId !== session.user.id) {
+    throw new Error("Unauthorized or Post not found");
+  }
+
+  // Delete post (cascade should handle tags if configured, but let's be safe)
+  await db.delete(postTags).where(eq(postTags.postId, postId));
+  await db.delete(posts).where(eq(posts.id, postId));
+
+  redirect("/dashboard");
+}

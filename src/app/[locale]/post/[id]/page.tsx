@@ -7,10 +7,12 @@ import PostDetailClient from "@/components/PostDetailClient";
 
 interface PostDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ source?: string }>;
 }
 
-export default async function PostDetailPage({ params }: PostDetailPageProps) {
+export default async function PostDetailPage({ params, searchParams }: PostDetailPageProps) {
   const { id } = await params;
+  const { source } = await searchParams;
 
   const post = await db.query.posts.findFirst({
     where: eq(posts.id, id),
@@ -35,6 +37,6 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const matchingMasters = await getMatchingMasters(id);
 
   return (
-    <PostDetailClient post={post} matchingMasters={matchingMasters} />
+    <PostDetailClient post={post} matchingMasters={matchingMasters} source={source} />
   );
 }

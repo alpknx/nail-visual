@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Page, Navbar, Block, BlockTitle, List, ListItem, Button } from "konsta/react";
+import { useRouter } from "next/navigation";
 
 interface DashboardClientProps {
   profile: {
@@ -21,8 +22,11 @@ interface DashboardClientProps {
 }
 
 export default function DashboardClient({ profile, masterPosts }: DashboardClientProps) {
+  const router = useRouter();
+
   return (
     <Page>
+      <Navbar title="Dashboard" />
       <BlockTitle>Profile</BlockTitle>
       <List strong inset>
         <ListItem
@@ -42,7 +46,7 @@ export default function DashboardClient({ profile, masterPosts }: DashboardClien
           {masterPosts.map((post) => (
             <Link
               key={post.id}
-              href={`/post/${post.id}`}
+              href={`/post/${post.id}/update`}
               className="relative aspect-square bg-gray-100"
             >
               <Image
