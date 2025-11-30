@@ -1,9 +1,7 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Phone, MessageCircle } from "lucide-react";
+import { Sheet, Button } from "konsta/react";
+import { MapPin, Phone, MessageCircle, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { trackConversionClick } from "@/app/actions";
@@ -59,74 +57,84 @@ export default function MasterMatchDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTitle></DialogTitle>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden gap-0">
-
-        {/* Header - Clickable to Profile */}
-        <div className="p-4 bg-white border-b border-gray-100">
-          <Link href={`/master/${master.masterId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <Avatar className="h-12 w-12 border border-gray-100">
-              <AvatarImage src={master.avatarUrl || undefined} />
-              <AvatarFallback>
+    <Sheet
+      opened={open}
+      onBackdropClick={() => onOpenChange(false)}
+      className="h-auto max-h-[85vh] rounded-t-xl pb-24"
+    >
+      {/* Header - Clickable to Profile */}
+      <div className="p-4 border-b border-gray-100 flex justify-between items-start">
+        <Link href={`/master/${master.masterId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <div className="h-12 w-12 rounded-full overflow-hidden bg-gray-100 border border-gray-200 relative">
+            {master.avatarUrl ? (
+              <Image src={master.avatarUrl} alt={master.businessName} fill className="object-cover" />
+            ) : (
+              <div className="flex items-center justify-center h-full w-full bg-gray-200 text-gray-500 font-bold">
                 {master.businessName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-semibold text-lg leading-tight">{master.businessName}</h3>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="h-3 w-3" />
-                <span>{master.distance.toFixed(1)} km away</span>
               </div>
+            )}
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg leading-tight">{master.businessName}</h3>
+            <div className="flex items-center gap-1 text-sm text-gray-500">
+              <MapPin className="h-3 w-3" />
+              <span>{master.distance.toFixed(1)} km away</span>
             </div>
-          </Link>
-        </div>
+          </div>
+        </Link>
+        <Button
+          clear
+          small
+          className="!p-0 min-w-0 w-8 h-8 rounded-full"
+          onClick={() => onOpenChange(false)}
+        >
+          <X className="w-5 h-5 text-gray-400" />
+        </Button>
+      </div>
 
-        {/* Matched Image */}
-        <div className="relative aspect-[4/5] w-full bg-gray-100">
-          {master.matchingImageUrl ? (
-            <Image
-              src={master.matchingImageUrl}
-              alt={`Work by ${master.businessName}`}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              No image available
-            </div>
-          )}
+      {/* Matched Image */}
+      <div className="relative aspect-[4/5] w-full bg-gray-100">
+        {master.matchingImageUrl ? (
+          <Image
+            src={master.matchingImageUrl}
+            alt={`Work by ${master.businessName}`}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            No image available
+          </div>
+        )}
 
-          {/* Price Tag Overlay */}
-          {master.price && (
-            <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-sm font-medium">
-              {master.price} PLN
-            </div>
-          )}
-        </div>
+        {/* Price Tag Overlay */}
+        {master.price && (
+          <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-sm font-medium">
+            {master.price} PLN
+          </div>
+        )}
+      </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 grid grid-cols-2 gap-3 bg-white border-t border-gray-100">
-          <Button
-            onClick={() => handleContact("sms")}
-            className="w-full bg-black text-white hover:bg-black/90"
-            size="lg"
-          >
-            <MessageCircle className="h-5 w-5 mr-2" />
-            Text
-          </Button>
-          <Button
-            onClick={() => handleContact("call")}
-            variant="outline"
-            className="w-full border-gray-200 hover:bg-gray-50"
-            size="lg"
-          >
-            <Phone className="h-5 w-5 mr-2" />
-            Call
-          </Button>
-        </div>
-
-      </DialogContent>
-    </Dialog>
+      {/* Footer Actions */}
+      <div className="p-4 grid grid-cols-2 gap-3 bg-white border-t border-gray-100">
+        <Button
+          onClick={() => handleContact("sms")}
+          large
+          className="bg-black text-white"
+        >
+          <MessageCircle className="h-5 w-5 mr-2" />
+          Text
+        </Button>
+        <Button
+          onClick={() => handleContact("call")}
+          large
+          outline
+          className="border-gray-200"
+        >
+          <Phone className="h-5 w-5 mr-2" />
+          Call
+        </Button>
+      </div>
+    </Sheet>
   );
 }
