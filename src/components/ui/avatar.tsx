@@ -1,50 +1,51 @@
-import * as React from "react"
+"use client";
 
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-export interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {}
+// Konsta doesn't have a dedicated Avatar component, so we build one with Tailwind
+// to match Shadcn API.
 
-const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
-  ({ className, ...props }, ref) => (
-    <span
-      ref={ref}
-      className={cn(
-        "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
-        className
-      )}
-      {...props}
-    />
-  )
-)
-Avatar.displayName = "Avatar"
+const Avatar = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      className
+    )}
+    {...props}
+  />
+));
+Avatar.displayName = "Avatar";
 
-export interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {}
+const AvatarImage = React.forwardRef<
+  HTMLImageElement,
+  React.ImgHTMLAttributes<HTMLImageElement>
+>(({ className, ...props }, ref) => (
+  <img
+    ref={ref}
+    className={cn("aspect-square h-full w-full", className)}
+    {...props}
+  />
+));
+AvatarImage.displayName = "AvatarImage";
 
-const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, ...props }, ref) => (
-    <img
-      ref={ref}
-      className={cn("aspect-square h-full w-full", className)}
-      {...props}
-    />
-  )
-)
-AvatarImage.displayName = "AvatarImage"
+const AvatarFallback = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "flex h-full w-full items-center justify-center rounded-full bg-muted",
+      className
+    )}
+    {...props}
+  />
+));
+AvatarFallback.displayName = "AvatarFallback";
 
-export interface AvatarFallbackProps extends React.HTMLAttributes<HTMLSpanElement> {}
-
-const AvatarFallback = React.forwardRef<HTMLSpanElement, AvatarFallbackProps>(
-  ({ className, ...props }, ref) => (
-    <span
-      ref={ref}
-      className={cn(
-        "flex h-full w-full items-center justify-center rounded-full bg-muted",
-        className
-      )}
-      {...props}
-    />
-  )
-)
-AvatarFallback.displayName = "AvatarFallback"
-
-export { Avatar, AvatarImage, AvatarFallback }
+export { Avatar, AvatarImage, AvatarFallback };

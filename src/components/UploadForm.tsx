@@ -10,6 +10,8 @@ import { Loader2, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { log } from "console";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // --- Types & Constants ---
 
@@ -126,11 +128,11 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
 
         {/* Image Upload */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 ml-4">
             Photo
           </label>
           {watchedImageUrl ? (
-            <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden border border-gray-200">
+            <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden border border-gray-200 mx-4 w-[calc(100%-2rem)]">
               <Image
                 src={watchedImageUrl}
                 alt="Uploaded work"
@@ -146,83 +148,79 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
               </button>
             </div>
           ) : (
-            <UploadButton
-              endpoint="imageUploader"
-              onUploadBegin={(name) => {
-                console.log("Upload started:", name);
-              }}
-              onClientUploadComplete={(res) => {
-                console.log("Upload response:", res);
-                if (res && res[0]) {
-                  // Try to get URL from standard property or serverData
-                  const url = res[0].url || (res[0].serverData as any)?.ufsUrl;
-                  console.log("Found URL:", url);
-
-                  if (url) {
-                    setValue("imageUrl", url, { shouldValidate: true, shouldDirty: true });
-                  } else {
-                    console.error("No URL found in response");
-                    alert("Upload failed: No URL returned");
+            <div className="mx-4">
+              <UploadButton
+                endpoint="imageUploader"
+                onUploadBegin={(name) => {
+                  console.log("Upload started:", name);
+                }}
+                onClientUploadComplete={(res) => {
+                  console.log("Upload response:", res);
+                  if (res && res[0]) {
+                    const url = res[0].url || (res[0].serverData as any)?.ufsUrl;
+                    if (url) {
+                      setValue("imageUrl", url, { shouldValidate: true, shouldDirty: true });
+                    } else {
+                      alert("Upload failed: No URL returned");
+                    }
                   }
-                }
-              }}
-              onUploadError={(error: Error) => {
-                console.error("Upload error:", error);
-                alert(`ERROR! ${error.message}`);
-              }}
-              className="ut-button:bg-black ut-button:ut-readying:bg-black/50 ut-button:ut-uploading:bg-black/50"
-            />
+                }}
+                onUploadError={(error: Error) => {
+                  console.error("Upload error:", error);
+                  alert(`ERROR! ${error.message}`);
+                }}
+                className="ut-button:bg-black ut-button:ut-readying:bg-black/50 ut-button:ut-uploading:bg-black/50 w-full"
+              />
+            </div>
           )}
         </div>
 
         {/* Section 1: Technique (Single Select) */}
-        <section>
+        <section className="px-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Technique</h3>
           <div className="flex flex-wrap gap-2">
             {techniqueTags.map((tag) => (
-              <button
+              <Button
                 key={tag.id}
                 type="button"
                 onClick={() => setValue("technique", tag.id, { shouldValidate: true })}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${watchedTechnique === tag.id
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-                  }`}
+                variant={watchedTechnique === tag.id ? "default" : "outline"}
+                size="sm"
+                className={watchedTechnique === tag.id ? "bg-black text-white" : "border-gray-200 text-gray-700"}
               >
                 {tag.nameTranslations["en"] || tag.slug}
-              </button>
+              </Button>
             ))}
           </div>
         </section>
 
         {/* Section 2: Shape (Single Select) */}
-        <section>
+        <section className="px-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Shape</h3>
           <div className="flex flex-wrap gap-2">
             {shapeTags.map((tag) => (
-              <button
+              <Button
                 key={tag.id}
                 type="button"
                 onClick={() => setValue("shape", tag.id, { shouldValidate: true })}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${watchedShape === tag.id
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-                  }`}
+                variant={watchedShape === tag.id ? "default" : "outline"}
+                size="sm"
+                className={watchedShape === tag.id ? "bg-black text-white" : "border-gray-200 text-gray-700"}
               >
                 {tag.nameTranslations["en"] || tag.slug}
-              </button>
+              </Button>
             ))}
           </div>
         </section>
 
         {/* Section 3: Style (Multi Select) */}
-        <section>
+        <section className="px-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Style <span className="text-gray-400 font-normal">(Select at least one)</span></h3>
           <div className="flex flex-wrap gap-2">
             {styleTags.map((tag) => {
               const isSelected = watchedStyles.includes(tag.id);
               return (
-                <button
+                <Button
                   key={tag.id}
                   type="button"
                   onClick={() => {
@@ -231,13 +229,12 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
                       : [...watchedStyles, tag.id];
                     setValue("styles", newStyles, { shouldValidate: true });
                   }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${isSelected
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-                    }`}
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  className={isSelected ? "bg-black text-white" : "border-gray-200 text-gray-700"}
                 >
                   {tag.nameTranslations["en"] || tag.slug}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -245,7 +242,7 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
         </section>
 
         {/* Section 4: Details (Optional) */}
-        <section className="space-y-6 pt-4 border-t border-gray-100">
+        <section className="space-y-6 pt-4 border-t border-gray-100 px-4">
 
           {/* Color */}
           <div>
@@ -277,30 +274,31 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
           <div className="grid grid-cols-2 gap-4">
             {/* Price */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Price</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                <input
-                  type="number"
-                  {...register("price")}
-                  className="w-full pl-7 pr-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-                  placeholder="Starts at 50"
-                />
-              </div>
+              <Input
+                label="Price"
+                type="number"
+                placeholder="Starts at 50"
+                {...register("price")}
+                onChange={(e: any) => {
+                  register("price").onChange(e);
+                }}
+                // Konsta ListInput props
+                media={<span className="text-gray-500">$</span>}
+              />
             </div>
 
             {/* Duration */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Duration</label>
-              <div className="relative">
-                <input
-                  type="number"
-                  {...register("durationMinutes")}
-                  className="w-full pl-3 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-                  placeholder="90"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">mins</span>
-              </div>
+              <Input
+                label="Duration"
+                type="number"
+                placeholder="90"
+                {...register("durationMinutes")}
+                onChange={(e: any) => {
+                  register("durationMinutes").onChange(e);
+                }}
+                after={<span className="text-gray-500 text-sm">mins</span>}
+              />
             </div>
           </div>
         </section>
@@ -308,14 +306,15 @@ export function UploadForm({ tags }: { tags: Tag[] }) {
       </form>
 
       {/* Sticky Bottom Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 safe-area-bottom">
-        <button
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 safe-area-bottom z-20">
+        <Button
           onClick={handleSubmit(onSubmit)}
           disabled={!isValid || isSubmitting}
-          className="w-full py-4 bg-black text-white font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all active:scale-[0.98]"
+          className="w-full py-4 bg-black text-white font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          size="lg"
         >
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Post Photo"}
-        </button>
+        </Button>
       </div>
     </div>
   );

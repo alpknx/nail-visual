@@ -56,6 +56,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.6
         version: 0.44.6(@types/pg@8.15.5)(postgres@3.4.7)
+      konsta:
+        specifier: ^5.0.6
+        version: 5.0.6
       lucide-react:
         specifier: ^0.545.0
         version: 0.545.0(react@19.1.0)
@@ -86,9 +89,6 @@ importers:
       react-dropzone:
         specifier: ^14.3.8
         version: 14.3.8(react@19.1.0)
-      react-easy-crop:
-        specifier: ^5.5.6
-        version: 5.5.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-hook-form:
         specifier: ^7.65.0
         version: 7.65.0(react@19.1.0)
@@ -2448,6 +2448,10 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
+  konsta@5.0.6:
+    resolution: {integrity: sha512-qMwBigssLnqTHDfpFnLPMYYWP329FGI6jr+qMpzVXIRsvHUwRmE9y9jxKf8IURh1n4aCAaytD/04BS6yNoKd3w==}
+    engines: {node: '>= 4.7.0'}
+
   language-subtag-registry@0.3.23:
     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
 
@@ -2661,9 +2665,6 @@ packages:
     resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
     hasBin: true
 
-  normalize-wheel@1.0.1:
-    resolution: {integrity: sha512-1OnlAPZ3zgrk8B91HyRj+eVv+kS5u+Z0SCsak6Xil/kmgEia50ga7zfkumayonZrImffAxPU/5WcyGhzetHNPA==}
-
   oauth4webapi@3.8.2:
     resolution: {integrity: sha512-FzZZ+bht5X0FKe7Mwz3DAVAmlH1BV5blSak/lHMBKz0/EBMhX6B10GlQYI51+oRp8ObJaX0g6pXrAxZh5s8rjw==}
 
@@ -2855,12 +2856,6 @@ packages:
     engines: {node: '>= 10.13'}
     peerDependencies:
       react: '>= 16.8 || 18.0.0'
-
-  react-easy-crop@5.5.6:
-    resolution: {integrity: sha512-Jw3/ozs8uXj3NpL511Suc4AHY+mLRO23rUgipXvNYKqezcFSYHxe4QXibBymkOoY6oOtLVMPO2HNPRHYvMPyTw==}
-    peerDependencies:
-      react: '>=16.4.0'
-      react-dom: '>=16.4.0'
 
   react-hook-form@7.65.0:
     resolution: {integrity: sha512-xtOzDz063WcXvGWaHgLNrNzlsdFgtUWcb32E6WFaGTd7kPZG3EeDusjdZfUsPwKCKVXy1ZlntifaHZ4l8pAsmw==}
@@ -5453,6 +5448,10 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
+  konsta@5.0.6:
+    dependencies:
+      tailwind-merge: 3.3.1
+
   language-subtag-registry@0.3.23: {}
 
   language-tags@1.0.9:
@@ -5645,8 +5644,6 @@ snapshots:
       detect-libc: 2.1.2
     optional: true
 
-  normalize-wheel@1.0.1: {}
-
   oauth4webapi@3.8.2: {}
 
   oauth@0.9.15: {}
@@ -5829,13 +5826,6 @@ snapshots:
       file-selector: 2.1.2
       prop-types: 15.8.1
       react: 19.1.0
-
-  react-easy-crop@5.5.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
-    dependencies:
-      normalize-wheel: 1.0.1
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
-      tslib: 2.8.1
 
   react-hook-form@7.65.0(react@19.1.0):
     dependencies:

@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
-import { masterProfiles, posts, postTags } from "@/db/schema";
+import { masterProfiles, posts, postTags, tags } from "@/db/schema";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { eq, desc, sql } from "drizzle-orm";
@@ -70,6 +70,24 @@ export async function getFeedPosts({ pageParam = 0 }: { pageParam?: number }) {
     data: feedPosts,
     nextPage: feedPosts.length === LIMIT ? pageParam + 1 : undefined,
   };
+}
+
+export async function searchTags(query: string, locale: string = 'en') {
+  if (!query || query.length < 2) return [];
+
+  const matchingTags = await db.query.tags.findMany({
+    where: sql`
+      ${tags.slug} ILIKE ${`%${query}%`} OR
+      ${tags.nameTranslations}->>${locale} ILIKE ${`%${query}%`}
+    `,
+    limit: 10,
+  });
+
+  return matchingTags.map(tag => ({
+    id: tag.id,
+    name: (tag.nameTranslations as any)[locale] || tag.slug,
+    slug: tag.slug
+  }));
 }
 
 export async function getMatchingMasters(postId: string) {

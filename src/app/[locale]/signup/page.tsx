@@ -98,7 +98,7 @@ export default function SignUpPage() {
                                 required
                                 placeholder="your@email.com"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e: any) => setEmail(e.target.value)}
                                 className="w-full"
                             />
                         </div>
@@ -115,7 +115,7 @@ export default function SignUpPage() {
                                 required
                                 placeholder="Min 8 characters"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e: any) => setPassword(e.target.value)}
                                 className="w-full"
                             />
                         </div>
@@ -132,7 +132,7 @@ export default function SignUpPage() {
                                 required
                                 placeholder={t('confirmPassword')}
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(e: any) => setConfirmPassword(e.target.value)}
                                 className="w-full"
                             />
                         </div>
