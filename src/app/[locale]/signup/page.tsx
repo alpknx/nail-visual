@@ -66,9 +66,10 @@ export default function SignUpPage() {
 
   return (
     <Page>
-      <Navbar title={t('title')} />
-
-      <BlockTitle>{t('subtitle')}</BlockTitle>
+      <BlockTitle 
+      >
+        {t('subtitle')}
+      </BlockTitle>
       <List strong inset>
         <ListInput
           outline
