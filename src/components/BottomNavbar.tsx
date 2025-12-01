@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabbar, TabbarLink, Icon } from "konsta/react";
 import { House, Search, PlusSquare, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,6 +9,13 @@ export default function BottomNavbar() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Prefetch routes on mount for instant navigation
+  useEffect(() => {
+    router.prefetch("/");
+    router.prefetch("/post/new");
+    router.prefetch("/profile");
+  }, [router]);
+
   // Simple check for active state. 
   // Note: pathname includes locale, e.g. /en/profile
   const isActive = (path: string) => {
@@ -16,11 +23,17 @@ export default function BottomNavbar() {
     return pathname?.includes(path);
   };
 
+  // Fast navigation handlers
+  const handleNavigate = (path: string) => {
+    router.push(path);
+  };
+
   return (
     <Tabbar labels className="left-0 bottom-0 fixed z-50">
       <TabbarLink
         active={isActive("/")}
-        onClick={() => router.push("/")}
+        onClick={() => handleNavigate("/")}
+        onMouseEnter={() => router.prefetch("/")}
         icon={
           <Icon
             ios={<Search className="w-7 h-7" />}
@@ -31,7 +44,8 @@ export default function BottomNavbar() {
       />
       <TabbarLink
         active={isActive("/post/new")}
-        onClick={() => router.push("/post/new")}
+        onClick={() => handleNavigate("/post/new")}
+        onMouseEnter={() => router.prefetch("/post/new")}
         icon={
           <Icon
             ios={<PlusSquare className="w-7 h-7" />}
@@ -42,7 +56,8 @@ export default function BottomNavbar() {
       />
       <TabbarLink
         active={isActive("/profile")}
-        onClick={() => router.push("/profile")}
+        onClick={() => handleNavigate("/profile")}
+        onMouseEnter={() => router.prefetch("/profile")}
         icon={
           <Icon
             ios={<User className="w-7 h-7" />}
