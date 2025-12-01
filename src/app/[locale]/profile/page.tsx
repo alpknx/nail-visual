@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user || session.user.role !== "master") {
-    redirect("/signin");
+    redirect("/signin?callbackUrl=/profile");
   }
 
   // Get master profile
