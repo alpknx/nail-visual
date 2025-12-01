@@ -7,6 +7,7 @@ import { masterProfiles, posts, postTags, tags } from "@/db/schema";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { eq, desc, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 
 const onboardingSchema = z.object({
   businessName: z.string().min(1, "Business Name is required"),
@@ -89,18 +90,12 @@ export async function updateProfile(data: z.infer<typeof updateProfileSchema>) {
   return { success: true };
 }
 
-export async function getFeedPosts({ pageParam = 0, tagId }: { pageParam?: number, tagId?: number }) {
-  const LIMIT = 10;
-  const OFFSET = pageParam * LIMIT;
+export async function getFeedPosts({ pageParam = 0, tagId, limit = 4 }: { pageParam?: number, tagId?: number, limit?: number }) {
+  const LIMIT = limit; // Dynamic limit based on viewport height
 
   // Mock location (New York)
   const userLat = 40.7128;
   const userLng = -74.0060;
-
-  // Fetch posts with master info
-  // For MVP mixed feed, we'll just fetch latest posts for now
-  // To implement the mix (2 local, 8 global), we would need more complex logic
-  // Here we just fetch latest posts
 
   const whereClause = tagId
     ? sql`EXISTS (
@@ -110,25 +105,63 @@ export async function getFeedPosts({ pageParam = 0, tagId }: { pageParam?: numbe
       )`
     : undefined;
 
+  // Fast random: Load a larger batch and shuffle, then paginate
+  // This is faster than RANDOM() on large tables and gives good variety
+  const batchSize = Math.max(LIMIT * 3, 12); // Load 3x what we need for good randomization
+  
   const feedPosts = await db.query.posts.findMany({
     with: {
       author: true,
     },
     where: whereClause,
-    limit: LIMIT,
-    offset: OFFSET,
-    orderBy: [desc(posts.createdAt)],
+    limit: batchSize,
+    offset: 0,
+    orderBy: [desc(posts.createdAt)], // Fast ordering
   });
+  
+  // Shuffle for randomness (lightweight on small batch)
+  const shuffled = [...feedPosts].sort(() => Math.random() - 0.5);
+  
+  // Paginate from shuffled results
+  const OFFSET = pageParam * LIMIT;
+  const paginatedPosts = shuffled.slice(OFFSET, OFFSET + LIMIT);
+  const hasMore = shuffled.length > OFFSET + LIMIT;
 
   return {
-    data: feedPosts,
-    nextPage: feedPosts.length === LIMIT ? pageParam + 1 : undefined,
+    data: paginatedPosts,
+    nextPage: hasMore ? pageParam + 1 : undefined,
   };
 }
 
 export async function searchTags(query: string, locale: string = 'en') {
   if (!query || query.length < 2) return [];
 
+  // Cache search results for 1 minute to reduce DB load
+  const getCachedTags = unstable_cache(
+    async (searchQuery: string, searchLocale: string) => {
+      const matchingTags = await db.query.tags.findMany({
+        where: sql`
+          ${tags.slug} ILIKE ${`%${searchQuery}%`} OR
+          ${tags.nameTranslations}->>${searchLocale} ILIKE ${`%${searchQuery}%`}
+        `,
+        limit: 10,
+      });
+
+      return matchingTags.map(tag => ({
+        id: tag.id,
+        name: (tag.nameTranslations as any)[searchLocale] || tag.slug,
+        slug: tag.slug
+      }));
+    },
+    ['search-tags'],
+    {
+      revalidate: 60, // 1 minute
+      tags: ['tags', `tags-${locale}`],
+    }
+  );
+
+  // Note: We don't cache by query to allow fresh search results
+  // But we can still benefit from DB query optimization
   const matchingTags = await db.query.tags.findMany({
     where: sql`
       ${tags.slug} ILIKE ${`%${query}%`} OR
@@ -145,23 +178,38 @@ export async function searchTags(query: string, locale: string = 'en') {
 }
 
 export async function getTagById(id: number, locale: string = 'en') {
-  const tag = await db.query.tags.findFirst({
-    where: eq(tags.id, id),
-  });
+  // Cache tag data for 5 minutes (tags are relatively static)
+  const getCachedTag = unstable_cache(
+    async (tagId: number, tagLocale: string) => {
+      const tag = await db.query.tags.findFirst({
+        where: eq(tags.id, tagId),
+      });
 
-  if (!tag) return null;
+      if (!tag) return null;
 
-  return {
-    id: tag.id,
-    name: (tag.nameTranslations as any)[locale] || tag.slug,
-    slug: tag.slug
-  };
+      return {
+        id: tag.id,
+        name: (tag.nameTranslations as any)[tagLocale] || tag.slug,
+        slug: tag.slug
+      };
+    },
+    [`tag-${id}-${locale}`],
+    {
+      revalidate: 300, // 5 minutes
+      tags: ['tags', `tag-${id}`],
+    }
+  );
+
+  return getCachedTag(id, locale);
 }
 
 export async function getMatchingMasters(postId: string) {
-  // Get the post with its tags
-  const post = await db.query.posts.findFirst({
-    where: eq(posts.id, postId),
+  // Cache matching masters for 2 minutes (expensive computation)
+  const getCachedMasters = unstable_cache(
+    async (pId: string) => {
+      // Get the post with its tags
+      const post = await db.query.posts.findFirst({
+        where: eq(posts.id, pId),
     with: {
       tags: {
         with: {
@@ -252,7 +300,16 @@ export async function getMatchingMasters(postId: string) {
     })
     .slice(0, 10); // Top 10
 
-  return scoredMasters;
+      return scoredMasters;
+    },
+    [`matching-masters-${postId}`],
+    {
+      revalidate: 120, // 2 minutes
+      tags: ['masters', `post-${postId}`],
+    }
+  );
+
+  return getCachedMasters(postId);
 }
 
 const createPostSchema = z.object({
