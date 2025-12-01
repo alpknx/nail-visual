@@ -4,6 +4,8 @@
 @import "uploadthing/tw/v4";
 @source "../../node_modules/@uploadthing/react/dist";
 
+/* CRITICAL: Remove ALL blur effects - must be after Konsta imports */
+
 /* @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap'); */
 
 @custom-variant dark (&:is(.dark *));
@@ -147,8 +149,229 @@
   }
 }
 
+/* Override Konsta safe area margins and padding to 8px */
+.ml-safe-4 {
+  margin-left: 8px !important;
+}
+
+.mr-safe-4 {
+  margin-right: 8px !important;
+}
+
+.pl-safe-4 {
+  padding-left: 8px !important;
+}
+
 /* Hide Tabbar internal container div */
 .pl-safe-4.pr-safe-4.h-11.justify-between.flex.relative.items-center.w-full {
   display: none !important;
 }
+
+/* Hide empty ListItem wrapper divs from Konsta - ONLY in profile list */
+.profile-list .profile-list-item > div.text-black.dark\:text-white.ps-safe-4.flex.items-center,
+.profile-list .profile-list-item div.text-black.dark\:text-white.ps-safe-4.flex.items-center {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.profile-list .profile-list-item > div.text-black.dark\:text-white.ps-safe-4.flex.items-center > div.py-3.pe-safe-4.w-full.relative.hairline-b,
+.profile-list .profile-list-item div.py-3.pe-safe-4.w-full.relative.hairline-b {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Smooth scroll loading animations - optimized for 2-item batches */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Smooth loading items */
+.smooth-load-item {
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Image loading wrapper */
+.image-load-wrapper {
+  position: relative;
+  overflow: hidden;
+  will-change: contents;
+}
+
+/* Smooth image fade-in */
+.image-fade-in {
+  will-change: opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Optimize animations */
+.fade-in-up,
+.fade-in-up *,
+.smooth-load-item {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(0, 0, 0, 0.1);
+  border-top-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  animation: spin 0.9s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  will-change: transform;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth transitions for images */
+img {
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth image loading */
+.next-image-wrapper {
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.next-image-wrapper img {
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Optimize image rendering */
+img,
+.image-fade-in {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Optimize scrolling performance */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent layout shifts during image loading */
+.image-load-wrapper::before {
+  content: '';
+  display: block;
+  padding-bottom: 125%; /* 4/5 aspect ratio */
+}
+
+/* Smooth column layout transitions */
+.columns-2 {
+  column-fill: balance;
+  -webkit-column-fill: balance;
+}
+
+/* Reduce repaints during scroll */
+.contents {
+  contain: layout style paint;
+  will-change: contents;
+}
+
+/* Optimize hover effects */
+.group:hover .group-hover\:scale-105 {
+  transform: scale(1.05);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fast button and link transitions */
+button,
+a,
+[role="button"],
+.TabbarLink {
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out !important;
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active,
+a:active,
+[role="button"]:active,
+.TabbarLink:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease-out !important;
+}
+
+/* Optimize navigation performance */
+.TabbarLink {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Fast page transitions */
+.Page {
+  will-change: contents;
+  contain: layout style paint;
+}
+
 /* stylelint-enable at-rule-no-unknown */
