@@ -132,8 +132,8 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
               className="object-contain opacity-80"
             />
           )}
-          <div className="absolute inset-0 flex items-center justify-center p-4 bg-black/30">
-            <p className="text-white text-center text-sm font-medium bg-black/50 p-2 rounded-lg backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-end justify-center bg-black/30">
+            <p className="text-white text-center text-sm font-medium bg-black/50 rounded-lg backdrop-blur-sm">
               To change the image, please delete and create a new post.
             </p>
           </div>

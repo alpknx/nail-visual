@@ -100,7 +100,7 @@ export default function SearchBar({ onSelectTag, selectedTag }: SearchBarProps) 
       )}
 
       {isOpen && results.length > 0 && !selectedTag && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md z-50 max-h-60 overflow-y-auto">
           {results.map((tag) => (
             <button
               key={tag.id}
@@ -114,7 +114,7 @@ export default function SearchBar({ onSelectTag, selectedTag }: SearchBarProps) 
       )}
 
       {isOpen && isLoading && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 p-2 text-center text-xs text-muted-foreground">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md z-50 p-2 text-center text-xs text-muted-foreground">
           Searching...
         </div>
       )}

@@ -51,6 +51,7 @@ export default function MatchingMastersList({ matches }: MatchingMastersListProp
                     src={match.matchingImageUrl}
                     alt={match.businessName}
                     fill
+                    sizes="192px"
                     className="object-cover"
                   />
                 )}
