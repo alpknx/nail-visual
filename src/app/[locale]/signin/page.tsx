@@ -11,7 +11,7 @@ import Link from "next/link";
 export default function SignInPage() {
   const t = useTranslations('auth.signIn');
   const tCommon = useTranslations('common');
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -31,11 +31,18 @@ export default function SignInPage() {
 
   // Redirect if already signed in
   useEffect(() => {
-    if (session) {
-      const callbackUrl = searchParams.get('callbackUrl') || '/';
-      router.push(callbackUrl);
+    if (status === "authenticated" && session) {
+      const callbackUrl = searchParams.get('callbackUrl');
+      // If there's a callback URL, use it (e.g., from protected route redirect)
+      if (callbackUrl) {
+        router.replace(callbackUrl);
+      } else {
+        // Otherwise, redirect to profile for masters, or home for clients
+        const redirectUrl = session.user?.role === "master" ? "/profile" : "/";
+        router.replace(redirectUrl);
+      }
     }
-  }, [session, searchParams, router]);
+  }, [session, status, searchParams, router]);
 
   const handleSubmit = async () => {
     setError("");
@@ -50,6 +57,7 @@ export default function SignInPage() {
 
       if (!result?.ok) {
         setError(result?.error || t('invalidCredentials'));
+        setLoading(false);
         return;
       }
 
@@ -57,40 +65,39 @@ export default function SignInPage() {
         localStorage.setItem("nail_visual_email", email);
       }
 
-      const callbackUrl = searchParams.get('callbackUrl') || '/';
-      router.push(callbackUrl);
+      // Refresh router to update session, then redirect immediately
+      router.refresh();
+      
+      // Immediate redirect - session will be available on next page
+      const callbackUrl = searchParams.get('callbackUrl');
+      if (callbackUrl) {
+        router.replace(callbackUrl);
+      } else {
+        // Redirect to profile - the profile page will handle role checks
+        router.replace("/profile");
+      }
     } catch {
       setError(t('error'));
-    } finally {
       setLoading(false);
     }
   };
 
-  if (session) {
-    return (
-      <Page>
-        <div className="min-h-screen p-4 flex items-center justify-center">
-          <div className="w-full max-w-md space-y-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t('signedInAs')} {session.user?.email}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {tCommon('role')}: {session.user?.role === "master" ? "Master" : "Client"}
-            </p>
-            <p className="text-xs text-muted-foreground animate-pulse">
-              Redirecting...
-            </p>
-          </div>
-        </div>
-      </Page>
-    );
+  // Don't show redirect screen if session is loading or if we're already redirecting
+  if (status === "loading") {
+    return null; // Or a loading spinner
+  }
+
+  if (status === "authenticated" && session) {
+    // Redirect is happening, show minimal loading state
+    return null;
   }
 
   return (
     <Page>
-      <Navbar title={t('title')} />
-
-      <BlockTitle>{t('subtitle')}</BlockTitle>
+      <BlockTitle
+      >
+        {t('subtitle')}
+      </BlockTitle>
       <List strong inset>
         <ListInput
           outline
