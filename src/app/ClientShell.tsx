@@ -25,12 +25,36 @@ export default function ClientShell({ children }: { children: React.ReactNode })
         // Set Apple status bar style
         const appleStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
         if (appleStatusBar) {
-            appleStatusBar.setAttribute('content', 'black');
+            appleStatusBar.setAttribute('content', 'black-translucent');
         } else {
             const meta = document.createElement('meta');
             meta.name = 'apple-mobile-web-app-status-bar-style';
-            meta.content = 'black';
+            meta.content = 'black-translucent';
             document.head.appendChild(meta);
+        }
+
+        // Add Apple Touch Icon if not present
+        let appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+        if (!appleTouchIcon) {
+            appleTouchIcon = document.createElement('link');
+            appleTouchIcon.setAttribute('rel', 'apple-touch-icon');
+            appleTouchIcon.setAttribute('href', '/icons/icon-512.png');
+            appleTouchIcon.setAttribute('sizes', '180x180');
+            document.head.appendChild(appleTouchIcon);
+        }
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator && typeof window !== 'undefined') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker
+                    .register('/sw.js', { scope: '/' })
+                    .then((registration) => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
         }
     }, []);
 
