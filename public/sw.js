@@ -3,6 +3,7 @@ const CACHE_NAME = 'nail-visual-v1';
 const urlsToCache = [
   '/',
   '/manifest.webmanifest',
+  '/icons/icon-512.png',
 ];
 
 // Установка Service Worker
