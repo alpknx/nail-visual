@@ -3,14 +3,14 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getFeedPosts } from "@/app/actions";
 import { useInView } from "react-intersection-observer";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback, startTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Page, Navbar, Searchbar, Block, Link as KonstaLink, Sheet, List, ListItem, Toolbar, ToolbarPane } from "konsta/react";
+import { Page, Navbar, Searchbar, List, ListItem } from "konsta/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/use-debounce";
 import { searchTags, getTagById } from "@/app/actions";
-import { X } from "lucide-react";
+import PerformanceMonitor from "@/components/PerformanceMonitor";
 
 export default function Home() {
   const searchParams = useSearchParams();
@@ -60,9 +60,11 @@ export default function Home() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Tag filter state from URL
   const selectedTagId = searchParams.get("tagId");
@@ -91,118 +93,184 @@ export default function Home() {
     }
   }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  // Fetch tag name if tagId is present
+  // Store current searchQuery in ref to avoid dependency issues
+  const searchQueryRef = useRef(searchQuery);
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
+
+  // Fetch tag name if tagId is present - only update if different
   useEffect(() => {
     const fetchTagName = async () => {
       if (selectedTagId) {
         const tag = await getTagById(parseInt(selectedTagId));
-        if (tag) {
-          setSearchQuery(tag.name);
+        if (tag && tag.name !== searchQueryRef.current) {
+          // Only update if the name is different to avoid unnecessary re-renders
+          startTransition(() => {
+            setSearchQuery(tag.name);
+          });
         }
-      } else {
-        setSearchQuery("");
+      } else if (searchQueryRef.current !== "") {
+        // Only clear if not already empty
+        startTransition(() => {
+          setSearchQuery("");
+        });
       }
     };
     fetchTagName();
   }, [selectedTagId]);
 
-  // Search effect
+  // Search effect with abort controller to cancel previous requests
   useEffect(() => {
+    const abortController = new AbortController();
+    
     const performSearch = async () => {
       if (debouncedQuery.length >= 2) {
-        const results = await searchTags(debouncedQuery);
-        setSearchResults(results);
+        setIsLoading(true);
+        try {
+          const results = await searchTags(debouncedQuery);
+          // Only update if request wasn't aborted
+          if (!abortController.signal.aborted) {
+            setSearchResults(results);
+            setIsLoading(false);
+          }
+        } catch (error) {
+          if (!abortController.signal.aborted) {
+            console.error("Failed to search tags:", error);
+            setSearchResults([]);
+            setIsLoading(false);
+          }
+        }
       } else {
         setSearchResults([]);
+        setIsLoading(false);
       }
     };
+    
     performSearch();
+    
+    // Cleanup: abort request if component unmounts or query changes
+    return () => {
+      abortController.abort();
+    };
   }, [debouncedQuery]);
 
-  const handleTagSelect = (tag: any) => {
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []);
+
+  const handleTagSelect = useCallback((tag: any) => {
     const params = new URLSearchParams(searchParams);
     if (tag) {
       params.set("tagId", tag.id.toString());
+      // Optimistically update searchQuery if tag name is known
+      // This prevents flickering - the value stays visible immediately
+      if (tag.name && tag.name !== searchQueryRef.current) {
+        startTransition(() => {
+          setSearchQuery(tag.name);
+        });
+      }
+      startTransition(() => {
+        setSearchResults([]);
+        setIsSearchFocused(false);
+      });
     } else {
       params.delete("tagId");
+      startTransition(() => {
+        setSearchQuery("");
+        setSearchResults([]);
+        setIsSearchFocused(false);
+      });
     }
     router.push(`/?${params.toString()}`);
+  }, [searchParams, router]);
 
-    setSearchQuery(""); // Clear search
-    setSearchResults([]);
-    setIsSheetOpen(false);
-  };
+  const showDropdown = useMemo(() => {
+    return isSearchFocused && (searchQuery.length >= 2 || searchResults.length > 0 || isLoading);
+  }, [isSearchFocused, searchQuery.length, searchResults.length, isLoading]);
 
   return (
     <Page className="pb-12">
-      <Navbar
-        subnavbar={
-          <Searchbar
-            value={searchQuery}
-            onInput={() => setIsSheetOpen(true)}
-            placeholder="Search tags..."
-            disableButton={false} // Always show search
-            onFocus={() => setIsSheetOpen(true)}
-            onClear={(e) => {
-              setSearchQuery("")
-              handleTagSelect(null)
-            }}
-          />
-        }
-      />
-
-      {/* Search Sheet */}
-      <Sheet
-        opened={isSheetOpen}
-        backdrop={true}
-        onBackdropClick={() => setIsSheetOpen(false)}
-      >
-        <Toolbar top className="ios:pt-4">
-          <ToolbarPane>
+      <div ref={searchContainerRef} className="relative">
+        <Navbar
+          subnavbar={
             <Searchbar
               value={searchQuery}
-              onInput={(e: any) => setSearchQuery(e.target.value)}
+              onInput={useCallback((e: any) => {
+                const value = e.target.value;
+                startTransition(() => {
+                  setSearchQuery(value);
+                  setIsSearchFocused(true);
+                });
+              }, [])}
               placeholder="Search tags..."
-              clearButton
-              onClear={() => setSearchQuery("")}
+              disableButton={false}
+              onFocus={useCallback(() => setIsSearchFocused(true), [])}
+              onClear={useCallback((e) => {
+                startTransition(() => {
+                  setSearchQuery("");
+                });
+                handleTagSelect(null);
+              }, [handleTagSelect])}
+              className="search-input-mobile"
             />
-          </ToolbarPane>
-          <ToolbarPane>
-            <KonstaLink onClick={() => setIsSheetOpen(false)}>
-              <X />
-            </KonstaLink>
-          </ToolbarPane>
-        </Toolbar>
+          }
+        />
 
-        <div className="overflow-y-auto h-[85vh]">
-          {searchResults.length > 0 ? (
-            <List strong inset>
-              {searchResults.map((tag) => (
-                <ListItem
-                  key={tag.id}
-                  title={tag.name}
-                  onClick={() => handleTagSelect(tag)}
-                  link
-                  chevron={false}
-                />
-              ))}
-            </List>
-          ) : searchQuery.length > 0 && debouncedQuery.length >= 2 ? (
-            <Block className="text-center text-gray-500 py-4">
-              No tags found
-            </Block>
-          ) : (
-            <Block className="text-center text-gray-500 py-4">
-              Type to search tags...
-            </Block>
-          )}
-        </div>
-      </Sheet>
+        {/* Search Dropdown */}
+        {showDropdown && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+            {isLoading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Searching...
+              </div>
+            ) : searchResults.length > 0 ? (
+              <List strong inset className="!m-0">
+                {searchResults.map((tag) => (
+                  <ListItem
+                    key={tag.id}
+                    title={tag.name}
+                    onClick={() => handleTagSelect(tag)}
+                    link
+                    chevron={false}
+                  />
+                ))}
+              </List>
+            ) : searchQuery.length >= 2 && debouncedQuery.length >= 2 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No matches
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
 
       {/* Feed */}
       <div className="p-2">
         {status === "pending" ? (
-          <div className="text-center py-10">Loading...</div>
+          <div className="grid grid-cols-2 gap-2">
+            {Array.from({ length: itemsPerLoad }).map((_, index) => (
+              <div
+                key={`shimmer-${index}`}
+                className="mb-2 rounded-xl overflow-hidden aspect-[4/5] shimmer"
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                }}
+              />
+            ))}
+          </div>
         ) : status === "error" ? (
           <div className="text-center py-10 text-red-500">
             Error loading feed
@@ -240,7 +308,7 @@ export default function Home() {
                         src={post.imageUrl}
                         alt={post.description || "Nail Art"}
                         fill
-                        className="object-cover transition-all duration-500 ease-out group-hover:scale-105 image-fade-in"
+                        className="object-cover transition-all duration-700 ease-out group-hover:scale-105 image-fade-in"
                         sizes="(max-width: 768px) 50vw, 33vw"
                         priority={isPriority}
                         loading={isPriority ? undefined : "lazy"}
@@ -251,10 +319,10 @@ export default function Home() {
                         }}
                         style={{ 
                           opacity: isPriority ? 1 : 0,
-                          transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                          transition: 'opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
                         }}
                       />
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent text-white transition-opacity duration-300">
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent text-white transition-opacity duration-500">
                         <p className="text-xs font-medium truncate">{post.author?.businessName}</p>
                         {post.price && <p className="text-[10px] opacity-90">{post.price} {post.currency}</p>}
                       </div>
@@ -284,6 +352,12 @@ export default function Home() {
           <span className="opacity-40">You've seen it all!</span>
         )}
       </div>
+
+      {/* Performance Monitor - скрыт, можно включить через ?perf=true */}
+      {/* <PerformanceMonitor
+        itemCount={data?.pages.flatMap(page => page.data).length || 0}
+        pageCount={data?.pages.length || 0}
+      /> */}
     </Page>
   );
 }
