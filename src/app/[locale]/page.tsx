@@ -218,7 +218,7 @@ export default function Home() {
               placeholder="Search tags..."
               disableButton={false}
               onFocus={useCallback(() => setIsSearchFocused(true), [])}
-              onClear={useCallback((e) => {
+              onClear={useCallback((e: any) => {
                 startTransition(() => {
                   setSearchQuery("");
                 });

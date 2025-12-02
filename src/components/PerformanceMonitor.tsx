@@ -127,7 +127,7 @@ export default function PerformanceMonitor({
           <div>
             <span className="text-gray-400">Memory:</span>{' '}
             <span className={getStatusColor(
-              memory.usedJSHeapSize, 
+              memory.usedJSHeapSize ?? null, 
               { good: 0, warning: 100 }
             )}>
               {memory.usedJSHeapSize}MB / {memory.jsHeapSizeLimit}MB
