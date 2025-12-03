@@ -5,17 +5,18 @@ import { masterProfiles, posts } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { MapPin, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import MasterProfileContext from "@/components/MasterProfileContext";
+import MasterProfileNavbar from "@/components/MasterProfileNavbar";
 
 interface MasterProfilePageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; locale: string }>;
 }
 
 export default async function MasterProfilePage({ params }: MasterProfilePageProps) {
-  const { id } = await params;
+  const { id, locale } = await params;
 
   const master = await db.query.masterProfiles.findFirst({
     where: eq(masterProfiles.userId, id),
@@ -44,8 +45,23 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
+    <>
+      {/* Set sessionStorage immediately via inline script for mobile Safari */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            if (typeof window !== 'undefined' && window.sessionStorage) {
+              try {
+                window.sessionStorage.setItem('postSource', 'profile');
+              } catch(e) {}
+            }
+          `,
+        }}
+      />
+      <div className="min-h-screen bg-background">
+        <MasterProfileNavbar />
+        <MasterProfileContext />
+        {/* Header */}
       <div className="bg-muted/30 border-b">
         <div className="max-w-6xl mx-auto p-6 space-y-4">
           <div className="flex items-start gap-4">
@@ -95,11 +111,37 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
           </p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {masterPosts.map((post) => (
-              <Link
+            {masterPosts.map((post) => {
+              // Use URLSearchParams to ensure proper encoding
+              const postUrl = `/${locale}/post/${post.id}`;
+              const searchParams = new URLSearchParams({ source: 'profile' });
+              const fullUrl = `${postUrl}?${searchParams.toString()}`;
+              return (
+              <a
                 key={post.id}
-                href={`/post/${post.id}?source=profile`}
-                className="group relative aspect-square rounded-lg overflow-hidden bg-muted"
+                href={fullUrl}
+                className="group relative aspect-square rounded-lg overflow-hidden bg-muted block"
+                onClick={(e) => {
+                  // Store source in sessionStorage as backup for mobile Safari
+                  // Set it BEFORE navigation to ensure it's available
+                  if (typeof window !== 'undefined') {
+                    try {
+                      sessionStorage.setItem('postSource', 'profile');
+                    } catch (e) {
+                      // ignore
+                    }
+                  }
+                }}
+                onTouchStart={() => {
+                  // Also set on touch for mobile Safari
+                  if (typeof window !== 'undefined') {
+                    try {
+                      sessionStorage.setItem('postSource', 'profile');
+                    } catch (e) {
+                      // ignore
+                    }
+                  }
+                }}
               >
                 <Image
                   src={post.imageUrl}
@@ -121,11 +163,13 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
                     <p className="text-white font-medium">{post.price} {post.currency}</p>
                   )}
                 </div>
-              </Link>
-            ))}
+              </a>
+              );
+            })}
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
