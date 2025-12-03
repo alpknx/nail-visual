@@ -59,6 +59,8 @@ export default function Home() {
     threshold: 0.1,
     rootMargin: rootMargin,
     triggerOnce: false, // Allow multiple triggers
+    // Skip initial trigger to prevent immediate fetch on mount
+    skip: false,
   });
 
   // Search state
@@ -79,6 +81,11 @@ export default function Home() {
     return tagIdsParam.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
   }, [searchParams]);
 
+  // Stable query key - use empty string for no tags instead of empty array join
+  const tagIdsKey = useMemo(() => {
+    return selectedTagIds.length > 0 ? selectedTagIds.join(',') : '';
+  }, [selectedTagIds]);
+
   const {
     data,
     fetchNextPage,
@@ -86,22 +93,45 @@ export default function Home() {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ["feed", selectedTagIds.join(','), itemsPerLoad], // Refetch when tags or itemsPerLoad changes
-    queryFn: ({ pageParam }) => getFeedPosts({ 
-      pageParam, 
-      tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
-      limit: itemsPerLoad 
-    }),
+    queryKey: ["feed", tagIdsKey, itemsPerLoad], // Refetch when tags or itemsPerLoad changes
+    queryFn: ({ pageParam }) => {
+      // Don't pass undefined - pass empty array or omit the parameter
+      const params: { pageParam: number; limit: number; tagIds?: number[] } = {
+        pageParam,
+        limit: itemsPerLoad,
+      };
+      if (selectedTagIds.length > 0) {
+        params.tagIds = selectedTagIds;
+      }
+      return getFeedPosts(params);
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
+    // Prevent automatic refetching on window focus or reconnect
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // Prevent refetching on mount if data exists
+    refetchOnMount: false,
   });
 
-  // Immediate loading when in view
+  // Immediate loading when in view - prevent duplicate calls with stricter checks
+  const lastFetchPageRef = useRef<number | null>(null);
+  const isFetchingRef = useRef(false);
+  
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+    // Only fetch if all conditions are met and we're not already fetching
+    if (inView && hasNextPage && !isFetchingNextPage && !isFetchingRef.current) {
+      const currentPage = data?.pages.length || 0;
+      // Only fetch if this is a new page we haven't fetched yet
+      if (lastFetchPageRef.current !== currentPage) {
+        lastFetchPageRef.current = currentPage;
+        isFetchingRef.current = true;
+        fetchNextPage().finally(() => {
+          isFetchingRef.current = false;
+        });
+      }
     }
-  }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, data?.pages.length]);
 
   // Store current searchQuery in ref to avoid dependency issues
   const searchQueryRef = useRef(searchQuery);
