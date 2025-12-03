@@ -366,27 +366,55 @@ export default function Home() {
       <div ref={searchContainerRef} className="relative">
         <Navbar
           subnavbar={
-            <div className="relative w-full">
+            <div className="relative w-full search-input-container" style={{
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
+              filter: 'none',
+              WebkitFilter: 'none'
+            }}>
               {/* Custom search input with tags inside */}
               <div 
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg min-h-[44px] flex-wrap transition-colors ${
+                className={`search-input-container flex items-center gap-1.5 px-3 py-2 rounded-lg min-h-[44px] transition-colors ${
                   isSearchFocused 
                     ? 'bg-white dark:bg-gray-900 border-2 border-primary shadow-sm' 
                     : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
                 }`}
                 onClick={() => setIsSearchFocused(true)}
+                style={{ 
+                  backdropFilter: 'none',
+                  WebkitBackdropFilter: 'none',
+                  filter: 'none',
+                  WebkitFilter: 'none',
+                  textRendering: 'optimizeLegibility',
+                  WebkitFontSmoothing: 'antialiased',
+                  MozOsxFontSmoothing: 'grayscale',
+                  transform: 'translateZ(0)',
+                  willChange: 'auto',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  WebkitOverflowScrolling: 'touch'
+                }}
               >
-                {/* Selected tags inside input */}
+                {/* Selected tags inside input - horizontal scrollable */}
                 {selectedTagIds.length > 0 && (
-                  <>
+                  <div className="flex items-center gap-1.5 flex-shrink-0" style={{ minWidth: 'fit-content' }}>
                     {selectedTagIds.map(tagId => {
                       const tag = allTags.find(t => t.id === tagId);
                       if (!tag) return null;
                       return (
                         <div
                           key={tagId}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-white border border-primary/30 flex-shrink-0 shadow-sm"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-white border border-primary/30 flex-shrink-0 shadow-sm whitespace-nowrap"
                           onClick={(e) => e.stopPropagation()}
+                          style={{
+                            backdropFilter: 'none',
+                            WebkitBackdropFilter: 'none',
+                            filter: 'none',
+                            WebkitFilter: 'none',
+                            textRendering: 'optimizeLegibility',
+                            WebkitFontSmoothing: 'antialiased',
+                            MozOsxFontSmoothing: 'grayscale'
+                          }}
                         >
                           <span className="whitespace-nowrap">{tag.name}</span>
                           <button
@@ -404,7 +432,7 @@ export default function Home() {
                         </div>
                       );
                     })}
-                  </>
+                  </div>
                 )}
                 {/* Search input */}
                 <input
@@ -426,7 +454,8 @@ export default function Home() {
                   }}
                   onFocus={() => setIsSearchFocused(true)}
                   placeholder={selectedTagIds.length > 0 ? "" : "Search tags..."}
-                  className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-0"
+                  className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-base text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-0 flex-shrink-0"
+                  style={{ fontSize: '16px' }}
                 />
                 {/* Clear button */}
                 {(searchQuery || selectedTagIds.length > 0) && (

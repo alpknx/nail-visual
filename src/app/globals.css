@@ -493,3 +493,33 @@ a:active,
 .tag-scroll-container::-webkit-scrollbar-thumb:hover {
   background-color: rgba(156, 163, 175, 0.7);
 }
+
+/* Remove blur effects from search input and tags */
+.search-input-container,
+.search-input-container *,
+.search-input-container *::before,
+.search-input-container *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Ensure text is sharp on mobile */
+.search-input-container input,
+.search-input-container span {
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  transform: translateZ(0) !important;
+}
+
+/* Hide scrollbar for search input container on mobile */
+.search-input-container::-webkit-scrollbar {
+  display: none;
+}
+
+.search-input-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
