@@ -1,10 +1,25 @@
+"use client";
+
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { Page, Navbar, NavbarBackLink } from "konsta/react";
 
 export default function PrivacyPolicyPage() {
   const t = useTranslations('privacy');
+  const router = useRouter();
+
+  const handleBack = () => {
+    router.back();
+  };
   
   return (
-    <div className="min-h-screen p-4 max-w-4xl mx-auto space-y-6 pt-16 md:pt-4">
+    <Page>
+      <Navbar
+        title={t('title')}
+        left={<NavbarBackLink onClick={handleBack} text="Back" />}
+        className="relative z-10 bg-white dark:bg-gray-900"
+      />
+      <div className="p-4 max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-4">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('lastUpdated')}: {new Date().toLocaleDateString()}</p>
@@ -97,7 +112,7 @@ export default function PrivacyPolicyPage() {
           </p>
         </section>
       </div>
-    </div>
+    </Page>
   );
 }
 
