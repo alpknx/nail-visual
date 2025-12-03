@@ -29,7 +29,14 @@ export default function BottomNavbar() {
   };
 
   return (
-    <Tabbar labels className="left-0 bottom-0 fixed z-[10000]">
+    <Tabbar 
+      labels 
+      className="left-0 fixed z-[10000]"
+      style={{
+        bottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
       <TabbarLink
         active={isActive("/")}
         onClick={() => handleNavigate("/")}

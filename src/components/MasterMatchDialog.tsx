@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "konsta/react";
 import { MapPin, X } from "lucide-react";
@@ -37,25 +37,85 @@ export default function MasterMatchDialog({
     setMounted(true);
   }, []);
 
-  // Prevent body scroll when modal is open
+  // Handle swipe down to close
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const minSwipeDistance = 80; // Increased threshold
+
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const modal = modalRef.current;
+    
+    // Only allow swipe down if modal is scrolled to top or on drag handle
+    if (modal && modal.scrollTop > 0 && !(e.target as HTMLElement).closest('[data-drag-handle]')) {
+      return; // Don't handle swipe if content is scrolled
+    }
+    
+    setTouchEnd(null);
+    setTouchStart(touch.clientY);
+    setIsDragging(false);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const touch = e.touches[0];
+    const currentY = touch.clientY;
+    const deltaY = currentY - touchStart;
+    const modal = modalRef.current;
+    
+    // Only handle swipe down if modal is at top or on drag handle
+    if (modal && modal.scrollTop > 0 && !(e.target as HTMLElement).closest('[data-drag-handle]')) {
+      return;
+    }
+    
+    setTouchEnd(currentY);
+    
+    // If swiping down (positive delta), prevent default to avoid pull-to-refresh
+    if (deltaY > 0) {
+      setIsDragging(true);
+      // Always prevent default when dragging down to avoid pull-to-refresh
+      e.preventDefault();
+      e.stopPropagation();
+    } else {
+      // If swiping up, allow normal scroll
+      setIsDragging(false);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) {
+      setTouchStart(null);
+      setTouchEnd(null);
+      setIsDragging(false);
+      return;
+    }
+    
+    const distance = touchEnd - touchStart; // Positive = down swipe
+    const isDownSwipe = distance > minSwipeDistance;
+    
+    if (isDownSwipe) {
+      onOpenChange(false);
+    }
+    
+    setTouchStart(null);
+    setTouchEnd(null);
+    setIsDragging(false);
+  };
+
+  // Light scroll prevention - don't block browser navigation
   useEffect(() => {
     if (open) {
+      // Only prevent scroll on modal content, not entire body
       document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      // Prevent iOS Safari bounce scroll
-      document.documentElement.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.documentElement.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.documentElement.style.overflow = '';
     };
   }, [open]);
 
@@ -63,33 +123,52 @@ export default function MasterMatchDialog({
 
   const modalContent = (
     <>
-      {/* Backdrop/Overlay - Don't cover bottom navigation */}
+      {/* Backdrop/Overlay - Light, non-blocking, allows swipe back */}
       <div
-        className="fixed left-0 right-0 top-0 bg-black/50 z-[9998]"
+        className="fixed left-0 right-0 top-0 bg-black/20 z-[9998]"
         onClick={() => onOpenChange(false)}
         style={{
           bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', // Don't cover bottom navigation + safe area
           animation: 'fadeIn 0.2s ease-out',
           WebkitBackdropFilter: 'blur(0px)',
           backdropFilter: 'blur(0px)',
+          pointerEvents: 'auto',
+          touchAction: 'pan-y', // Allow vertical gestures for browser navigation
         }}
         aria-hidden="true"
       />
       
       {/* Modal Content - Slides up from bottom */}
       <div
+        ref={modalRef}
         className="fixed left-1/2 bg-white rounded-t-3xl z-[9999] max-h-[85vh] overflow-y-auto w-full max-w-md"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         style={{
-          bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', // Increased space above bottom navigation + safe area
+          bottom: 'calc(60px + env(safe-area-inset-bottom, 0px))', // Moved down 40px total (was 100px, now 60px)
           transform: open 
-            ? 'translate(-50%, 0)' 
-            : 'translate(-50%, calc(100% + 100px + env(safe-area-inset-bottom, 0px)))',
-          transition: 'transform 0.3s ease-out',
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)'
+            ? (isDragging && touchStart && touchEnd 
+                ? `translate(-50%, ${Math.max(0, touchEnd - touchStart)}px)` 
+                : 'translate(-50%, 0)')
+            : 'translate(-50%, calc(100% + 60px + env(safe-area-inset-bottom, 0px)))',
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
+          touchAction: 'pan-y', // Allow vertical scrolling
+          overscrollBehavior: 'contain', // Prevent pull-to-refresh
+          WebkitOverflowScrolling: 'touch',
         }}
       >
-        {/* Drag Handle */}
-        <div className="flex justify-center pt-3 pb-2">
+        {/* Drag Handle - Swipe down area */}
+        <div 
+          data-drag-handle
+          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+          style={{
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            touchAction: 'none', // Disable all touch actions on drag handle
+          }}
+        >
           <div className="w-12 h-1 bg-gray-300 rounded-full" />
         </div>
 
