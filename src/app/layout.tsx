@@ -4,6 +4,11 @@ import "./globals.css";
 
 export const viewport = {
   themeColor: "#ffffff",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -25,6 +30,7 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "apple-mobile-web-app-title": "Nail Visual",
     "theme-color": "#ffffff",
+    "screen-orientation": "portrait",
   },
 };
 
