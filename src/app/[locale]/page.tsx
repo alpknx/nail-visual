@@ -214,7 +214,11 @@ export default function Home() {
                   setSearchQuery(value);
                   setIsSearchFocused(true);
                 });
-              }, [])}
+                // If search query is cleared, remove tagId from URL to show random posts
+                if (!value || value.trim() === "") {
+                  handleTagSelect(null);
+                }
+              }, [handleTagSelect])}
               placeholder="Search tags..."
               disableButton={false}
               onFocus={useCallback(() => setIsSearchFocused(true), [])}

@@ -105,9 +105,9 @@ export async function getFeedPosts({ pageParam = 0, tagId, limit = 4 }: { pagePa
       )`
     : undefined;
 
-  // Fast random: Load a larger batch and shuffle, then paginate
-  // This is faster than RANDOM() on large tables and gives good variety
-  const batchSize = Math.max(LIMIT * 3, 12); // Load 3x what we need for good randomization
+  // Load a much larger batch to ensure diversity across masters
+  // We need enough posts to have variety from different masters
+  const batchSize = Math.max(LIMIT * 10, 50); // Load 10x what we need for good master diversity
   
   const feedPosts = await db.query.posts.findMany({
     with: {
@@ -119,13 +119,42 @@ export async function getFeedPosts({ pageParam = 0, tagId, limit = 4 }: { pagePa
     orderBy: [desc(posts.createdAt)], // Fast ordering
   });
   
-  // Shuffle for randomness (lightweight on small batch)
-  const shuffled = [...feedPosts].sort(() => Math.random() - 0.5);
+  // Group posts by master to ensure diversity
+  const postsByMaster = new Map<string, typeof feedPosts>();
+  for (const post of feedPosts) {
+    const masterId = post.masterId || 'unknown';
+    if (!postsByMaster.has(masterId)) {
+      postsByMaster.set(masterId, []);
+    }
+    postsByMaster.get(masterId)!.push(post);
+  }
+
+  // Interleave posts from different masters to ensure diversity
+  const interleaved: typeof feedPosts = [];
+  const masterArrays = Array.from(postsByMaster.values());
   
-  // Paginate from shuffled results
+  // Shuffle each master's posts array for randomness
+  masterArrays.forEach(masterPosts => {
+    masterPosts.sort(() => Math.random() - 0.5);
+  });
+  
+  // Shuffle the order of masters for randomness
+  masterArrays.sort(() => Math.random() - 0.5);
+  
+  // Interleave: take one post from each master in round-robin fashion
+  let maxLength = Math.max(...masterArrays.map(arr => arr.length));
+  for (let i = 0; i < maxLength; i++) {
+    for (const masterPosts of masterArrays) {
+      if (masterPosts[i]) {
+        interleaved.push(masterPosts[i]);
+      }
+    }
+  }
+  
+  // Paginate from interleaved results
   const OFFSET = pageParam * LIMIT;
-  const paginatedPosts = shuffled.slice(OFFSET, OFFSET + LIMIT);
-  const hasMore = shuffled.length > OFFSET + LIMIT;
+  const paginatedPosts = interleaved.slice(OFFSET, OFFSET + LIMIT);
+  const hasMore = interleaved.length > OFFSET + LIMIT;
 
   return {
     data: paginatedPosts,
