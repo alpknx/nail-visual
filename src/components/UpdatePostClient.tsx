@@ -37,10 +37,12 @@ export default function UpdatePostClient({ post, allTags }: UpdatePostClientProp
         price: data.price,
         durationMinutes: data.durationMinutes,
       });
-      // router.push("/profile"); 
+      // updatePostDetails will redirect to profile, but in case it doesn't:
+      router.push("/profile");
+      router.refresh();
     } catch (error) {
-      console.error("Failed to update tags", error);
-    } finally {
+      console.error("Failed to update post", error);
+      alert('Failed to save changes. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -48,9 +50,16 @@ export default function UpdatePostClient({ post, allTags }: UpdatePostClientProp
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
-      await deletePost(post.id);
-    } catch (error) {
+      const result = await deletePost(post.id);
+      // If deletePost returns successfully, redirect to profile
+      if (result?.success) {
+        router.push("/profile");
+        router.refresh();
+      }
+    } catch (error: any) {
       console.error("Failed to delete post", error);
+      const errorMessage = error?.message || "Failed to delete post. Please try again.";
+      alert(errorMessage);
       setIsSubmitting(false);
     }
   };

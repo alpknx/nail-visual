@@ -498,10 +498,15 @@ export async function deletePost(postId: string) {
     throw new Error("Unauthorized or Post not found");
   }
 
-  // Delete post (cascade should handle tags if configured, but let's be safe)
-  await db.delete(postTags).where(eq(postTags.postId, postId));
-  await db.delete(posts).where(eq(posts.id, postId));
-
-  const locale = await getLocaleFromHeaders();
-  redirect(`/${locale}/profile`);
+  try {
+    // Delete post (cascade should handle tags if configured, but let's be safe)
+    await db.delete(postTags).where(eq(postTags.postId, postId));
+    await db.delete(posts).where(eq(posts.id, postId));
+    
+    // Return success instead of redirecting (let client handle redirect)
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    throw new Error("Failed to delete post. Please try again.");
+  }
 }

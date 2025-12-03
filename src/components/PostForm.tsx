@@ -207,16 +207,36 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
             </Button>
           )}
 
-          {mode === "update" && onDelete && (
-            <Button
-              large
-              outline
-              className="border-red-500 text-red-500"
-              onClick={() => setIsDeleteConfirmOpen(true)}
-              disabled={isSubmitting}
-            >
-              Delete Post
-            </Button>
+          {mode === "update" && (
+            <>
+              <Button 
+                large 
+                onClick={handleSubmit} 
+                disabled={isSubmitting}
+                className="w-full"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+              
+              {onDelete && (
+                <Button
+                  large
+                  outline
+                  className="border-red-500 text-red-500 w-full"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  disabled={isSubmitting}
+                >
+                  Delete Post
+                </Button>
+              )}
+            </>
           )}
         </div>
       </Block>

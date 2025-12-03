@@ -2,12 +2,15 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Page, Navbar, NavbarBackLink, Block, Chip, Button } from "konsta/react";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Page, Block, Chip, Button } from "konsta/react";
 import MatchingMastersList from "@/components/MatchingMastersList";
 import MasterMatchDialog from "@/components/MasterMatchDialog";
-import { MessageCircle, Clock, Phone } from "lucide-react";
+import { MessageCircle, Clock, Phone, Edit, Trash2 } from "lucide-react";
 import ContactButtons from "@/components/ContactButtons";
+import Link from "next/link";
+import { deletePost } from "@/app/actions";
 
 interface PostDetailClientProps {
   post: any;
@@ -30,7 +33,41 @@ interface Match {
 export default function PostDetailClient({ post, matchingMasters, source }: PostDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
+  const { data: session } = useSession();
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const locale = (params?.locale as string) || 'en';
+  
+  // Check if current user is the owner of the post
+  // post.masterId references masterProfiles.userId, and author is the masterProfile relation
+  // So we need to check: session.user.id === post.masterId OR session.user.id === post.author?.userId
+  const isOwner = Boolean(
+    session?.user?.id && 
+    (session.user.id === post.masterId || session.user.id === post.author?.userId)
+  );
+  
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+    
+    setIsDeleting(true);
+    try {
+      const result = await deletePost(post.id);
+      // If deletePost returns successfully, redirect to profile
+      if (result?.success) {
+        router.push(`/${locale}/profile`);
+        router.refresh();
+      }
+    } catch (error: any) {
+      console.error('Failed to delete post:', error);
+      const errorMessage = error?.message || 'Failed to delete post. Please try again.';
+      alert(errorMessage);
+      setIsDeleting(false);
+    }
+  };
 
   const handleMatchClick = useCallback((match: Match) => {
     setSelectedMatch(match);
@@ -130,18 +167,18 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
       console.log('PostDetailClient - full URL:', window.location.href);
       console.log('PostDetailClient - referrer:', document.referrer);
       console.log('PostDetailClient - sessionStorage postSource:', sessionStorage.getItem('postSource'));
+      console.log('PostDetailClient - isOwner:', isOwner);
+      console.log('PostDetailClient - session user id:', session?.user?.id);
+      console.log('PostDetailClient - post author userId:', post.author?.userId);
+      console.log('PostDetailClient - post masterId:', post.masterId);
+      console.log('PostDetailClient - post object:', { masterId: post.masterId, author: post.author });
     }
-  }, [source, sourceFromUrl, sourceFromWindow, sourceFromReferrer, effectiveSource, isPortfolioMode, finalIsPortfolioMode]);
+  }, [source, sourceFromUrl, sourceFromWindow, sourceFromReferrer, effectiveSource, isPortfolioMode, finalIsPortfolioMode, isOwner, session, post]);
 
 
 
   return (
     <Page className="!h-[100dvh] !overflow-hidden flex flex-col">
-      <Navbar
-        className="absolute top-0 left-0 z-20 text-white"
-        left={<NavbarBackLink onClick={() => router.back()} text="Back" className="text-white" />}
-      />
-
       {/* Main Content Area - Flex Column */}
       <div className="flex-1 flex flex-col min-h-0 relative">
 
@@ -188,17 +225,29 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
           {finalIsPortfolioMode ? (
             <Block className="!my-0 !py-4 space-y-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className="flex items-center gap-4">
+                  <div className="text-2xl font-bold text-gray-900 whitespace-nowrap">
                     {post.price ? `${post.price} ${post.currency}` : 'Price on request'}
                   </div>
                   {post.durationMinutes && (
-                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {post.durationMinutes} mins
+                    <div className="flex items-center text-base text-gray-600 whitespace-nowrap">
+                      <Clock className="w-4 h-4 mr-1.5" />
+                      <span>{post.durationMinutes} mins</span>
                     </div>
                   )}
                 </div>
+                {isOwner && (
+                  <Button
+                    clear
+                    className="!p-2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/${locale}/post/${post.id}/update`);
+                    }}
+                  >
+                    <Edit className="w-5 h-5" />
+                  </Button>
+                )}
               </div>
 
               {post.description && (
@@ -207,10 +256,33 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
                 </div>
               )}
 
-              <ContactButtons
-                phoneNumber={post.author.phoneNumber}
-                phoneCountryCode={post.author.phoneCountryCode}
-              />
+              {isOwner ? (
+                <div className="flex gap-2">
+                  <Button 
+                    large 
+                    className="flex-1"
+                    onClick={() => router.push(`/${locale}/post/${post.id}/update`)}
+                    disabled={isDeleting}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Post
+                  </Button>
+                  <Button 
+                    large 
+                    className="flex-1 bg-red-500 active:bg-red-600"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </div>
+              ) : (
+                <ContactButtons
+                  phoneNumber={post.author.phoneNumber}
+                  phoneCountryCode={post.author.phoneCountryCode}
+                />
+              )}
             </Block>
           ) : null}
           
