@@ -1,9 +1,12 @@
 "use client";
 
-import { Sheet, Button } from "konsta/react";
-import { MapPin, Phone, MessageCircle, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Button } from "konsta/react";
+import { MapPin, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import ContactButtons from "@/components/ContactButtons";
 
 interface MasterMatchDialogProps {
@@ -26,18 +29,77 @@ export default function MasterMatchDialog({
   onOpenChange,
   master,
 }: MasterMatchDialogProps) {
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  return (
-    <Sheet
-      opened={open}
-      onBackdropClick={() => onOpenChange(false)}
-    >
-      <div className="pb-16">
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      // Prevent iOS Safari bounce scroll
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [open]);
+
+  if (!open || !mounted) return null;
+
+  const modalContent = (
+    <>
+      {/* Backdrop/Overlay - Don't cover bottom navigation */}
+      <div
+        className="fixed left-0 right-0 top-0 bg-black/50 z-[9998]"
+        onClick={() => onOpenChange(false)}
+        style={{
+          bottom: '80px', // Don't cover bottom navigation
+          animation: 'fadeIn 0.2s ease-out',
+          WebkitBackdropFilter: 'blur(0px)',
+          backdropFilter: 'blur(0px)',
+        }}
+        aria-hidden="true"
+      />
+      
+      {/* Modal Content - Slides up from bottom */}
+      <div
+        className="fixed left-1/2 bg-white rounded-t-3xl z-[9999] max-h-[85vh] overflow-y-auto w-full max-w-md"
+        style={{
+          bottom: '80px', // Space above bottom navigation
+          transform: open 
+            ? 'translate(-50%, 0)' 
+            : 'translate(-50%, calc(100% + 80px))',
+          transition: 'transform 0.3s ease-out',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)'
+        }}
+      >
+        {/* Drag Handle */}
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-12 h-1 bg-gray-300 rounded-full" />
+        </div>
+
         {/* Header - Clickable to Profile */}
         <div className="p-4 border-b border-gray-100 flex justify-between items-start">
-          <Link href={`/master/${master.masterId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="h-12 w-12 rounded-full overflow-hidden bg-gray-100 border border-gray-200 relative">
+          <Link 
+            href={`/${locale}/master/${master.masterId}`} 
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-1"
+          >
+            <div className="h-12 w-12 rounded-full overflow-hidden bg-gray-100 border border-gray-200 relative flex-shrink-0">
               {master.avatarUrl ? (
                 <Image src={master.avatarUrl} alt={master.businessName} fill className="object-cover" />
               ) : (
@@ -46,10 +108,10 @@ export default function MasterMatchDialog({
                 </div>
               )}
             </div>
-            <div>
-              <h3 className="font-semibold text-lg leading-tight">{master.businessName}</h3>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-lg leading-tight truncate">{master.businessName}</h3>
               <div className="flex items-center gap-1 text-sm text-gray-500">
-                <MapPin className="h-3 w-3" />
+                <MapPin className="h-3 w-3 flex-shrink-0" />
                 <span>{master.distance.toFixed(1)} km away</span>
               </div>
             </div>
@@ -57,7 +119,7 @@ export default function MasterMatchDialog({
           <Button
             clear
             small
-            className="!p-0 min-w-0 w-8 h-8 rounded-full"
+            className="!p-0 min-w-0 w-8 h-8 rounded-full flex-shrink-0 ml-2"
             onClick={() => onOpenChange(false)}
           >
             <X className="w-5 h-5 text-gray-400" />
@@ -72,6 +134,7 @@ export default function MasterMatchDialog({
               alt={`Work by ${master.businessName}`}
               fill
               className="object-cover"
+              priority
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400">
@@ -88,13 +151,16 @@ export default function MasterMatchDialog({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 bg-white border-t border-gray-100">
+        <div className="p-4 bg-white border-t border-gray-100 pb-safe">
           <ContactButtons
             phoneNumber={master.phoneNumber}
             phoneCountryCode={master.phoneCountryCode}
           />
         </div>
       </div>
-    </Sheet>
+    </>
   );
+
+  // Render modal using portal to body for proper z-index stacking in Safari
+  return createPortal(modalContent, document.body);
 }
