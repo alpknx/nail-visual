@@ -68,7 +68,7 @@ export default function MasterMatchDialog({
         className="fixed left-0 right-0 top-0 bg-black/50 z-[9998]"
         onClick={() => onOpenChange(false)}
         style={{
-          bottom: '80px', // Don't cover bottom navigation
+          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', // Don't cover bottom navigation + safe area
           animation: 'fadeIn 0.2s ease-out',
           WebkitBackdropFilter: 'blur(0px)',
           backdropFilter: 'blur(0px)',
@@ -80,10 +80,10 @@ export default function MasterMatchDialog({
       <div
         className="fixed left-1/2 bg-white rounded-t-3xl z-[9999] max-h-[85vh] overflow-y-auto w-full max-w-md"
         style={{
-          bottom: '80px', // Space above bottom navigation
+          bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', // Increased space above bottom navigation + safe area
           transform: open 
             ? 'translate(-50%, 0)' 
-            : 'translate(-50%, calc(100% + 80px))',
+            : 'translate(-50%, calc(100% + 100px + env(safe-area-inset-bottom, 0px)))',
           transition: 'transform 0.3s ease-out',
           boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)'
         }}
@@ -151,7 +151,7 @@ export default function MasterMatchDialog({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 bg-white border-t border-gray-100 pb-safe">
+        <div className="p-4 bg-white border-t border-gray-100" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
           <ContactButtons
             phoneNumber={master.phoneNumber}
             phoneCountryCode={master.phoneCountryCode}
