@@ -29,7 +29,7 @@ export default function BottomNavbar() {
   };
 
   return (
-    <Tabbar labels className="left-0 bottom-0 fixed z-50">
+    <Tabbar labels className="left-0 bottom-0 fixed z-[10000]">
       <TabbarLink
         active={isActive("/")}
         onClick={() => handleNavigate("/")}
