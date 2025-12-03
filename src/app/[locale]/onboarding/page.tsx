@@ -26,6 +26,8 @@ export default function OnboardingPage() {
 
     setLoading(true);
 
+    let isRedirect = false;
+
     try {
       await completeOnboarding({
         businessName,
@@ -34,7 +36,8 @@ export default function OnboardingPage() {
         addressText,
       });
       // If successful, redirect will happen on server side
-      // Don't set loading to false here as page will redirect
+      // The redirect() function throws a NEXT_REDIRECT error
+      // which we catch and handle below
     } catch (e: any) {
       // Check if it's a redirect error (NEXT_REDIRECT) - don't show error for redirects
       // Next.js redirect() throws a special error that we should ignore
@@ -45,11 +48,19 @@ export default function OnboardingPage() {
         e?.digest === 'NEXT_REDIRECT;push'
       ) {
         // This is a redirect, not an error - let it happen
+        // Don't set loading to false as page will redirect
+        isRedirect = true;
         return;
       }
       console.error(e);
       setError("Something went wrong. Please try again.");
-      setLoading(false);
+    } finally {
+      // Only set loading to false if it's not a redirect
+      // If redirect happens, page will navigate away and state doesn't matter
+      // If redirect doesn't happen (error case), we need to reset loading state
+      if (!isRedirect) {
+        setLoading(false);
+      }
     }
   };
 

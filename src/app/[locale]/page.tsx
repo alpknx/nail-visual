@@ -188,6 +188,39 @@ export default function Home() {
     };
   }, []);
 
+  // Hide dropdown on scroll if input is empty
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          // Only hide if scrolling down and input is empty
+          if (currentScrollY > lastScrollY && searchQuery.trim() === "" && isSearchFocused) {
+            // Clear timer if scrolling
+            if (hideDropdownTimerRef.current) {
+              clearTimeout(hideDropdownTimerRef.current);
+              hideDropdownTimerRef.current = null;
+            }
+            startTransition(() => {
+              setIsSearchFocused(false);
+            });
+          }
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [searchQuery, isSearchFocused]);
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -229,7 +262,10 @@ export default function Home() {
     });
     
     // Use replace instead of push to avoid adding to history and reduce POST requests
-    router.replace(`/?${params.toString()}`, { scroll: false });
+    // Router from @/i18n/routing automatically handles locale prefix for paths starting with /
+    const queryString = params.toString();
+    const path = queryString ? `/?${queryString}` : '/';
+    router.replace(path, { scroll: false });
     
     // If tag was added (not removed), set timer to hide dropdown after 1.5 seconds
     if (!wasRemoving) {
@@ -251,7 +287,10 @@ export default function Home() {
       setIsSearchFocused(false);
     });
     // Use replace instead of push to avoid adding to history and reduce POST requests
-    router.replace(`/?${params.toString()}`, { scroll: false });
+    // Router from @/i18n/routing automatically handles locale prefix for paths starting with /
+    const queryString = params.toString();
+    const path = queryString ? `/?${queryString}` : '/';
+    router.replace(path, { scroll: false });
   }, [searchParams, router]);
 
   const handleRemoveTag = useCallback((tagId: number) => {
@@ -270,7 +309,10 @@ export default function Home() {
     });
     
     // Use replace instead of push to avoid adding to history and reduce POST requests
-    router.replace(`/?${params.toString()}`, { scroll: false });
+    // Router from @/i18n/routing automatically handles locale prefix for paths starting with /
+    const queryString = params.toString();
+    const path = queryString ? `/?${queryString}` : '/';
+    router.replace(path, { scroll: false });
   }, [searchParams, router, selectedTagIds]);
 
   const showDropdown = useMemo(() => {
