@@ -127,9 +127,16 @@
     @apply bg-background text-foreground;
     height: 100dvh;
     overflow-x: hidden;
+    /* Prevent scroll issues on mobile */
+    position: relative;
+    -webkit-overflow-scrolling: touch;
   }
   #__next {
     height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Ensure proper scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -299,13 +306,31 @@ img {
   transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Optimize image rendering */
+/* Optimize image rendering - NO blur, sharp images */
 img,
-.image-fade-in {
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+.image-fade-in,
+.next-image-wrapper img,
+[data-next-image],
+.next-image-wrapper,
+span[style*="position: absolute"] img {
+  image-rendering: auto !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  filter: none !important;
+  -webkit-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Remove blur from all image containers */
+div[class*="image"],
+div[class*="Image"],
+.relative img,
+.absolute img {
+  filter: none !important;
+  -webkit-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* Smooth scroll behavior */
@@ -522,4 +547,95 @@ a:active,
 .search-input-container {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Prevent zoom on input focus and lock orientation to portrait */
+html {
+  touch-action: pan-y;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+body {
+  touch-action: pan-y;
+  /* Prevent zoom on double tap */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Lock orientation to portrait - hide content when landscape */
+@media screen and (orientation: landscape) and (max-width: 768px) {
+  body::before {
+    content: "Please rotate your device to portrait mode";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    font-size: 18px;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  body > * {
+    display: none !important;
+  }
+}
+
+/* Prevent zoom on input focus */
+input, textarea, select {
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Hide Konsta Navbar backdrop blur overlay */
+.backdrop-blur-\[2px\] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+/* Alternative selector for the mask element - more specific */
+div.backdrop-blur-\[2px\].absolute.left-0.top-0,
+div[class*="backdrop-blur"][class*="mask-b-to"][class*="mask-b-from"],
+div[class*="backdrop-blur"][class*="mask-b-to-100%"],
+div[class*="mask-b-from-50%"][class*="backdrop-blur"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure Navbar and NavbarBackLink are visible on mobile */
+.Navbar,
+.Navbar * {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+.NavbarBackLink,
+.NavbarBackLink * {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: inherit !important;
+  pointer-events: auto !important;
+}
+
+/* Ensure NavbarBackLink icon is visible */
+.NavbarBackLink svg,
+.NavbarBackLink i {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
