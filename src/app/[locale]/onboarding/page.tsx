@@ -33,10 +33,22 @@ export default function OnboardingPage() {
         city,
         addressText,
       });
-    } catch (e) {
+      // If successful, redirect will happen on server side
+      // Don't set loading to false here as page will redirect
+    } catch (e: any) {
+      // Check if it's a redirect error (NEXT_REDIRECT) - don't show error for redirects
+      // Next.js redirect() throws a special error that we should ignore
+      if (
+        e?.digest?.startsWith('NEXT_REDIRECT') || 
+        e?.message?.includes('NEXT_REDIRECT') ||
+        e?.digest === 'NEXT_REDIRECT;replace' ||
+        e?.digest === 'NEXT_REDIRECT;push'
+      ) {
+        // This is a redirect, not an error - let it happen
+        return;
+      }
       console.error(e);
       setError("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };

@@ -470,3 +470,26 @@ a:active,
   max-height: 240px;
   overflow-y: auto;
 }
+
+/* Tag scroll container - thin horizontal scrollbar */
+.tag-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.tag-scroll-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tag-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tag-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 2px;
+}
+
+.tag-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}

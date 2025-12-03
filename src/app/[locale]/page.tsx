@@ -7,14 +7,17 @@ import { useEffect, useState, useRef, useMemo, useCallback, startTransition } fr
 import Image from "next/image";
 import Link from "next/link";
 import { Page, Navbar, Searchbar, List, ListItem } from "konsta/react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useDebounce } from "@/hooks/use-debounce";
-import { searchTags, getTagById } from "@/app/actions";
+import { searchTags, getTagById, getAllTags } from "@/app/actions";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 
 export default function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
   
   // Calculate items per load and rootMargin based on viewport height
   const [itemsPerLoad, setItemsPerLoad] = useState(4);
@@ -65,9 +68,16 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [allTags, setAllTags] = useState<any[]>([]);
+  const [isLoadingAllTags, setIsLoadingAllTags] = useState(false);
+  const hideDropdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Tag filter state from URL
-  const selectedTagId = searchParams.get("tagId");
+  // Tag filter state from URL - support multiple tags
+  const selectedTagIds = useMemo(() => {
+    const tagIdsParam = searchParams.get("tagIds");
+    if (!tagIdsParam) return [];
+    return tagIdsParam.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+  }, [searchParams]);
 
   const {
     data,
@@ -76,10 +86,10 @@ export default function Home() {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ["feed", selectedTagId, itemsPerLoad], // Refetch when tag or itemsPerLoad changes
+    queryKey: ["feed", selectedTagIds.join(','), itemsPerLoad], // Refetch when tags or itemsPerLoad changes
     queryFn: ({ pageParam }) => getFeedPosts({ 
       pageParam, 
-      tagId: selectedTagId ? parseInt(selectedTagId) : undefined,
+      tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
       limit: itemsPerLoad 
     }),
     initialPageParam: 0,
@@ -99,26 +109,28 @@ export default function Home() {
     searchQueryRef.current = searchQuery;
   }, [searchQuery]);
 
-  // Fetch tag name if tagId is present - only update if different
+  // Clear search query when tags are selected - tags are shown as chips, not in input
   useEffect(() => {
-    const fetchTagName = async () => {
-      if (selectedTagId) {
-        const tag = await getTagById(parseInt(selectedTagId));
-        if (tag && tag.name !== searchQueryRef.current) {
-          // Only update if the name is different to avoid unnecessary re-renders
-          startTransition(() => {
-            setSearchQuery(tag.name);
-          });
-        }
-      } else if (searchQueryRef.current !== "") {
-        // Only clear if not already empty
-        startTransition(() => {
-          setSearchQuery("");
-        });
-      }
-    };
-    fetchTagName();
-  }, [selectedTagId]);
+    if (selectedTagIds.length > 0 && searchQueryRef.current !== "") {
+      // Clear search query when tags are selected - they're displayed as chips
+      startTransition(() => {
+        setSearchQuery("");
+      });
+    }
+  }, [selectedTagIds]);
+
+  // Load all tags when search is focused
+  useEffect(() => {
+    if (isSearchFocused && allTags.length === 0 && !isLoadingAllTags) {
+      setIsLoadingAllTags(true);
+      getAllTags(locale).then(tags => {
+        setAllTags(tags);
+        setIsLoadingAllTags(false);
+      }).catch(() => {
+        setIsLoadingAllTags(false);
+      });
+    }
+  }, [isSearchFocused, allTags.length, locale, isLoadingAllTags]);
 
   // Search effect with abort controller to cancel previous requests
   useEffect(() => {
@@ -159,6 +171,11 @@ export default function Home() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        // Clear timer if clicking outside
+        if (hideDropdownTimerRef.current) {
+          clearTimeout(hideDropdownTimerRef.current);
+          hideDropdownTimerRef.current = null;
+        }
         setIsSearchFocused(false);
       }
     };
@@ -171,89 +188,233 @@ export default function Home() {
     };
   }, []);
 
-  const handleTagSelect = useCallback((tag: any) => {
-    const params = new URLSearchParams(searchParams);
-    if (tag) {
-      params.set("tagId", tag.id.toString());
-      // Optimistically update searchQuery if tag name is known
-      // This prevents flickering - the value stays visible immediately
-      if (tag.name && tag.name !== searchQueryRef.current) {
-        startTransition(() => {
-          setSearchQuery(tag.name);
-        });
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hideDropdownTimerRef.current) {
+        clearTimeout(hideDropdownTimerRef.current);
       }
-      startTransition(() => {
-        setSearchResults([]);
-        setIsSearchFocused(false);
-      });
-    } else {
-      params.delete("tagId");
-      startTransition(() => {
-        setSearchQuery("");
-        setSearchResults([]);
-        setIsSearchFocused(false);
-      });
+    };
+  }, []);
+
+  const handleTagToggle = useCallback((tag: any) => {
+    const params = new URLSearchParams(searchParams);
+    const currentTagIds = [...selectedTagIds];
+    const tagIndex = currentTagIds.indexOf(tag.id);
+    const wasRemoving = tagIndex > -1;
+    
+    // Clear any existing timer
+    if (hideDropdownTimerRef.current) {
+      clearTimeout(hideDropdownTimerRef.current);
+      hideDropdownTimerRef.current = null;
     }
-    router.push(`/?${params.toString()}`);
+    
+    if (tagIndex > -1) {
+      // Remove tag if already selected
+      currentTagIds.splice(tagIndex, 1);
+    } else {
+      // Add tag if not selected
+      currentTagIds.push(tag.id);
+    }
+    
+    if (currentTagIds.length > 0) {
+      params.set("tagIds", currentTagIds.join(','));
+    } else {
+      params.delete("tagIds");
+    }
+    
+    // Clear search query when tags are selected - they're displayed as chips, not in input
+    startTransition(() => {
+      setSearchQuery("");
+    });
+    
+    // Use replace instead of push to avoid adding to history and reduce POST requests
+    router.replace(`/?${params.toString()}`, { scroll: false });
+    
+    // If tag was added (not removed), set timer to hide dropdown after 1.5 seconds
+    if (!wasRemoving) {
+      hideDropdownTimerRef.current = setTimeout(() => {
+        startTransition(() => {
+          setIsSearchFocused(false);
+        });
+        hideDropdownTimerRef.current = null;
+      }, 1500);
+    }
+  }, [searchParams, router, selectedTagIds]);
+
+  const handleClearTags = useCallback(() => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("tagIds");
+    startTransition(() => {
+      setSearchQuery("");
+      setSearchResults([]);
+      setIsSearchFocused(false);
+    });
+    // Use replace instead of push to avoid adding to history and reduce POST requests
+    router.replace(`/?${params.toString()}`, { scroll: false });
   }, [searchParams, router]);
 
+  const handleRemoveTag = useCallback((tagId: number) => {
+    const params = new URLSearchParams(searchParams);
+    const currentTagIds = selectedTagIds.filter(id => id !== tagId);
+    
+    if (currentTagIds.length > 0) {
+      params.set("tagIds", currentTagIds.join(','));
+    } else {
+      params.delete("tagIds");
+    }
+    
+    // Keep search query empty - tags are displayed as chips, not in input
+    startTransition(() => {
+      setSearchQuery("");
+    });
+    
+    // Use replace instead of push to avoid adding to history and reduce POST requests
+    router.replace(`/?${params.toString()}`, { scroll: false });
+  }, [searchParams, router, selectedTagIds]);
+
   const showDropdown = useMemo(() => {
-    return isSearchFocused && (searchQuery.length >= 2 || searchResults.length > 0 || isLoading);
-  }, [isSearchFocused, searchQuery.length, searchResults.length, isLoading]);
+    return isSearchFocused && (searchQuery.length >= 2 || searchResults.length > 0 || isLoading || allTags.length > 0);
+  }, [isSearchFocused, searchQuery.length, searchResults.length, isLoading, allTags.length]);
+
+  // Filter tags based on search query - exclude already selected tags
+  const displayedTags = useMemo(() => {
+    let tags = [];
+    if (searchQuery.length >= 2) {
+      tags = searchResults;
+    } else {
+      tags = allTags;
+    }
+    // Filter out already selected tags to avoid duplication
+    return tags.filter(tag => !selectedTagIds.includes(tag.id));
+  }, [searchQuery, searchResults, allTags, selectedTagIds]);
 
   return (
     <Page className="pb-12">
       <div ref={searchContainerRef} className="relative">
         <Navbar
           subnavbar={
-            <Searchbar
-              value={searchQuery}
-              onInput={useCallback((e: any) => {
-                const value = e.target.value;
-                startTransition(() => {
-                  setSearchQuery(value);
-                  setIsSearchFocused(true);
-                });
-                // If search query is cleared, remove tagId from URL to show random posts
-                if (!value || value.trim() === "") {
-                  handleTagSelect(null);
-                }
-              }, [handleTagSelect])}
-              placeholder="Search tags..."
-              disableButton={false}
-              onFocus={useCallback(() => setIsSearchFocused(true), [])}
-              onClear={useCallback((e: any) => {
-                startTransition(() => {
-                  setSearchQuery("");
-                });
-                handleTagSelect(null);
-              }, [handleTagSelect])}
-              className="search-input-mobile"
-            />
+            <div className="relative w-full">
+              {/* Custom search input with tags inside */}
+              <div 
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg min-h-[44px] flex-wrap transition-colors ${
+                  isSearchFocused 
+                    ? 'bg-white dark:bg-gray-900 border-2 border-primary shadow-sm' 
+                    : 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                }`}
+                onClick={() => setIsSearchFocused(true)}
+              >
+                {/* Selected tags inside input */}
+                {selectedTagIds.length > 0 && (
+                  <>
+                    {selectedTagIds.map(tagId => {
+                      const tag = allTags.find(t => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <div
+                          key={tagId}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-white border border-primary/30 flex-shrink-0 shadow-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="whitespace-nowrap">{tag.name}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveTag(tagId);
+                            }}
+                            className="ml-0.5 hover:bg-white/30 rounded-full p-0.5 transition-colors flex-shrink-0 flex items-center justify-center"
+                            aria-label="Remove tag"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+                {/* Search input */}
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e: any) => {
+                    const value = e.target.value;
+                    // Normalize value: if it's empty or only whitespace, use empty string
+                    const normalizedValue = value.trim() === "" ? "" : value;
+                    
+                    // Only update search query state - don't trigger URL updates
+                    // URL should only update when tags are actually selected/removed, not during typing
+                    startTransition(() => {
+                      setSearchQuery(normalizedValue);
+                      setIsSearchFocused(true);
+                    });
+                    // Note: We don't auto-select tags when typing - user must click on them
+                    // This keeps the input clean and only shows selected tags as chips
+                  }}
+                  onFocus={() => setIsSearchFocused(true)}
+                  placeholder={selectedTagIds.length > 0 ? "" : "Search tags..."}
+                  className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-0"
+                />
+                {/* Clear button */}
+                {(searchQuery || selectedTagIds.length > 0) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startTransition(() => {
+                        setSearchQuery("");
+                      });
+                      handleClearTags();
+                    }}
+                    className="flex-shrink-0 p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors flex items-center justify-center"
+                    aria-label="Clear"
+                  >
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
           }
         />
 
         {/* Search Dropdown */}
         {showDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-            {isLoading ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                Searching...
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+            {isLoading || isLoadingAllTags ? (
+              <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                Loading...
               </div>
-            ) : searchResults.length > 0 ? (
-              <List strong inset className="!m-0">
-                {searchResults.map((tag) => (
-                  <ListItem
-                    key={tag.id}
-                    title={tag.name}
-                    onClick={() => handleTagSelect(tag)}
-                    link
-                    chevron={false}
-                  />
-                ))}
-              </List>
+            ) : displayedTags.length > 0 ? (
+              <div className="p-1.5">
+                <div 
+                  className="tag-scroll-container" 
+                  style={{ 
+                    maxHeight: '60px',
+                    overflowX: 'auto',
+                    overflowY: 'hidden',
+                    WebkitOverflowScrolling: 'touch',
+                    display: 'grid',
+                    gridTemplateRows: 'repeat(2, 1fr)',
+                    gridAutoFlow: 'column',
+                    gap: '6px'
+                  }}
+                >
+                  {displayedTags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => handleTagToggle(tag)}
+                      className="px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/10 whitespace-nowrap"
+                      style={{ height: 'fit-content' }}
+                    >
+                      {tag.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : searchQuery.length >= 2 && debouncedQuery.length >= 2 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
+              <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">
                 No matches
               </div>
             ) : null}

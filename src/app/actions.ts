@@ -6,8 +6,18 @@ import { db } from "@/db";
 import { masterProfiles, posts, postTags, tags } from "@/db/schema";
 import { z } from "zod";
 import { redirect } from "next/navigation";
-import { eq, desc, sql } from "drizzle-orm";
+import { headers } from "next/headers";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+
+// Helper function to get locale from headers
+async function getLocaleFromHeaders(): Promise<string> {
+  const headersList = await headers();
+  const referer = headersList.get("referer") || "";
+  // Extract locale from referer URL (e.g., http://localhost:3000/en/onboarding -> en)
+  const localeMatch = referer.match(/\/(en|pl|ru)(?:\/|$)/);
+  return localeMatch ? localeMatch[1] : "en";
+}
 
 const onboardingSchema = z.object({
   businessName: z.string().min(1, "Business Name is required"),
@@ -42,7 +52,9 @@ export async function completeOnboarding(formData: z.infer<typeof onboardingSche
     }
   });
 
-  redirect("/profile");
+  // Get locale from headers to preserve it in redirect
+  const locale = await getLocaleFromHeaders();
+  redirect(`/${locale}/profile`);
 }
 
 export async function getProfile() {
@@ -90,18 +102,18 @@ export async function updateProfile(data: z.infer<typeof updateProfileSchema>) {
   return { success: true };
 }
 
-export async function getFeedPosts({ pageParam = 0, tagId, limit = 4 }: { pageParam?: number, tagId?: number, limit?: number }) {
+export async function getFeedPosts({ pageParam = 0, tagIds, limit = 4 }: { pageParam?: number, tagIds?: number[], limit?: number }) {
   const LIMIT = limit; // Dynamic limit based on viewport height
 
   // Mock location (New York)
   const userLat = 40.7128;
   const userLng = -74.0060;
 
-  const whereClause = tagId
+  const whereClause = tagIds && tagIds.length > 0
     ? sql`EXISTS (
         SELECT 1 FROM ${postTags} pt 
         WHERE pt.post_id = ${posts.id} 
-        AND pt.tag_id = ${tagId}
+        AND pt.tag_id = ANY(${sql.raw(`ARRAY[${tagIds.map(id => id.toString()).join(',')}]`)})
       )`
     : undefined;
 
@@ -378,7 +390,8 @@ export async function createPost(data: z.infer<typeof createPostSchema>) {
     );
   }
 
-  redirect("/profile");
+  const locale = await getLocaleFromHeaders();
+  redirect(`/${locale}/profile`);
 }
 
 export async function getTags() {
@@ -389,6 +402,34 @@ export async function getTags() {
     orderBy: (tags, { asc }) => [asc(tags.slug)],
   });
   return allTags;
+}
+
+export async function getAllTags(locale: string = 'en') {
+  // Cache all tags for 5 minutes (tags are relatively static)
+  const getCachedTags = unstable_cache(
+    async (tagLocale: string) => {
+      const allTags = await db.query.tags.findMany({
+        with: {
+          category: true,
+        },
+        orderBy: (tags, { asc }) => [asc(tags.slug)],
+      });
+
+      return allTags.map(tag => ({
+        id: tag.id,
+        name: (tag.nameTranslations as any)[tagLocale] || tag.slug,
+        slug: tag.slug,
+        categoryId: tag.categoryId,
+      }));
+    },
+    ['all-tags', locale],
+    {
+      revalidate: 300, // 5 minutes
+      tags: ['tags', `tags-${locale}`],
+    }
+  );
+
+  return getCachedTags(locale);
 }
 
 const updatePostDetailsSchema = z.object({
@@ -437,7 +478,8 @@ export async function updatePostDetails(data: z.infer<typeof updatePostDetailsSc
     );
   }
 
-  redirect("/profile");
+  const locale = await getLocaleFromHeaders();
+  redirect(`/${locale}/profile`);
 }
 
 export async function deletePost(postId: string) {
@@ -460,5 +502,6 @@ export async function deletePost(postId: string) {
   await db.delete(postTags).where(eq(postTags.postId, postId));
   await db.delete(posts).where(eq(posts.id, postId));
 
-  redirect("/profile");
+  const locale = await getLocaleFromHeaders();
+  redirect(`/${locale}/profile`);
 }
