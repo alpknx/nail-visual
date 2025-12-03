@@ -43,6 +43,38 @@ export default function ClientShell({ children }: { children: React.ReactNode })
             document.head.appendChild(appleTouchIcon);
         }
 
+        // Lock screen orientation to portrait
+        if (typeof window !== 'undefined' && 'screen' in window && 'orientation' in window.screen) {
+            try {
+                // Use Screen Orientation API if available
+                if ('lock' in window.screen.orientation) {
+                    window.screen.orientation.lock('portrait').catch((err) => {
+                        // Lock may fail if not in fullscreen or user gesture required
+                        console.log('Orientation lock not available:', err);
+                    });
+                }
+            } catch (e) {
+                console.log('Screen Orientation API not supported');
+            }
+        }
+
+        // Prevent zoom on input focus
+        const preventZoom = (e: Event) => {
+            const target = e.target as HTMLElement;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
+                // Ensure font size is at least 16px to prevent zoom on iOS
+                const computedStyle = window.getComputedStyle(target);
+                const fontSize = parseFloat(computedStyle.fontSize);
+                if (fontSize < 16) {
+                    target.style.fontSize = '16px';
+                }
+            }
+        };
+
+        // Add event listeners to prevent zoom
+        document.addEventListener('focusin', preventZoom);
+        document.addEventListener('touchstart', preventZoom, { passive: true });
+
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator && typeof window !== 'undefined') {
             window.addEventListener('load', () => {
@@ -56,6 +88,11 @@ export default function ClientShell({ children }: { children: React.ReactNode })
                     });
             });
         }
+
+        return () => {
+            document.removeEventListener('focusin', preventZoom);
+            document.removeEventListener('touchstart', preventZoom);
+        };
     }, []);
 
     return (
