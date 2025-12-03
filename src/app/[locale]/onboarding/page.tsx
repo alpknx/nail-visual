@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { completeOnboarding } from "@/app/actions";
-import { Page, Navbar, List, ListInput, Button, Block, BlockTitle } from "konsta/react";
+import { Page, Navbar, NavbarBackLink, List, ListInput, Button, Block, BlockTitle } from "konsta/react";
 
 export default function OnboardingPage() {
+  const router = useRouter();
   const [businessName, setBusinessName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [city, setCity] = useState("");
@@ -66,7 +68,10 @@ export default function OnboardingPage() {
 
   return (
     <Page>
-      <Navbar title="Complete your Profile" />
+      <Navbar 
+        title="Complete your Profile"
+        left={<NavbarBackLink onClick={() => router.back()} text="Back" />}
+      />
 
       <BlockTitle>Tell us about your business to get started.</BlockTitle>
 
