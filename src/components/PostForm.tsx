@@ -80,7 +80,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
   }));
 
   return (
-    <div>
+    <div className="pb-safe">
       {mode === "create" ? (
         <Block>
           {imageUrl ? (
