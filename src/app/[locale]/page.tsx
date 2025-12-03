@@ -569,7 +569,12 @@ export default function Home() {
                       animationFillMode: 'both'
                     } : undefined}
                   >
-                    <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-[4/5] image-load-wrapper">
+                    <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-[4/5] image-load-wrapper" style={{
+                      filter: 'none',
+                      WebkitFilter: 'none',
+                      backdropFilter: 'none',
+                      WebkitBackdropFilter: 'none'
+                    }}>
                       <Image
                         src={post.imageUrl}
                         alt={post.description || "Nail Art"}
@@ -585,7 +590,10 @@ export default function Home() {
                         }}
                         style={{ 
                           opacity: isPriority ? 1 : 0,
-                          transition: 'opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                          transition: 'opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                          filter: 'none',
+                          WebkitFilter: 'none',
+                          imageRendering: 'auto'
                         }}
                       />
                       <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent text-white transition-opacity duration-500">
