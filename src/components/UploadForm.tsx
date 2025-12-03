@@ -42,21 +42,23 @@ export function UploadForm({ allTags }: UploadFormProps) {
   };
 
   return (
-    <Page className="pb-12">
+    <Page className="!h-[100dvh] !overflow-y-auto">
       <Navbar
         transparent
         title="New Post"
         left={<NavbarBackLink onClick={() => router.back()} text="Cancel" />}
       />
 
-      <PostForm
-        mode="create"
-        allTags={allTags}
-        onSubmit={onSubmit}
-        isSubmitting={isSubmitting}
-        // @ts-ignore
-        ref={formRef}
-      />
+      <div className="pb-safe">
+        <PostForm
+          mode="create"
+          allTags={allTags}
+          onSubmit={onSubmit}
+          isSubmitting={isSubmitting}
+          // @ts-ignore
+          ref={formRef}
+        />
+      </div>
 
     </Page>
   );
