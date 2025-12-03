@@ -48,7 +48,7 @@ export default function ClientShell({ children }: { children: React.ReactNode })
             try {
                 // Use Screen Orientation API if available
                 if ('lock' in window.screen.orientation) {
-                    window.screen.orientation.lock('portrait').catch((err) => {
+                    (window.screen.orientation.lock as (orientation: string) => Promise<void>)('portrait').catch((err) => {
                         // Lock may fail if not in fullscreen or user gesture required
                         console.log('Orientation lock not available:', err);
                     });
