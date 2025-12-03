@@ -4,8 +4,9 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Plus, LogOut } from "lucide-react";
-import { Page, Navbar, Block, BlockTitle, List, ListItem, Button } from "konsta/react";
+import { Page, Navbar, NavbarBackLink, Block, BlockTitle, List, ListItem, Button } from "konsta/react";
 import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 interface DashboardClientProps {
@@ -24,13 +25,29 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ profile, masterPosts }: DashboardClientProps) {
   const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
 
   const handleLogout = async () => {
     await signOut({ redirect: true, callbackUrl: "/signin" });
   };
 
+  const handleBack = () => {
+    // If there's a referrer and it's not the same page, go back
+    if (typeof window !== 'undefined' && document.referrer && !document.referrer.includes('/profile')) {
+      router.back();
+    } else {
+      // Otherwise go to home
+      router.push('/');
+    }
+  };
+
   return (
     <Page>
+      <Navbar
+        left={<NavbarBackLink onClick={handleBack} text="Back" />}
+        className="relative z-10 bg-white dark:bg-gray-900"
+      />
       <List strong inset className="!shadow-none profile-list">
         <ListItem className="!h-auto !p-0 profile-list-item">
           <div className="flex items-center gap-4 w-full py-1 pl-2 pr-4">
@@ -58,10 +75,10 @@ export default function DashboardClient({ profile, masterPosts }: DashboardClien
           {masterPosts.map((post) => (
             <Link
               key={post.id}
-              href={`/post/${post.id}?source=profile`}
+              href={`/${locale}/post/${post.id}?source=profile`}
               prefetch={true}
               className="relative aspect-square bg-gray-100"
-              onMouseEnter={() => router.prefetch(`/post/${post.id}?source=profile`)}
+              onMouseEnter={() => router.prefetch(`/${locale}/post/${post.id}?source=profile`)}
             >
               <Image
                 src={post.imageUrl}
