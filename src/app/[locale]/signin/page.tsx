@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { useSearchParams } from 'next/navigation';
-import { Page, Navbar, List, ListInput, Button, Block, BlockTitle } from "konsta/react";
+import { Page, Navbar, NavbarBackLink, List, ListInput, Button, Block, BlockTitle } from "konsta/react";
 import Link from "next/link";
 
 export default function SignInPage() {
@@ -92,8 +92,22 @@ export default function SignInPage() {
     return null;
   }
 
+  const handleBack = () => {
+    // If there's a referrer and it's not the same page, go back
+    if (typeof window !== 'undefined' && document.referrer && !document.referrer.includes('/signin')) {
+      router.back();
+    } else {
+      // Otherwise go to home
+      router.push('/');
+    }
+  };
+
   return (
     <Page>
+      <Navbar
+        left={<NavbarBackLink onClick={handleBack} text="Back" />}
+        className="relative z-10 bg-white dark:bg-gray-900"
+      />
       <BlockTitle
       >
         {t('subtitle')}
