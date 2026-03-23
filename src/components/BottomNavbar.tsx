@@ -9,7 +9,7 @@ import { useSession } from "next-auth/react";
 export default function BottomNavbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const role = session?.user?.role;
 
   useEffect(() => {
@@ -126,7 +126,35 @@ export default function BottomNavbar() {
         </>
       )}
 
-      {/* Unauthenticated: just Explore already shown above */}
+      {/* Unauthenticated: Upload + Profile (profile redirects to signin) */}
+      {status === "unauthenticated" && (
+        <>
+          <TabbarLink
+            active={isActive("/post/new")}
+            onClick={() => handleNavigate("/post/new")}
+            onMouseEnter={() => router.prefetch("/post/new")}
+            icon={
+              <Icon
+                ios={<PlusSquare className="w-7 h-7" />}
+                material={<PlusSquare className="w-7 h-7" />}
+              />
+            }
+            label="Upload"
+          />
+          <TabbarLink
+            active={isActive("/profile")}
+            onClick={() => handleNavigate("/profile")}
+            onMouseEnter={() => router.prefetch("/profile")}
+            icon={
+              <Icon
+                ios={<User className="w-7 h-7" />}
+                material={<User className="w-7 h-7" />}
+              />
+            }
+            label="Profile"
+          />
+        </>
+      )}
     </Tabbar>
   );
 }
