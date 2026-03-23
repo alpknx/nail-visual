@@ -27,7 +27,8 @@ const geography = customType<{ data: string }>({
 // ==========================================
 // 1. ENUMS
 // ==========================================
-export const userRoleEnum = pgEnum('user_role', ['master']);
+export const userRoleEnum = pgEnum('user_role', ['master', 'client']);
+export const bookingStatusEnum = pgEnum('booking_status', ['pending', 'confirmed', 'cancelled', 'completed']);
 
 // ==========================================
 // 2. AUTHENTICATION (NextAuth / Auth.js)
@@ -66,7 +67,6 @@ export const accounts = pgTable('accounts', {
   idToken: text('id_token'),
   sessionState: text('session_state'),
 }, (table) => [
-  // Updated to array syntax
   uniqueIndex('idx_accounts_provider_compound').on(table.provider, table.providerAccountId),
 ]);
 
@@ -82,7 +82,6 @@ export const verificationTokens = pgTable('verification_tokens', {
   token: text('token').notNull(),
   expires: timestamp('expires', { mode: 'date' }).notNull(),
 }, (table) => [
-  // Updated to array syntax
   primaryKey({ columns: [table.identifier, table.token] }),
 ]);
 
@@ -91,7 +90,6 @@ export const verificationTokens = pgTable('verification_tokens', {
 // ==========================================
 
 export const masterProfiles = pgTable('master_profiles', {
-  // 1:1 Relationship (PK is also FK)
   userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
   businessName: varchar('business_name', { length: 255 }).notNull(),
   bio: varchar('bio', { length: 255 }),
@@ -114,7 +112,6 @@ export const masterProfiles = pgTable('master_profiles', {
 // 4. PORTFOLIO & TAGS
 // ==========================================
 
-// Define the TS type for your JSON translations
 type TranslationJSON = { [lang: string]: string };
 
 export const categories = pgTable('categories', {
@@ -130,7 +127,6 @@ export const tags = pgTable('tags', {
   slug: varchar('slug', { length: 255 }).notNull(),
   nameTranslations: jsonb('name_translations').$type<TranslationJSON>().notNull(),
 }, (table) => [
-  // Updated to array syntax
   uniqueIndex('idx_tags_category_slug').on(table.categoryId, table.slug),
 ]);
 
@@ -149,12 +145,57 @@ export const postTags = pgTable('post_tags', {
   postId: uuid('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
   tagId: integer('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
 }, (table) => [
-  // Updated to array syntax
   primaryKey({ columns: [table.postId, table.tagId] }),
 ]);
 
 // ==========================================
-// 5. RELATIONS (Application Level)
+// 5. BOOKING SYSTEM
+// ==========================================
+
+// Рабочее расписание мастера (1:1 с masterProfiles)
+export const masterSchedules = pgTable('master_schedules', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  masterId: uuid('master_id').notNull().unique().references(() => masterProfiles.userId, { onDelete: 'cascade' }),
+  timezone: varchar('timezone', { length: 100 }).notNull().default('Europe/Warsaw'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Рабочие часы по дням недели
+export const scheduleRanges = pgTable('schedule_ranges', {
+  id: serial('id').primaryKey(),
+  scheduleId: uuid('schedule_id').notNull().references(() => masterSchedules.id, { onDelete: 'cascade' }),
+  dayOfWeek: integer('day_of_week').notNull(), // 1=Mon ... 7=Sun
+  startTime: varchar('start_time', { length: 8 }).notNull(), // HH:mm
+  endTime: varchar('end_time', { length: 8 }).notNull(),     // HH:mm
+});
+
+// Блокировки времени (перерывы, отпуск, недоступность)
+export const masterOverrides = pgTable('master_overrides', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  masterId: uuid('master_id').notNull().references(() => masterProfiles.userId, { onDelete: 'cascade' }),
+  startDatetimeUtc: timestamp('start_datetime_utc', { withTimezone: true }).notNull(),
+  endDatetimeUtc: timestamp('end_datetime_utc', { withTimezone: true }).notNull(),
+  notes: varchar('notes', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Бронирования
+export const bookings = pgTable('bookings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  masterId: uuid('master_id').notNull().references(() => masterProfiles.userId, { onDelete: 'cascade' }),
+  postId: uuid('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
+  clientId: uuid('client_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: bookingStatusEnum('status').notNull().default('pending'),
+  startDatetimeUtc: timestamp('start_datetime_utc', { withTimezone: true }).notNull(),
+  endDatetimeUtc: timestamp('end_datetime_utc', { withTimezone: true }).notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// ==========================================
+// 6. RELATIONS (Application Level)
 // ==========================================
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -164,6 +205,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   accounts: many(accounts),
   sessions: many(sessions),
+  bookings: many(bookings),
 }));
 
 export const masterProfileRelations = relations(masterProfiles, ({ one, many }) => ({
@@ -172,6 +214,12 @@ export const masterProfileRelations = relations(masterProfiles, ({ one, many }) 
     references: [users.id],
   }),
   posts: many(posts),
+  schedule: one(masterSchedules, {
+    fields: [masterProfiles.userId],
+    references: [masterSchedules.masterId],
+  }),
+  overrides: many(masterOverrides),
+  bookings: many(bookings),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -183,7 +231,7 @@ export const tagsRelations = relations(tags, ({ one, many }) => ({
     fields: [tags.categoryId],
     references: [categories.id],
   }),
-  posts: many(postTags), // Many-to-Many link
+  posts: many(postTags),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -192,6 +240,7 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
     references: [masterProfiles.userId],
   }),
   tags: many(postTags),
+  bookings: many(bookings),
 }));
 
 export const postTagsRelations = relations(postTags, ({ one }) => ({
@@ -202,5 +251,42 @@ export const postTagsRelations = relations(postTags, ({ one }) => ({
   tag: one(tags, {
     fields: [postTags.tagId],
     references: [tags.id],
+  }),
+}));
+
+export const masterSchedulesRelations = relations(masterSchedules, ({ one, many }) => ({
+  master: one(masterProfiles, {
+    fields: [masterSchedules.masterId],
+    references: [masterProfiles.userId],
+  }),
+  ranges: many(scheduleRanges),
+}));
+
+export const scheduleRangesRelations = relations(scheduleRanges, ({ one }) => ({
+  schedule: one(masterSchedules, {
+    fields: [scheduleRanges.scheduleId],
+    references: [masterSchedules.id],
+  }),
+}));
+
+export const masterOverridesRelations = relations(masterOverrides, ({ one }) => ({
+  master: one(masterProfiles, {
+    fields: [masterOverrides.masterId],
+    references: [masterProfiles.userId],
+  }),
+}));
+
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+  master: one(masterProfiles, {
+    fields: [bookings.masterId],
+    references: [masterProfiles.userId],
+  }),
+  post: one(posts, {
+    fields: [bookings.postId],
+    references: [posts.id],
+  }),
+  client: one(users, {
+    fields: [bookings.clientId],
+    references: [users.id],
   }),
 }));
