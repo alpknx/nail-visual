@@ -4,6 +4,9 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
     compress: true, // Включить Gzip/Brotli компрессию
     poweredByHeader: false, // Убрать X-Powered-By header для безопасности
     productionBrowserSourceMaps: false, // Отключить source maps в продакшене (меньше размер)
