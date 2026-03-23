@@ -3,11 +3,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
-import { masterProfiles, posts, postTags, tags, masterSchedules, scheduleRanges, masterOverrides } from "@/db/schema";
+import { masterProfiles, posts, postTags, tags, masterSchedules, scheduleRanges, masterOverrides, bookings } from "@/db/schema";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { eq, desc, sql, inArray, and, gt, lt } from "drizzle-orm";
+import { eq, desc, sql, inArray, and, gt, lt, ne, gte } from "drizzle-orm";
+import { getAvailableSlots } from "@/lib/slots";
+import { addMinutes } from "date-fns";
 import { unstable_cache } from "next/cache";
 
 // Helper function to get locale from headers
@@ -648,4 +650,168 @@ export async function getMasterOverrides(masterId: string) {
   });
 
   return overrides;
+}
+
+// ==========================================
+// BOOKING ACTIONS (CLIENT)
+// ==========================================
+
+export async function getAvailableSlotsAction(
+  masterId: string,
+  postId: string,
+  date: string // "YYYY-MM-DD" in master's timezone
+) {
+  return getAvailableSlots(masterId, postId, date);
+}
+
+export async function previewBooking(
+  masterId: string,
+  postId: string,
+  datetimeUtc: string
+) {
+  const post = await db.query.posts.findFirst({
+    where: eq(posts.id, postId),
+    with: { author: true },
+  });
+
+  if (!post || !post.durationMinutes) {
+    throw new Error("Post not found or missing duration");
+  }
+
+  if (post.masterId !== masterId) {
+    throw new Error("Post does not belong to this master");
+  }
+
+  const start = new Date(datetimeUtc);
+  const end = addMinutes(start, post.durationMinutes);
+
+  // Verify the slot is still free
+  const slots = await getAvailableSlots(masterId, postId, datetimeUtc.slice(0, 10));
+  const stillFree = slots.some((s) => s.startUtc === start.toISOString());
+
+  if (!stillFree) {
+    throw new Error("This slot is no longer available");
+  }
+
+  return {
+    master: {
+      id: post.author!.userId,
+      businessName: post.author!.businessName,
+      avatarUrl: post.author!.avatarUrl,
+      phoneNumber: post.author!.phoneNumber,
+      phoneCountryCode: post.author!.phoneCountryCode,
+    },
+    post: {
+      id: post.id,
+      imageUrl: post.imageUrl,
+      description: post.description,
+      price: post.price,
+      currency: post.currency,
+      durationMinutes: post.durationMinutes,
+    },
+    startUtc: start.toISOString(),
+    endUtc: end.toISOString(),
+  };
+}
+
+const createBookingSchema = z.object({
+  masterId: z.string().uuid(),
+  postId: z.string().uuid(),
+  datetimeUtc: z.string().datetime({ offset: true }),
+  notes: z.string().max(500).optional(),
+});
+
+export async function createBooking(data: z.infer<typeof createBookingSchema>) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "client") {
+    throw new Error("Unauthorized — only clients can book");
+  }
+
+  const validated = createBookingSchema.parse(data);
+
+  const post = await db.query.posts.findFirst({
+    where: eq(posts.id, validated.postId),
+  });
+
+  if (!post?.durationMinutes || post.masterId !== validated.masterId) {
+    throw new Error("Post not found or invalid");
+  }
+
+  const start = new Date(validated.datetimeUtc);
+  const end = addMinutes(start, post.durationMinutes);
+
+  // Race condition check: verify slot is still free
+  const slots = await getAvailableSlots(
+    validated.masterId,
+    validated.postId,
+    validated.datetimeUtc.slice(0, 10)
+  );
+  const isAvailable = slots.some((s) => s.startUtc === start.toISOString());
+
+  if (!isAvailable) {
+    throw new Error("This slot is no longer available");
+  }
+
+  const [booking] = await db
+    .insert(bookings)
+    .values({
+      masterId: validated.masterId,
+      postId: validated.postId,
+      clientId: session.user.id,
+      status: "pending",
+      startDatetimeUtc: start,
+      endDatetimeUtc: end,
+      notes: validated.notes,
+    })
+    .returning();
+
+  return booking;
+}
+
+export async function cancelBooking(bookingId: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "client") {
+    throw new Error("Unauthorized");
+  }
+
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, bookingId),
+  });
+
+  if (!booking || booking.clientId !== session.user.id) {
+    throw new Error("Not found or unauthorized");
+  }
+
+  if (booking.status === "completed" || booking.status === "cancelled") {
+    throw new Error("Cannot cancel a booking with status: " + booking.status);
+  }
+
+  await db
+    .update(bookings)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(bookings.id, bookingId));
+
+  return { success: true };
+}
+
+export async function getClientBookings() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "client") {
+    throw new Error("Unauthorized");
+  }
+
+  const clientBookings = await db.query.bookings.findMany({
+    where: eq(bookings.clientId, session.user.id),
+    with: {
+      post: {
+        with: { author: true },
+      },
+    },
+    orderBy: (bookings, { desc }) => [desc(bookings.startDatetimeUtc)],
+  });
+
+  return clientBookings;
 }
