@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, LogOut } from "lucide-react";
+import { Plus, LogOut, CalendarDays } from "lucide-react";
 import { Page, Navbar, NavbarBackLink, Block, BlockTitle, List, ListItem, Button } from "konsta/react";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
@@ -67,6 +67,21 @@ export default function DashboardClient({ profile, masterPosts }: DashboardClien
             </Button>
           </div>
         </ListItem>
+      </List>
+
+      <List strong inset className="!mb-0">
+        <ListItem
+          link
+          title="Working Hours"
+          media={<CalendarDays className="w-5 h-5 text-gray-500" />}
+          onClick={() => router.push(`/${locale}/profile/schedule`)}
+        />
+        <ListItem
+          link
+          title="Booking Calendar"
+          media={<CalendarDays className="w-5 h-5 text-gray-500" />}
+          onClick={() => router.push(`/${locale}/profile/calendar`)}
+        />
       </List>
 
       <BlockTitle className="!shadow-none" style={{ textShadow: 'none' }}>Your Portfolio</BlockTitle>
