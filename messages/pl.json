@@ -553,6 +553,82 @@
     "title": "Ulubione",
     "subtitle": "Twoje zapisane wzory",
     "empty": "Nie masz jeszcze żadnych ulubionych wzorów"
+  },
+  "bookings": {
+    "title": "Moje rezerwacje",
+    "upcoming": "Nadchodzące",
+    "past": "Poprzednie",
+    "cancel": "Anuluj rezerwację",
+    "cancelling": "Anulowanie...",
+    "confirmCancel": "Anulować tę rezerwację?",
+    "cancelled": "Rezerwacja anulowana",
+    "failedToCancel": "Nie udało się anulować",
+    "failedToLoad": "Nie udało się załadować rezerwacji",
+    "noUpcoming": "Brak nadchodzących rezerwacji. Znajdź mistrza i zarezerwuj!",
+    "noPast": "Brak poprzednich rezerwacji.",
+    "exploreMasters": "Przeglądaj mistrzów",
+    "status": {
+      "pending": "Oczekująca",
+      "confirmed": "Potwierdzona",
+      "cancelled": "Anulowana",
+      "completed": "Zakończona"
+    }
+  },
+  "schedule": {
+    "title": "Godziny pracy",
+    "timezone": "Strefa czasowa",
+    "save": "Zapisz harmonogram",
+    "saving": "Zapisywanie...",
+    "saved": "Harmonogram zapisany",
+    "failedToSave": "Nie udało się zapisać harmonogramu",
+    "days": {
+      "mon": "Poniedziałek",
+      "tue": "Wtorek",
+      "wed": "Środa",
+      "thu": "Czwartek",
+      "fri": "Piątek",
+      "sat": "Sobota",
+      "sun": "Niedziela"
+    },
+    "overrides": {
+      "title": "Zablokowane terminy",
+      "add": "Zablokuj termin",
+      "from": "Od",
+      "to": "Do",
+      "notes": "Notatki (opcjonalnie)",
+      "delete": "Usuń",
+      "deleting": "Usuwanie...",
+      "failedToDelete": "Nie udało się usunąć",
+      "noOverrides": "Brak zablokowanych terminów",
+      "addTitle": "Dodaj zablokowany termin"
+    },
+    "calendar": {
+      "title": "Kalendarz rezerwacji",
+      "confirm": "Potwierdź",
+      "cancel": "Anuluj",
+      "confirming": "Potwierdzanie...",
+      "cancelling": "Anulowanie...",
+      "noBookings": "Brak rezerwacji na ten dzień",
+      "blockedTime": "Zablokowane"
+    }
+  },
+  "bookingModal": {
+    "title": "Zarezerwuj wizytę",
+    "selectDate": "Wybierz datę",
+    "selectTime": "Wybierz godzinę",
+    "notes": "Notatki dla mistrza",
+    "notesPlaceholder": "Ewentualne prośby lub uwagi…",
+    "confirm": "Potwierdź rezerwację",
+    "confirming": "Potwierdzanie...",
+    "back": "Wstecz",
+    "noSlots": "Brak wolnych terminów w tym dniu",
+    "tryAnotherDate": "Spróbuj inną datę",
+    "successTitle": "Zarezerwowano!",
+    "successMessage": "Twoja wizyta została zarezerwowana.",
+    "viewBookings": "Zobacz moje rezerwacje",
+    "done": "Gotowe",
+    "preview": "Szczegóły rezerwacji",
+    "slotUnavailable": "Ten termin jest już niedostępny. Wybierz inny."
   }
 }
 

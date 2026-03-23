@@ -555,6 +555,82 @@
     "title": "Favorites",
     "subtitle": "Your saved designs",
     "empty": "You don't have any favorite designs yet"
+  },
+  "bookings": {
+    "title": "My Bookings",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "cancel": "Cancel booking",
+    "cancelling": "Cancelling...",
+    "confirmCancel": "Cancel this booking?",
+    "cancelled": "Booking cancelled",
+    "failedToCancel": "Failed to cancel",
+    "failedToLoad": "Failed to load bookings",
+    "noUpcoming": "No upcoming bookings. Find a master and book!",
+    "noPast": "No past bookings yet.",
+    "exploreMasters": "Explore masters",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled",
+      "completed": "Completed"
+    }
+  },
+  "schedule": {
+    "title": "Working Hours",
+    "timezone": "Timezone",
+    "save": "Save Schedule",
+    "saving": "Saving...",
+    "saved": "Schedule saved",
+    "failedToSave": "Failed to save schedule",
+    "days": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
+    "overrides": {
+      "title": "Blocked Times",
+      "add": "Block time",
+      "from": "From",
+      "to": "To",
+      "notes": "Notes (optional)",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "failedToDelete": "Failed to delete",
+      "noOverrides": "No blocked times",
+      "addTitle": "Add blocked time"
+    },
+    "calendar": {
+      "title": "Booking Calendar",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "confirming": "Confirming...",
+      "cancelling": "Cancelling...",
+      "noBookings": "No bookings for this day",
+      "blockedTime": "Blocked"
+    }
+  },
+  "bookingModal": {
+    "title": "Book Appointment",
+    "selectDate": "Choose a date",
+    "selectTime": "Choose a time",
+    "notes": "Notes for the master",
+    "notesPlaceholder": "Any requests or notes…",
+    "confirm": "Confirm Booking",
+    "confirming": "Confirming...",
+    "back": "Back",
+    "noSlots": "No available slots on this date",
+    "tryAnotherDate": "Try another date",
+    "successTitle": "Booked!",
+    "successMessage": "Your appointment has been booked.",
+    "viewBookings": "View my bookings",
+    "done": "Done",
+    "preview": "Booking details",
+    "slotUnavailable": "This slot is no longer available. Please choose another."
   }
 }
 
