@@ -13,18 +13,18 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
-      role: "user" | "master";
+      role: "master" | "client";
     } & DefaultSession["user"];
   }
 
   interface User extends DefaultUser {
-    role: "user" | "master";
+    role: "master" | "client";
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    role: "user" | "master";
+    role: "master" | "client";
   }
 }
 
@@ -70,7 +70,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email!,
           name: user.name,
-          role: user.role as "user" | "master",
+          role: user.role as "master" | "client",
         };
       },
     }),

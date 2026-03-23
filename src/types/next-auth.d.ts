@@ -7,21 +7,19 @@ declare module "next-auth" {
             email?: string | null;
             name?: string | null;
             image?: string | null;
-            phone?: string | null;
-            city?: string | null;
-            role: "client" | "pro" | "admin";
+            role: "master" | "client";
         };
     }
 
     interface User {
         id: string;
-        role: "client" | "pro" | "admin";
+        role: "master" | "client";
     }
 }
 
 declare module "next-auth/jwt" {
     interface JWT {
-        uid: string;
-        role: "client" | "pro" | "admin";
+        sub: string;
+        role: "master" | "client";
     }
 }

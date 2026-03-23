@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 const registerSchema = z.object({
     email: z.string().email("Invalid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
+    role: z.enum(["master", "client"]).optional().default("master"),
 });
 
 export async function POST(request: NextRequest) {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { email, password } = parsed.data;
+        const { email, password, role } = parsed.data;
         const lowercaseEmail = email.toLowerCase().trim();
 
         // Rate limiting: 5 registration attempts per hour per email
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
         const [newUser] = await db.insert(users).values({
             email: lowercaseEmail,
             passwordHash: hashedPassword,
-            role: "master",
+            role,
         }).returning();
 
         return NextResponse.json({ id: newUser.id, email: newUser.email }, { status: 201 });
