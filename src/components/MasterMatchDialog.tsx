@@ -8,6 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import ContactButtons from "@/components/ContactButtons";
+import BookingModal from "@/components/BookingModal";
+import { useSession } from "next-auth/react";
 
 interface MasterMatchDialogProps {
   open: boolean;
@@ -18,9 +20,12 @@ interface MasterMatchDialogProps {
     avatarUrl?: string | null;
     distance: number;
     price?: number | null;
+    currency?: string | null;
+    durationMinutes?: number | null;
     phoneNumber: string;
     phoneCountryCode: string | null;
     matchingImageUrl: string | null;
+    matchingPostId?: string | null;
   };
 }
 
@@ -31,7 +36,9 @@ export default function MasterMatchDialog({
 }: MasterMatchDialogProps) {
   const params = useParams();
   const locale = (params?.locale as string) || 'en';
+  const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -230,16 +237,34 @@ export default function MasterMatchDialog({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 bg-white border-t border-gray-100" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="p-4 bg-white border-t border-gray-100 space-y-2" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+          {session?.user?.role === "client" && master.matchingPostId && master.durationMinutes && (
+            <Button large className="w-full" onClick={() => setBookingOpen(true)}>
+              Book Appointment
+            </Button>
+          )}
           <ContactButtons
             phoneNumber={master.phoneNumber}
             phoneCountryCode={master.phoneCountryCode}
           />
         </div>
       </div>
+
+      {bookingOpen && master.matchingPostId && (
+        <BookingModal
+          open={bookingOpen}
+          onOpenChange={setBookingOpen}
+          masterId={master.masterId}
+          postId={master.matchingPostId}
+          masterName={master.businessName}
+          masterAvatarUrl={master.avatarUrl}
+          price={master.price}
+          currency={master.currency}
+          durationMinutes={master.durationMinutes}
+        />
+      )}
     </>
   );
 
-  // Render modal using portal to body for proper z-index stacking in Safari
   return createPortal(modalContent, document.body);
 }

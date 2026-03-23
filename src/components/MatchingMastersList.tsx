@@ -13,7 +13,10 @@ interface Match {
   score: number;
   distance: number;
   matchingImageUrl: string | null;
+  matchingPostId: string | null;
   price: number | null;
+  currency: string | null;
+  durationMinutes: number | null;
 }
 
 interface MatchingMastersListProps {

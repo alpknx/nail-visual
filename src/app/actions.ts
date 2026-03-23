@@ -331,7 +331,10 @@ export async function getMatchingMasters(postId: string) {
         score,
         distance,
         matchingImageUrl: matchingPost?.imageUrl || null,
+        matchingPostId: matchingPost?.id || null,
         price: matchingPost?.price || null,
+        currency: matchingPost?.currency || null,
+        durationMinutes: matchingPost?.durationMinutes || null,
       };
     })
     .filter((m) => m.score > 0) // Only show masters with at least some match

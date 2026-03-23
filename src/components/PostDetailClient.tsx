@@ -9,6 +9,7 @@ import MatchingMastersList from "@/components/MatchingMastersList";
 import MasterMatchDialog from "@/components/MasterMatchDialog";
 import { MessageCircle, Clock, Phone, Edit, Trash2 } from "lucide-react";
 import ContactButtons from "@/components/ContactButtons";
+import BookingModal from "@/components/BookingModal";
 import Link from "next/link";
 import { deletePost } from "@/app/actions";
 
@@ -27,7 +28,10 @@ interface Match {
   score: number;
   distance: number;
   matchingImageUrl: string | null;
+  matchingPostId: string | null;
   price: number | null;
+  currency: string | null;
+  durationMinutes: number | null;
 }
 
 export default function PostDetailClient({ post, matchingMasters, source }: PostDetailClientProps) {
@@ -47,6 +51,7 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
   );
   
   const [isDeleting, setIsDeleting] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
   
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
@@ -278,10 +283,17 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
                   </Button>
                 </div>
               ) : (
-                <ContactButtons
-                  phoneNumber={post.author.phoneNumber}
-                  phoneCountryCode={post.author.phoneCountryCode}
-                />
+                <div className="space-y-2">
+                  {session?.user?.role === "client" && post.masterId && post.durationMinutes && (
+                    <Button large className="w-full" onClick={() => setBookingOpen(true)}>
+                      Book Appointment
+                    </Button>
+                  )}
+                  <ContactButtons
+                    phoneNumber={post.author.phoneNumber}
+                    phoneCountryCode={post.author.phoneCountryCode}
+                  />
+                </div>
               )}
             </Block>
           ) : null}
@@ -318,12 +330,25 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
         </div>
       </div>
 
-      {/* Master Match Dialog - Rendered at top level for proper z-index */}
       {selectedMatch && (
         <MasterMatchDialog
           open={!!selectedMatch}
           onOpenChange={(open) => !open && setSelectedMatch(null)}
           master={selectedMatch}
+        />
+      )}
+
+      {bookingOpen && post.masterId && (
+        <BookingModal
+          open={bookingOpen}
+          onOpenChange={setBookingOpen}
+          masterId={post.masterId}
+          postId={post.id}
+          masterName={post.author?.businessName ?? "Master"}
+          masterAvatarUrl={post.author?.avatarUrl}
+          price={post.price}
+          currency={post.currency}
+          durationMinutes={post.durationMinutes}
         />
       )}
     </Page>
