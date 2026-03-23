@@ -9,7 +9,8 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { eq, desc, sql, inArray, and, gt, lt, ne, gte } from "drizzle-orm";
 import { getAvailableSlots } from "@/lib/slots";
-import { addMinutes } from "date-fns";
+import { addMinutes, startOfDay, endOfDay, parseISO } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { unstable_cache } from "next/cache";
 
 // Helper function to get locale from headers
@@ -814,4 +815,134 @@ export async function getClientBookings() {
   });
 
   return clientBookings;
+}
+
+// ==========================================
+// BOOKING ACTIONS (MASTER)
+// ==========================================
+
+const getMasterBookingsSchema = z.object({
+  dateFrom: z.string().datetime({ offset: true }),
+  dateTo: z.string().datetime({ offset: true }),
+});
+
+export async function getMasterBookings(data: z.infer<typeof getMasterBookingsSchema>) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "master") {
+    throw new Error("Unauthorized");
+  }
+
+  const validated = getMasterBookingsSchema.parse(data);
+
+  const masterBookings = await db.query.bookings.findMany({
+    where: and(
+      eq(bookings.masterId, session.user.id),
+      gte(bookings.startDatetimeUtc, new Date(validated.dateFrom)),
+      lt(bookings.startDatetimeUtc, new Date(validated.dateTo))
+    ),
+    with: {
+      post: true,
+      client: true,
+    },
+    orderBy: (bookings, { asc }) => [asc(bookings.startDatetimeUtc)],
+  });
+
+  return masterBookings;
+}
+
+export async function confirmBooking(bookingId: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "master") {
+    throw new Error("Unauthorized");
+  }
+
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, bookingId),
+  });
+
+  if (!booking || booking.masterId !== session.user.id) {
+    throw new Error("Not found or unauthorized");
+  }
+
+  if (booking.status !== "pending") {
+    throw new Error("Only pending bookings can be confirmed");
+  }
+
+  await db
+    .update(bookings)
+    .set({ status: "confirmed", updatedAt: new Date() })
+    .where(eq(bookings.id, bookingId));
+
+  return { success: true };
+}
+
+export async function cancelBookingByMaster(bookingId: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "master") {
+    throw new Error("Unauthorized");
+  }
+
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, bookingId),
+  });
+
+  if (!booking || booking.masterId !== session.user.id) {
+    throw new Error("Not found or unauthorized");
+  }
+
+  if (booking.status === "completed" || booking.status === "cancelled") {
+    throw new Error("Cannot cancel a booking with status: " + booking.status);
+  }
+
+  await db
+    .update(bookings)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(bookings.id, bookingId));
+
+  return { success: true };
+}
+
+export async function getMasterCalendarData(date: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "master") {
+    throw new Error("Unauthorized");
+  }
+
+  // Load master timezone to build correct UTC window
+  const schedule = await db.query.masterSchedules.findFirst({
+    where: eq(masterSchedules.masterId, session.user.id),
+  });
+
+  const timezone = schedule?.timezone ?? "UTC";
+
+  const localDay = toZonedTime(parseISO(date), timezone);
+  const windowStart = fromZonedTime(startOfDay(localDay), timezone);
+  const windowEnd   = fromZonedTime(endOfDay(localDay), timezone);
+
+  const [dayBookings, dayOverrides] = await Promise.all([
+    db.query.bookings.findMany({
+      where: and(
+        eq(bookings.masterId, session.user.id),
+        ne(bookings.status, "cancelled"),
+        gte(bookings.startDatetimeUtc, windowStart),
+        lt(bookings.startDatetimeUtc, windowEnd)
+      ),
+      with: { post: true, client: true },
+      orderBy: (bookings, { asc }) => [asc(bookings.startDatetimeUtc)],
+    }),
+    db.query.masterOverrides.findMany({
+      where: and(
+        eq(masterOverrides.masterId, session.user.id),
+        gte(masterOverrides.startDatetimeUtc, windowStart),
+        lt(masterOverrides.startDatetimeUtc, windowEnd)
+      ),
+      orderBy: (masterOverrides, { asc }) => [asc(masterOverrides.startDatetimeUtc)],
+    }),
+  ]);
+
+  return { bookings: dayBookings, overrides: dayOverrides, timezone };
 }
