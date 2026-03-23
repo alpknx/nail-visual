@@ -10,6 +10,7 @@ import Link from "next/link";
 export default function SignUpPage() {
   const t = useTranslations('auth.signUp');
   const router = useRouter();
+  const [role, setRole] = useState<"master" | "client">("client");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -35,7 +36,7 @@ export default function SignUpPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, role }),
       });
 
       const data = await res.json();
@@ -53,7 +54,7 @@ export default function SignUpPage() {
       });
 
       if (result?.ok) {
-        router.push("/onboarding");
+        router.push(role === "master" ? "/onboarding" : "/");
       } else {
         setError(t('signInAfterRegistrationError'));
       }
@@ -80,10 +81,41 @@ export default function SignUpPage() {
         left={<NavbarBackLink onClick={handleBack} text="Back" />}
         className="relative z-10 bg-white dark:bg-gray-900"
       />
-      <BlockTitle 
-      >
+      <BlockTitle>
         {t('subtitle')}
       </BlockTitle>
+
+      {/* Role selector */}
+      <Block>
+        <p className="text-sm text-gray-500 mb-2">{t('iWant')}</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setRole("client")}
+            className={[
+              "flex-1 py-3 rounded-2xl text-sm font-medium border transition-colors",
+              role === "client"
+                ? "bg-black text-white border-black"
+                : "bg-white text-gray-600 border-gray-200",
+            ].join(" ")}
+          >
+            {t('findMaster')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole("master")}
+            className={[
+              "flex-1 py-3 rounded-2xl text-sm font-medium border transition-colors",
+              role === "master"
+                ? "bg-black text-white border-black"
+                : "bg-white text-gray-600 border-gray-200",
+            ].join(" ")}
+          >
+            {t('offerServices')}
+          </button>
+        </div>
+      </Block>
+
       <List strong inset>
         <ListInput
           outline
