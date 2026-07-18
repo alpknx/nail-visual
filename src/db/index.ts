@@ -4,8 +4,9 @@ config({ path: ".env.local" });
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema"; // ← добавь
+import { env } from "@/lib/env";
 
-const client = postgres(process.env.DATABASE_URL!, {
+const client = postgres(env.DATABASE_URL, {
     prepare: false,
     max: 10, // Increased connection pool for better performance
     idle_timeout: 20,

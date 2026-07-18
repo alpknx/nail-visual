@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { isRateLimited } from "@/lib/rate-limit";
+import { env } from "@/lib/env";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -36,6 +37,7 @@ const credentialsSchema = z.object({
 
 export const authOptions: NextAuthOptions = {
   adapter: DrizzleAdapter(db) as any, // Type cast to avoid version mismatch issues
+  secret: env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
