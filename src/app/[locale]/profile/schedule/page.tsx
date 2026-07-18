@@ -15,15 +15,17 @@ export default async function SchedulePage() {
     redirect("/signin");
   }
 
-  const profile = await db.query.masterProfiles.findFirst({
-    where: eq(masterProfiles.userId, session.user.id),
-  });
+  const [profile, schedule] = await Promise.all([
+    db.query.masterProfiles.findFirst({
+      where: eq(masterProfiles.userId, session.user.id),
+    }),
+    getMasterSchedule(session.user.id),
+  ]);
 
   if (!profile) {
     redirect("/onboarding");
   }
 
-  const schedule = await getMasterSchedule(session.user.id);
   const timezone = schedule?.timezone ?? "Europe/Warsaw";
 
   return (

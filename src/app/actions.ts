@@ -255,19 +255,37 @@ export async function getMatchingMasters(postId: string) {
   // Cache matching masters for 2 minutes (expensive computation)
   const getCachedMasters = unstable_cache(
     async (pId: string) => {
-      // Get the post with its tags
-      const post = await db.query.posts.findFirst({
-        where: eq(posts.id, pId),
-    with: {
-      tags: {
-        with: {
-          tag: {
+      // Get the post with its tags, and all masters with their posts, in parallel -
+      // the masters query doesn't depend on the post lookup's result.
+      const [post, masters] = await Promise.all([
+    db.query.posts.findFirst({
+      where: eq(posts.id, pId),
+      with: {
+        tags: {
+          with: {
+            tag: {
 
+            },
           },
         },
       },
-    },
-  });
+    }),
+    db.query.masterProfiles.findMany({
+      with: {
+        posts: {
+          with: {
+            tags: {
+              with: {
+                tag: {
+
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
 
   if (!post) {
     return [];
@@ -276,23 +294,6 @@ export async function getMatchingMasters(postId: string) {
   // Mock user location (New York)
   const userLat = 40.7128;
   const userLng = -74.0060;
-
-  // Get all masters with their posts
-  const masters = await db.query.masterProfiles.findMany({
-    with: {
-      posts: {
-        with: {
-          tags: {
-            with: {
-              tag: {
-
-              },
-            },
-          },
-        },
-      },
-    },
-  });
 
   // Score each master
   const scoredMasters = masters

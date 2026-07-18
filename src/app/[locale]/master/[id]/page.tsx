@@ -18,31 +18,32 @@ interface MasterProfilePageProps {
 export default async function MasterProfilePage({ params }: MasterProfilePageProps) {
   const { id, locale } = await params;
 
-  const master = await db.query.masterProfiles.findFirst({
-    where: eq(masterProfiles.userId, id),
-    with: {
-      user: true,
-    },
-  });
-
-  if (!master) {
-    notFound();
-  }
-
-  const masterPosts = await db.query.posts.findMany({
-    where: eq(posts.masterId, id),
-    with: {
-      tags: {
-        with: {
-          tag: {
-            with: {
-              category: true,
+  const [master, masterPosts] = await Promise.all([
+    db.query.masterProfiles.findFirst({
+      where: eq(masterProfiles.userId, id),
+      with: {
+        user: true,
+      },
+    }),
+    db.query.posts.findMany({
+      where: eq(posts.masterId, id),
+      with: {
+        tags: {
+          with: {
+            tag: {
+              with: {
+                category: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    }),
+  ]);
+
+  if (!master) {
+    notFound();
+  }
 
   return (
     <>
