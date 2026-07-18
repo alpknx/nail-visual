@@ -59,6 +59,13 @@ export default function UpdatePostClient({ post, allTags }: UpdatePostClientProp
       router.push("/profile");
       router.refresh();
     } catch (error) {
+      // updatePostDetails() redirects on success, which throws a
+      // NEXT_REDIRECT-digest error - let that propagate instead of
+      // treating it as a failure.
+      const err = error as { digest?: string } | undefined;
+      if (err?.digest?.startsWith("NEXT_REDIRECT")) {
+        return;
+      }
       console.error("Failed to update post", error);
       alert('Failed to save changes. Please try again.');
       setIsSubmitting(false);

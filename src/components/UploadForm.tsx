@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPost } from "@/app/actions";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
 
 const PostForm = dynamic(() => import("@/components/PostForm"), { ssr: false });
 import { Page, Navbar, NavbarBackLink, Link, Block } from "konsta/react";
@@ -47,7 +48,15 @@ export function UploadForm({ allTags }: UploadFormProps) {
 
       // router.push("/profile"); // Handled by server action redirect
     } catch (error) {
+      // createPost() redirects on success, which throws a NEXT_REDIRECT-
+      // digest error - let that propagate instead of treating it as a
+      // failure (same pattern as onboarding/page.tsx).
+      const err = error as { digest?: string } | undefined;
+      if (err?.digest?.startsWith("NEXT_REDIRECT")) {
+        return;
+      }
       console.error(error);
+      toast.error("Failed to create post. Please try again.");
       setIsSubmitting(false);
     }
   };

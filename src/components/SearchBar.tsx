@@ -5,6 +5,7 @@ import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchTags } from "@/app/actions";
 import { useDebounce } from "@/hooks/use-debounce";
+import { toast } from "sonner";
 
 interface Tag {
   id: number;
@@ -40,6 +41,7 @@ export default function SearchBar({ onSelectTag, selectedTag }: SearchBarProps) 
         setIsOpen(true);
       } catch (error) {
         console.error("Failed to search tags:", error);
+        toast.error("Search failed. Please try again.");
       } finally {
         setIsLoading(false);
       }
