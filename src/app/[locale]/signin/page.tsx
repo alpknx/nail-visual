@@ -119,7 +119,7 @@ export default function SignInPage() {
           type="email"
           placeholder="your@email.com"
           value={email}
-          onInput={(e: any) => setEmail(e.target.value)}
+          onInput={(e: Event) => setEmail((e.target as HTMLInputElement).value)}
         />
         <ListInput
           outline
@@ -127,7 +127,7 @@ export default function SignInPage() {
           type="password"
           placeholder={t('password')}
           value={password}
-          onInput={(e: any) => setPassword(e.target.value)}
+          onInput={(e: Event) => setPassword((e.target as HTMLInputElement).value)}
         />
       </List>
 
