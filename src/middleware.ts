@@ -1,6 +1,6 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
-import { getProtectedPaths } from "@/config/protected-routes";
+import { getProtectedPaths, canAccessRoute } from "@/config/protected-routes";
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 
@@ -66,6 +66,11 @@ export async function middleware(request: NextRequest) {
                 const url = new URL(`/${locale}/signin`, request.url);
                 url.searchParams.set("callbackUrl", pathWithoutLocale);
                 return NextResponse.redirect(url);
+            }
+
+            // Redirect home if the authenticated user's role can't access this route
+            if (!canAccessRoute(pathWithoutLocale, token.role)) {
+                return NextResponse.redirect(new URL(`/${locale}`, request.url));
             }
         } catch (error) {
             // Log error for debugging
