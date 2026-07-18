@@ -6,9 +6,9 @@ import { db } from "@/db";
 import { posts, masterSchedules, masterOverrides, bookings } from "@/db/schema";
 import { z } from "zod";
 import { eq, and, gt, lt, ne, gte } from "drizzle-orm";
-import { getAvailableSlots } from "@/lib/slots";
-import { addMinutes, startOfDay, endOfDay, parseISO } from "date-fns";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { getAvailableSlots, getMasterTimezone, dateStrInTimezone } from "@/lib/slots";
+import { addMinutes } from "date-fns";
+import { fromZonedTime } from "date-fns-tz";
 
 export async function previewBooking(
   masterId: string,
@@ -31,8 +31,11 @@ export async function previewBooking(
   const start = new Date(datetimeUtc);
   const end = addMinutes(start, post.durationMinutes);
 
-  // Verify the slot is still free
-  const slots = await getAvailableSlots(masterId, postId, datetimeUtc.slice(0, 10));
+  // Verify the slot is still free. Derive the date in the master's own
+  // timezone, not a UTC slice - near midnight in a non-UTC timezone those
+  // can be different calendar days.
+  const timezone = await getMasterTimezone(masterId);
+  const slots = await getAvailableSlots(masterId, postId, dateStrInTimezone(start, timezone));
   const stillFree = slots.some((s) => s.startUtc === start.toISOString());
 
   if (!stillFree) {
@@ -87,11 +90,13 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
   const start = new Date(validated.datetimeUtc);
   const end = addMinutes(start, post.durationMinutes);
 
-  // Race condition check: verify slot is still free
+  // Race condition check: verify slot is still free. Derive the date in the
+  // master's own timezone, not a UTC slice - see previewBooking above.
+  const timezone = await getMasterTimezone(validated.masterId);
   const slots = await getAvailableSlots(
     validated.masterId,
     validated.postId,
-    validated.datetimeUtc.slice(0, 10)
+    dateStrInTimezone(start, timezone)
   );
   const isAvailable = slots.some((s) => s.startUtc === start.toISOString());
 
@@ -260,9 +265,11 @@ export async function getMasterCalendarData(date: string) {
 
   const timezone = schedule?.timezone ?? "UTC";
 
-  const localDay = toZonedTime(parseISO(date), timezone);
-  const windowStart = fromZonedTime(startOfDay(localDay), timezone);
-  const windowEnd   = fromZonedTime(endOfDay(localDay), timezone);
+  // Same fix as lib/slots.ts: fromZonedTime() parses the date string's
+  // numeric components directly, unlike parseISO() which anchors a bare
+  // date to the *server's* system-local timezone.
+  const windowStart = fromZonedTime(`${date}T00:00:00`, timezone);
+  const windowEnd = fromZonedTime(`${date}T23:59:59.999`, timezone);
 
   const [dayBookings, dayOverrides] = await Promise.all([
     db.query.bookings.findMany({

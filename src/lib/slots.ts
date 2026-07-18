@@ -1,19 +1,8 @@
 import { db } from "@/db";
 import { bookings, masterOverrides, masterSchedules, posts } from "@/db/schema";
 import { and, eq, gte, lt, ne } from "drizzle-orm";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
-import {
-  addMinutes,
-  startOfDay,
-  endOfDay,
-  setHours,
-  setMinutes,
-  setSeconds,
-  setMilliseconds,
-  isAfter,
-  isBefore,
-  parseISO,
-} from "date-fns";
+import { fromZonedTime, formatInTimeZone } from "date-fns-tz";
+import { addMinutes, isAfter, isBefore } from "date-fns";
 
 // Step size for slot generation (minutes)
 const SLOT_STEP_MINUTES = 15;
@@ -28,18 +17,18 @@ interface BusyInterval {
 }
 
 /**
- * Parse "HH:mm" time string and apply it to a given UTC date
- * in the master's local timezone.
+ * Given a "YYYY-MM-DD" calendar date and an "HH:mm" wall-clock time, return
+ * the UTC instant that wall-clock time falls on in the given IANA timezone.
+ *
+ * Deliberately avoids date-fns's parseISO()/new Date(y, m, d) here: both
+ * interpret a bare date as midnight in the *runtime's* system-local
+ * timezone, which silently shifts the calendar day whenever the server's
+ * OS timezone differs from `timezone` (or from whatever timezone produced
+ * the date string client-side). fromZonedTime() parses the numeric
+ * components of the string directly and is not affected by system TZ.
  */
-function applyLocalTime(dateInTz: Date, timeStr: string, timezone: string): Date {
-  const [hh, mm] = timeStr.split(":").map(Number);
-  // Build a date in the master's timezone at the given wall-clock time
-  const local = setMilliseconds(
-    setSeconds(setMinutes(setHours(dateInTz, hh), mm), 0),
-    0
-  );
-  // Convert back to UTC
-  return fromZonedTime(local, timezone);
+function applyLocalTime(dateStr: string, timeStr: string, timezone: string): Date {
+  return fromZonedTime(`${dateStr}T${timeStr}:00`, timezone);
 }
 
 /**
@@ -47,6 +36,28 @@ function applyLocalTime(dateInTz: Date, timeStr: string, timezone: string): Date
  */
 function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
   return isBefore(aStart, bEnd) && isAfter(aEnd, bStart);
+}
+
+/**
+ * Returns the master's schedule timezone, or "UTC" if none is set yet.
+ */
+export async function getMasterTimezone(masterId: string): Promise<string> {
+  const schedule = await db.query.masterSchedules.findFirst({
+    where: eq(masterSchedules.masterId, masterId),
+  });
+  return schedule?.timezone ?? "UTC";
+}
+
+/**
+ * Given a UTC instant, return its calendar date ("YYYY-MM-DD") as it falls
+ * in the given IANA timezone. Use this instead of `isoString.slice(0, 10)`
+ * when re-deriving a date for getAvailableSlots() from a UTC datetime - a
+ * plain slice gives the *UTC* calendar date, which can be a different day
+ * than the master's-timezone calendar date for slots near midnight in a
+ * non-UTC timezone.
+ */
+export function dateStrInTimezone(instant: Date | string, timezone: string): string {
+  return formatInTimeZone(instant, timezone, "yyyy-MM-dd");
 }
 
 /**
@@ -80,10 +91,13 @@ export async function getAvailableSlots(
 
   const timezone = schedule.timezone;
 
-  // 3. Determine day of week (1=Mon … 7=Sun) in the master's timezone
-  const localDay = toZonedTime(parseISO(date), timezone);
-  // JS getDay(): 0=Sun … 6=Sat → convert to ISO 1=Mon … 7=Sun
-  const jsDay = localDay.getDay();
+  // 3. Determine day of week (1=Mon … 7=Sun) directly from the date's Y/M/D -
+  // `date` is already "the calendar date in the master's timezone" per the
+  // JSDoc above, so day-of-week needs no timezone conversion at all. Using
+  // Date.UTC keeps this independent of the server's system-local timezone.
+  const [y, m, d] = date.split("-").map(Number);
+  const jsDay = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  // JS getUTCDay(): 0=Sun … 6=Sat → convert to ISO 1=Mon … 7=Sun
   const dayOfWeek = jsDay === 0 ? 7 : jsDay;
 
   // 4. Find ranges for this day
@@ -91,10 +105,8 @@ export async function getAvailableSlots(
   if (todayRanges.length === 0) return [];
 
   // 5. Build UTC window for the whole day to query DB
-  const localStartOfDay = toZonedTime(startOfDay(parseISO(date)), timezone);
-  const localEndOfDay   = toZonedTime(endOfDay(parseISO(date)), timezone);
-  const windowStart = fromZonedTime(localStartOfDay, timezone);
-  const windowEnd   = fromZonedTime(localEndOfDay, timezone);
+  const windowStart = fromZonedTime(`${date}T00:00:00`, timezone);
+  const windowEnd = fromZonedTime(`${date}T23:59:59.999`, timezone);
 
   // 6. Fetch busy intervals (active bookings + overrides) in one go
   const [activeBookings, activeOverrides] = await Promise.all([
@@ -131,8 +143,8 @@ export async function getAvailableSlots(
   const now = new Date();
 
   for (const range of todayRanges) {
-    const rangeStartUtc = applyLocalTime(localDay, range.startTime, timezone);
-    const rangeEndUtc   = applyLocalTime(localDay, range.endTime, timezone);
+    const rangeStartUtc = applyLocalTime(date, range.startTime, timezone);
+    const rangeEndUtc   = applyLocalTime(date, range.endTime, timezone);
 
     let cursor = rangeStartUtc;
 
