@@ -8,7 +8,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import ContactButtons from "@/components/ContactButtons";
-import BookingModal from "@/components/BookingModal";
+import dynamic from "next/dynamic";
+
+const BookingModal = dynamic(() => import("@/components/BookingModal"), { ssr: false });
 import { useSession } from "next-auth/react";
 
 interface MasterMatchDialogProps {

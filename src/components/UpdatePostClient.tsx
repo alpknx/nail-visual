@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Page, Navbar, NavbarBackLink, Link } from "konsta/react";
 import { updatePostDetails, deletePost } from "@/app/actions";
-import PostForm from "@/components/PostForm";
+import dynamic from "next/dynamic";
+
+const PostForm = dynamic(() => import("@/components/PostForm"), { ssr: false });
 
 interface UpdatePostClientProps {
   post: any;

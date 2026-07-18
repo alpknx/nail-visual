@@ -3,7 +3,9 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPost } from "@/app/actions";
-import PostForm from "@/components/PostForm";
+import dynamic from "next/dynamic";
+
+const PostForm = dynamic(() => import("@/components/PostForm"), { ssr: false });
 import { Page, Navbar, NavbarBackLink, Link, Block } from "konsta/react";
 
 interface UploadFormProps {

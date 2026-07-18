@@ -10,7 +10,9 @@ import { Page, Navbar } from "konsta/react";
 import { useSearchParams, useParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import { Search, X } from "lucide-react";
-import SearchModal from "@/components/SearchModal";
+import dynamic from "next/dynamic";
+
+const SearchModal = dynamic(() => import("@/components/SearchModal"), { ssr: false });
 
 export default function Home() {
   const searchParams = useSearchParams();

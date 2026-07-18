@@ -3,13 +3,12 @@
 import React, { useEffect } from "react";
 import NextAuthProvider from "@/providers/NextAuthProvider";
 import { ReactQueryClientProvider } from "@/lib/queryClient";
-import { initPostHog } from "@/lib/analytics";
 import { App } from "konsta/react";
 import BottomNavbar from "@/components/BottomNavbar";
 
 export default function ClientShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
-        initPostHog?.();
+        import("@/lib/analytics").then(({ initPostHog }) => initPostHog?.());
 
         // Set theme-color meta tag dynamically
         const metaThemeColor = document.querySelector('meta[name="theme-color"]');

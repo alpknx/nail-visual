@@ -9,7 +9,9 @@ import MatchingMastersList from "@/components/MatchingMastersList";
 import MasterMatchDialog from "@/components/MasterMatchDialog";
 import { MessageCircle, Clock, Phone, Edit, Trash2 } from "lucide-react";
 import ContactButtons from "@/components/ContactButtons";
-import BookingModal from "@/components/BookingModal";
+import dynamic from "next/dynamic";
+
+const BookingModal = dynamic(() => import("@/components/BookingModal"), { ssr: false });
 import Link from "next/link";
 import { deletePost } from "@/app/actions";
 
