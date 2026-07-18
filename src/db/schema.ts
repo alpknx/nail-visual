@@ -11,6 +11,7 @@ import {
   jsonb,
   bigint,
   uniqueIndex,
+  index,
   primaryKey,
   customType
 } from 'drizzle-orm/pg-core';
@@ -139,7 +140,9 @@ export const posts = pgTable('posts', {
   durationMinutes: integer('duration_minutes'),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow(),
-});
+}, (table) => [
+  index('idx_posts_master_id').on(table.masterId),
+]);
 
 export const postTags = pgTable('post_tags', {
   postId: uuid('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
@@ -178,7 +181,9 @@ export const masterOverrides = pgTable('master_overrides', {
   endDatetimeUtc: timestamp('end_datetime_utc', { withTimezone: true }).notNull(),
   notes: varchar('notes', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow(),
-});
+}, (table) => [
+  index('idx_master_overrides_master_id').on(table.masterId),
+]);
 
 // Бронирования
 export const bookings = pgTable('bookings', {
@@ -192,7 +197,12 @@ export const bookings = pgTable('bookings', {
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-});
+}, (table) => [
+  index('idx_bookings_master_id').on(table.masterId),
+  index('idx_bookings_client_id').on(table.clientId),
+  index('idx_bookings_post_id').on(table.postId),
+  index('idx_bookings_master_schedule').on(table.masterId, table.startDatetimeUtc, table.status),
+]);
 
 // ==========================================
 // 6. RELATIONS (Application Level)
