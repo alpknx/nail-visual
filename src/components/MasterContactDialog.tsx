@@ -46,10 +46,13 @@ export default function MasterContactDialog({
           {/* Master Info */}
           <div className="flex items-center gap-3">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={master.avatarUrl || undefined} />
-              <AvatarFallback>
-                {master.businessName.charAt(0).toUpperCase()}
-              </AvatarFallback>
+              {master.avatarUrl ? (
+                <AvatarImage src={master.avatarUrl} alt={master.businessName} />
+              ) : (
+                <AvatarFallback>
+                  {master.businessName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              )}
             </Avatar>
             <div>
               <h3 className="font-semibold">{master.businessName}</h3>

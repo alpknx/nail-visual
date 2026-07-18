@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image, { type ImageProps } from "next/image";
 import { cn } from "@/lib/utils";
 
 // Konsta doesn't have a dedicated Avatar component, so we build one with Tailwind
@@ -21,16 +22,20 @@ const Avatar = React.forwardRef<
 ));
 Avatar.displayName = "Avatar";
 
-const AvatarImage = React.forwardRef<
-  HTMLImageElement,
-  React.ImgHTMLAttributes<HTMLImageElement>
->(({ className, ...props }, ref) => (
-  <img
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-));
+type AvatarImageProps = Omit<ImageProps, "fill" | "alt"> & { alt?: string };
+
+const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
+  ({ className, alt = "", ...props }, ref) => (
+    <Image
+      ref={ref}
+      fill
+      alt={alt}
+      sizes="40px"
+      className={cn("aspect-square object-cover", className)}
+      {...props}
+    />
+  )
+);
 AvatarImage.displayName = "AvatarImage";
 
 const AvatarFallback = React.forwardRef<
