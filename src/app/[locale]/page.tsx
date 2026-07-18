@@ -66,7 +66,7 @@ export default function Home() {
 
   // Search modal state
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [allTags, setAllTags] = useState<any[]>([]);
+  const [allTags, setAllTags] = useState<{ id: number; name: string; slug: string }[]>([]);
 
   // Tag filter state from URL - support multiple tags
   const selectedTagIds = useMemo(() => {
@@ -373,7 +373,7 @@ export default function Home() {
         ) : hasNextPage ? (
           <span className="opacity-60">Scroll for more</span>
         ) : (
-          <span className="opacity-40">You've seen it all!</span>
+          <span className="opacity-40">You&apos;ve seen it all!</span>
         )}
       </div>
 

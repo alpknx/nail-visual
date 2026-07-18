@@ -1,5 +1,6 @@
 import type { DefaultSession, DefaultUser } from "next-auth";
 import type { NextAuthOptions } from "next-auth";
+import type { Adapter } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { compare } from "bcryptjs";
@@ -36,7 +37,11 @@ const credentialsSchema = z.object({
 });
 
 export const authOptions: NextAuthOptions = {
-  adapter: DrizzleAdapter(db) as any, // Type cast to avoid version mismatch issues
+  // @auth/drizzle-adapter targets Auth.js core (v5) adapter types, which are
+  // structurally incompatible with next-auth v4's Adapter type at the type level
+  // (even though they're compatible at runtime). A direct cast fails, so we go
+  // through `unknown` to bridge the two versions' types.
+  adapter: DrizzleAdapter(db) as unknown as Adapter,
   secret: env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",

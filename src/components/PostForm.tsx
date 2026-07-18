@@ -6,25 +6,35 @@ import { Loader2, X } from "lucide-react";
 import Image from "next/image";
 import { UploadButton } from "@/lib/uploadthing";
 
+type TranslationJSON = { [lang: string]: string };
+
 interface Tag {
   id: number;
   slug: string;
-  nameTranslations: any;
+  nameTranslations: TranslationJSON;
   category: {
     slug: string;
   };
 }
 
+interface PostFormSubmitData {
+  imageUrl: string;
+  description: string;
+  price?: number;
+  durationMinutes?: number;
+  tagIds: number[];
+}
+
 interface PostFormProps {
   initialData?: {
     imageUrl?: string;
-    description?: string;
+    description?: string | null;
     price?: number | null;
     durationMinutes?: number | null;
-    tags?: { tag: Tag }[];
+    tags?: { tag: { id: number } }[];
   };
   allTags: Tag[];
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: PostFormSubmitData) => Promise<void>;
   isSubmitting: boolean;
   mode: "create" | "update";
   onDelete?: () => Promise<void>;
@@ -147,7 +157,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
           type="textarea"
           placeholder="Describe your work..."
           value={description}
-          onInput={(e: any) => setDescription(e.target.value)}
+          onInput={(e: Event) => setDescription((e.target as HTMLInputElement).value)}
           inputClassName="!h-20 resize-none"
         />
         <div className="grid grid-cols-2 gap-4">
@@ -157,7 +167,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
             type="number"
             placeholder="0.00"
             value={price}
-            onInput={(e: any) => setPrice(e.target.value)}
+            onInput={(e: Event) => setPrice((e.target as HTMLInputElement).value)}
           />
           <ListInput
             outline
@@ -165,7 +175,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
             type="number"
             placeholder="60"
             value={duration}
-            onInput={(e: any) => setDuration(e.target.value)}
+            onInput={(e: Event) => setDuration((e.target as HTMLInputElement).value)}
           />
         </div>
       </List>

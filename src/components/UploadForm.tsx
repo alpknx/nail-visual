@@ -8,8 +8,17 @@ import dynamic from "next/dynamic";
 const PostForm = dynamic(() => import("@/components/PostForm"), { ssr: false });
 import { Page, Navbar, NavbarBackLink, Link, Block } from "konsta/react";
 
+type TranslationJSON = { [lang: string]: string };
+
+interface UploadFormTag {
+  id: number;
+  slug: string;
+  nameTranslations: TranslationJSON;
+  category: { slug: string };
+}
+
 interface UploadFormProps {
-  allTags: any[];
+  allTags: UploadFormTag[];
 }
 
 export function UploadForm({ allTags }: UploadFormProps) {
@@ -19,7 +28,13 @@ export function UploadForm({ allTags }: UploadFormProps) {
   // Ref to trigger submit from Navbar
   const formRef = React.useRef<{ submit: () => void }>(null);
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: {
+    imageUrl: string;
+    description: string;
+    price?: number;
+    durationMinutes?: number;
+    tagIds: number[];
+  }) => {
     setIsSubmitting(true);
     try {
       await createPost({
@@ -57,7 +72,6 @@ export function UploadForm({ allTags }: UploadFormProps) {
           allTags={allTags}
           onSubmit={onSubmit}
           isSubmitting={isSubmitting}
-          // @ts-ignore
           ref={formRef}
         />
       </div>

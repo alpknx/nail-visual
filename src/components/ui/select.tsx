@@ -50,7 +50,14 @@ import { cn } from "@/lib/utils";
 // But wait, `Select` in `ui/select.tsx` exports many components.
 // I will replace it with a simplified version and then I MUST update `UploadForm`.
 
-export const Select = ({ children, onValueChange, defaultValue, value }: any) => {
+interface SelectProps_Legacy {
+  children?: React.ReactNode;
+  onValueChange?: (value: string) => void;
+  defaultValue?: string;
+  value?: string;
+}
+
+export const Select = (_props: SelectProps_Legacy) => {
   // We need to find the options from children? No, that's hard.
   // We'll rely on the consumer to pass options or use the new API.
   // Let's just export a component that wraps ListInput and we'll fix the usage.
@@ -82,7 +89,7 @@ export const KonstaSelect = ({ label, value, onChange, options, placeholder }: S
       label={label}
       type="select"
       value={value}
-      onChange={(e: any) => onChange?.(e.target.value)}
+      onChange={(e: Event) => onChange?.((e.target as HTMLSelectElement).value)}
       outline
       floatingLabel
       placeholder={placeholder}

@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
     const locale = pathname.split('/')[1];
     
     // Skip if locale is not valid (shouldn't happen, but safety check)
-    if (!routing.locales.includes(locale as any)) {
+    if (!(routing.locales as readonly string[]).includes(locale)) {
         return response;
     }
     

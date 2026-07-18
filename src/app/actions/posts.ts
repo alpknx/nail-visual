@@ -66,7 +66,7 @@ export async function getFeedPosts({ pageParam = 0, tagIds, limit = 4 }: { pageP
   masterArrays.sort(() => Math.random() - 0.5);
 
   // Interleave: take one post from each master in round-robin fashion
-  let maxLength = Math.max(...masterArrays.map(arr => arr.length));
+  const maxLength = Math.max(...masterArrays.map(arr => arr.length));
   for (let i = 0; i < maxLength; i++) {
     for (const masterPosts of masterArrays) {
       if (masterPosts[i]) {

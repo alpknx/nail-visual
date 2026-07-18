@@ -20,7 +20,7 @@ export async function searchTags(query: string, locale: string = 'en') {
 
   return matchingTags.map(tag => ({
     id: tag.id,
-    name: (tag.nameTranslations as any)[locale] || tag.slug,
+    name: tag.nameTranslations[locale] || tag.slug,
     slug: tag.slug
   }));
 }
@@ -37,7 +37,7 @@ export async function getTagById(id: number, locale: string = 'en') {
 
       return {
         id: tag.id,
-        name: (tag.nameTranslations as any)[tagLocale] || tag.slug,
+        name: tag.nameTranslations[tagLocale] || tag.slug,
         slug: tag.slug
       };
     },
@@ -74,7 +74,7 @@ export async function getAllTags(locale: string = 'en') {
 
       return allTags.map(tag => ({
         id: tag.id,
-        name: (tag.nameTranslations as any)[tagLocale] || tag.slug,
+        name: tag.nameTranslations[tagLocale] || tag.slug,
         slug: tag.slug,
         categoryId: tag.categoryId,
       }));

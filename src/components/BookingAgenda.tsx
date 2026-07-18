@@ -83,8 +83,8 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
       await confirmBooking(id);
       toast.success("Booking confirmed");
       await loadDay(selectedDate);
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to confirm");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to confirm");
     }
   };
 
@@ -93,8 +93,8 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
       await cancelBookingByMaster(id);
       toast.success("Booking cancelled");
       await loadDay(selectedDate);
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to cancel");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to cancel");
     }
   };
 
@@ -187,7 +187,7 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
 
                 {/* Notes */}
                 {b.notes && (
-                  <p className="text-xs italic text-gray-400 mt-1 truncate">"{b.notes}"</p>
+                  <p className="text-xs italic text-gray-400 mt-1 truncate">&quot;{b.notes}&quot;</p>
                 )}
 
                 {/* Status badge + actions */}

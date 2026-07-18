@@ -15,9 +15,35 @@ const BookingModal = dynamic(() => import("@/components/BookingModal"), { ssr: f
 import Link from "next/link";
 import { deletePost } from "@/app/actions";
 
+interface PostTag {
+  tag: {
+    id: number;
+    slug: string;
+    nameTranslations: unknown;
+  };
+}
+
+interface PostDetailPost {
+  id: string;
+  imageUrl: string;
+  description: string | null;
+  price: number | null;
+  currency: string | null;
+  durationMinutes: number | null;
+  masterId: string | null;
+  tags: PostTag[];
+  author: {
+    userId: string;
+    businessName: string;
+    avatarUrl: string | null;
+    phoneNumber: string;
+    phoneCountryCode: string | null;
+  } | null;
+}
+
 interface PostDetailClientProps {
-  post: any;
-  matchingMasters: any[];
+  post: PostDetailPost;
+  matchingMasters: Match[];
   source?: string;
 }
 
@@ -68,9 +94,9 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
         router.push(`/${locale}/profile`);
         router.refresh();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to delete post:', error);
-      const errorMessage = error?.message || 'Failed to delete post. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete post. Please try again.';
       alert(errorMessage);
       setIsDeleting(false);
     }
@@ -212,7 +238,7 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
           {/* Tags Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent z-10">
             <div className="flex flex-wrap gap-2">
-              {post.tags.map(({ tag }: any) => (
+              {post.tags.map(({ tag }: PostTag) => (
                 <Chip
                   key={tag.id}
                   className="bg-white/20 backdrop-blur-sm text-white border-none"
@@ -292,8 +318,8 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
                     </Button>
                   )}
                   <ContactButtons
-                    phoneNumber={post.author.phoneNumber}
-                    phoneCountryCode={post.author.phoneCountryCode}
+                    phoneNumber={post.author!.phoneNumber}
+                    phoneCountryCode={post.author!.phoneCountryCode}
                   />
                 </div>
               )}

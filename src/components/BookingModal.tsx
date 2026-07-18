@@ -62,7 +62,7 @@ export default function BookingModal({
   const [notes, setNotes] = useState("");
 
   // Step 4
-  const [preview, setPreview] = useState<any>(null);
+  const [preview, setPreview] = useState<Awaited<ReturnType<typeof previewBooking>> | null>(null);
   const [previewing, setPreviewing] = useState(false);
 
   // Step 5
@@ -132,8 +132,8 @@ export default function BookingModal({
       const data = await previewBooking(masterId, postId, selectedSlot);
       setPreview(data);
       setStep(4);
-    } catch (e: any) {
-      toast.error(e.message ?? "Slot no longer available");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Slot no longer available");
     } finally {
       setPreviewing(false);
     }
@@ -151,8 +151,8 @@ export default function BookingModal({
         notes: notes || undefined,
       });
       setStep(5);
-    } catch (e: any) {
-      toast.error(e.message ?? "Booking failed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Booking failed");
     } finally {
       setSubmitting(false);
     }
@@ -414,7 +414,7 @@ export default function BookingModal({
             <div>
               <h4 className="text-xl font-bold">Booking sent!</h4>
               <p className="text-sm text-gray-500 mt-1">
-                Waiting for {masterName} to confirm. You'll see it in your bookings.
+                Waiting for {masterName} to confirm. You&apos;ll see it in your bookings.
               </p>
             </div>
             <Button

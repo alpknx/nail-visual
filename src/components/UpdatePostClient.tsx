@@ -8,9 +8,25 @@ import dynamic from "next/dynamic";
 
 const PostForm = dynamic(() => import("@/components/PostForm"), { ssr: false });
 
+type TranslationJSON = { [lang: string]: string };
+
+interface UpdatePostTag {
+  id: number;
+  slug: string;
+  nameTranslations: TranslationJSON;
+  category: { slug: string };
+}
+
 interface UpdatePostClientProps {
-  post: any;
-  allTags: any[];
+  post: {
+    id: string;
+    imageUrl?: string;
+    description?: string | null;
+    price?: number | null;
+    durationMinutes?: number | null;
+    tags?: { tag: { id: number; slug: string; nameTranslations: TranslationJSON } }[];
+  };
+  allTags: UpdatePostTag[];
 }
 
 export default function UpdatePostClient({ post, allTags }: UpdatePostClientProps) {
@@ -30,7 +46,7 @@ export default function UpdatePostClient({ post, allTags }: UpdatePostClientProp
 
   const formRef = React.useRef<{ submit: () => void }>(null);
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: { tagIds: number[]; price?: number; durationMinutes?: number }) => {
     setIsSubmitting(true);
     try {
       await updatePostDetails({
@@ -58,9 +74,9 @@ export default function UpdatePostClient({ post, allTags }: UpdatePostClientProp
         router.push("/profile");
         router.refresh();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to delete post", error);
-      const errorMessage = error?.message || "Failed to delete post. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete post. Please try again.";
       alert(errorMessage);
       setIsSubmitting(false);
     }
@@ -92,7 +108,6 @@ export default function UpdatePostClient({ post, allTags }: UpdatePostClientProp
         onSubmit={handleUpdate}
         onDelete={handleDelete}
         isSubmitting={isSubmitting}
-        // @ts-ignore - we'll add useImperativeHandle to PostForm next
         ref={formRef}
       />
     </Page>

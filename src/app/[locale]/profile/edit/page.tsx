@@ -95,7 +95,7 @@ export default function EditProfilePage() {
           type="text"
           placeholder="e.g. Elena's Nails"
           value={businessName}
-          onInput={(e: any) => setBusinessName(e.target.value)}
+          onInput={(e: Event) => setBusinessName((e.target as HTMLInputElement).value)}
         />
 
         <ListInput
@@ -104,7 +104,7 @@ export default function EditProfilePage() {
           type="tel"
           placeholder="+1 234 567 8900"
           value={phoneNumber}
-          onInput={(e: any) => setPhoneNumber(e.target.value)}
+          onInput={(e: Event) => setPhoneNumber((e.target as HTMLInputElement).value)}
         />
 
         <ListInput
@@ -113,7 +113,7 @@ export default function EditProfilePage() {
           type="text"
           placeholder="e.g. New York"
           value={city}
-          onInput={(e: any) => setCity(e.target.value)}
+          onInput={(e: Event) => setCity((e.target as HTMLInputElement).value)}
         />
 
         <ListInput
@@ -122,7 +122,7 @@ export default function EditProfilePage() {
           type="text"
           placeholder="e.g. 123 Main St"
           value={addressText}
-          onInput={(e: any) => setAddressText(e.target.value)}
+          onInput={(e: Event) => setAddressText((e.target as HTMLInputElement).value)}
         />
 
         <ListInput
@@ -131,7 +131,7 @@ export default function EditProfilePage() {
           type="textarea"
           placeholder="Tell us about yourself..."
           value={bio}
-          onInput={(e: any) => setBio(e.target.value)}
+          onInput={(e: Event) => setBio((e.target as HTMLInputElement).value)}
           inputClassName="!h-20 resize-none"
         />
       </List>

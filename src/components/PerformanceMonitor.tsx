@@ -66,7 +66,9 @@ export default function PerformanceMonitor({
 
     const updateMemory = () => {
       if ('memory' in performance) {
-        const mem = (performance as any).memory;
+        const mem = (performance as Performance & {
+          memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number };
+        }).memory;
         setMemory({
           usedJSHeapSize: Math.round(mem.usedJSHeapSize / 1048576), // MB
           totalJSHeapSize: Math.round(mem.totalJSHeapSize / 1048576), // MB

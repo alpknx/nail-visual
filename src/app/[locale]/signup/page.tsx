@@ -123,7 +123,7 @@ export default function SignUpPage() {
           type="email"
           placeholder="your@email.com"
           value={email}
-          onInput={(e: any) => setEmail(e.target.value)}
+          onInput={(e: Event) => setEmail((e.target as HTMLInputElement).value)}
         />
         <ListInput
           outline
@@ -131,7 +131,7 @@ export default function SignUpPage() {
           type="password"
           placeholder="Min 8 characters"
           value={password}
-          onInput={(e: any) => setPassword(e.target.value)}
+          onInput={(e: Event) => setPassword((e.target as HTMLInputElement).value)}
         />
         <ListInput
           outline
@@ -139,7 +139,7 @@ export default function SignUpPage() {
           type="password"
           placeholder={t('confirmPassword')}
           value={confirmPassword}
-          onInput={(e: any) => setConfirmPassword(e.target.value)}
+          onInput={(e: Event) => setConfirmPassword((e.target as HTMLInputElement).value)}
         />
       </List>
 

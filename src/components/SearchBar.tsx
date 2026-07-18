@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchTags } from "@/app/actions";
@@ -89,7 +89,7 @@ export default function SearchBar({ onSelectTag, selectedTag }: SearchBarProps) 
           placeholder="Search tags..."
           className="pl-9 h-9 bg-muted/50 border-none"
           value={query}
-          onChange={(e: any) => {
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
             setQuery(e.target.value);
             if (!isOpen && e.target.value.length >= 2) setIsOpen(true);
           }}

@@ -105,7 +105,7 @@ function BookingCard({
 
         {/* Notes */}
         {booking.notes && (
-          <p className="text-xs italic text-gray-400">"{booking.notes}"</p>
+          <p className="text-xs italic text-gray-400">&quot;{booking.notes}&quot;</p>
         )}
 
         {/* Cancel button */}
@@ -152,8 +152,8 @@ export default function BookingsList() {
       await cancelBooking(id);
       toast.success("Booking cancelled");
       await load();
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to cancel");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to cancel");
     }
   };
 

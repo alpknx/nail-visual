@@ -40,14 +40,15 @@ export default function OnboardingPage() {
       // If successful, redirect will happen on server side
       // The redirect() function throws a NEXT_REDIRECT error
       // which we catch and handle below
-    } catch (e: any) {
+    } catch (e) {
       // Check if it's a redirect error (NEXT_REDIRECT) - don't show error for redirects
       // Next.js redirect() throws a special error that we should ignore
+      const err = e as { digest?: string; message?: string } | undefined;
       if (
-        e?.digest?.startsWith('NEXT_REDIRECT') || 
-        e?.message?.includes('NEXT_REDIRECT') ||
-        e?.digest === 'NEXT_REDIRECT;replace' ||
-        e?.digest === 'NEXT_REDIRECT;push'
+        err?.digest?.startsWith('NEXT_REDIRECT') ||
+        err?.message?.includes('NEXT_REDIRECT') ||
+        err?.digest === 'NEXT_REDIRECT;replace' ||
+        err?.digest === 'NEXT_REDIRECT;push'
       ) {
         // This is a redirect, not an error - let it happen
         // Don't set loading to false as page will redirect
@@ -82,7 +83,7 @@ export default function OnboardingPage() {
           type="text"
           placeholder="e.g. Elena's Nails"
           value={businessName}
-          onInput={(e: any) => setBusinessName(e.target.value)}
+          onInput={(e: Event) => setBusinessName((e.target as HTMLInputElement).value)}
         />
 
         <ListInput
@@ -91,7 +92,7 @@ export default function OnboardingPage() {
           type="tel"
           placeholder="+1 234 567 8900"
           value={phoneNumber}
-          onInput={(e: any) => setPhoneNumber(e.target.value)}
+          onInput={(e: Event) => setPhoneNumber((e.target as HTMLInputElement).value)}
         />
 
         <ListInput
@@ -100,7 +101,7 @@ export default function OnboardingPage() {
           type="text"
           placeholder="e.g. New York"
           value={city}
-          onInput={(e: any) => setCity(e.target.value)}
+          onInput={(e: Event) => setCity((e.target as HTMLInputElement).value)}
         />
 
         <ListInput
@@ -109,7 +110,7 @@ export default function OnboardingPage() {
           type="text"
           placeholder="e.g. 123 Main St"
           value={addressText}
-          onInput={(e: any) => setAddressText(e.target.value)}
+          onInput={(e: Event) => setAddressText((e.target as HTMLInputElement).value)}
         />
       </List>
 

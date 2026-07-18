@@ -64,8 +64,8 @@ export default function OverridesList({
       setNotes("");
       toast.success("Block added");
       await load();
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to add block");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to add block");
     } finally {
       setAdding(false);
     }

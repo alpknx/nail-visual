@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 const Input = React.forwardRef<
   HTMLInputElement,
-  any // Bypass strict type check for now to allow Konsta props like 'after', 'media'
+  React.ComponentProps<typeof ListInput> // Konsta props like 'after', 'media' plus standard input attrs
 >(({ className, type, ...props }, ref) => {
   return (
     <div className={cn("w-full", className)}>
