@@ -14,7 +14,9 @@ Nail Visual compresses a typically fragmented discovery-and-booking flow into a 
 
 - **Clients** browse artist portfolios, filter by style, and book appointments in 3–4 taps
 - **Nail artists** manage their portfolio, set availability, and receive bookings
-- Role-based access (client / artist) with secure auth and session management
+- Role-based access (client / artist) enforced end-to-end: server actions, middleware route gating, and UI
+- Timezone-aware availability/booking engine (working hours, one-off overrides, race-condition-safe slot booking)
+- Localized in English, Polish, and Russian (next-intl)
 - Analytics via PostHog; image uploads via UploadThing
 
 ## Tech Stack
@@ -34,6 +36,8 @@ Nail Visual compresses a typically fragmented discovery-and-booking flow into a 
 ## Getting Started
 
 ```bash
+cp .env.example .env.local   # fill in DATABASE_URL, NEXTAUTH_SECRET, etc.
+docker compose up -d         # local Postgres + PostGIS
 pnpm install
 pnpm dev
 ```
@@ -46,3 +50,12 @@ Database commands:
 pnpm db:studio    # Drizzle Studio
 pnpm db:fresh     # reset + migrate + seed
 ```
+
+## Testing
+
+```bash
+pnpm exec playwright test   # e2e (registration, sign-in, role-gated routing)
+```
+
+CI (`.github/workflows/ci.yml`) runs lint + build on every push/PR, plus the
+e2e suite against a disposable Postgres/PostGIS service container.
