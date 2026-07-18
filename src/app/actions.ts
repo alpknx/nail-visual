@@ -112,11 +112,15 @@ export async function getFeedPosts({ pageParam = 0, tagIds, limit = 4 }: { pageP
   const userLat = 40.7128;
   const userLng = -74.0060;
 
-  const whereClause = tagIds && tagIds.length > 0
+  const validatedTagIds = tagIds
+    ? z.array(z.number().int().positive()).parse(tagIds)
+    : undefined;
+
+  const whereClause = validatedTagIds && validatedTagIds.length > 0
     ? sql`EXISTS (
-        SELECT 1 FROM ${postTags} pt 
-        WHERE pt.post_id = ${posts.id} 
-        AND pt.tag_id = ANY(${sql.raw(`ARRAY[${tagIds.map(id => id.toString()).join(',')}]`)})
+        SELECT 1 FROM ${postTags} pt
+        WHERE pt.post_id = ${posts.id}
+        AND pt.tag_id = ANY(${validatedTagIds}::int[])
       )`
     : undefined;
 
