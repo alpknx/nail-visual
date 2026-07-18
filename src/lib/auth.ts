@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { isRateLimited } from "@/lib/rate-limit";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -56,9 +57,14 @@ export const authOptions: NextAuthOptions = {
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+        const lowercaseEmail = email.toLowerCase().trim();
+
+        // Rate limiting: 5 login attempts per hour per email
+        const rateLimited = await isRateLimited(`login:${lowercaseEmail}`, 5, 3600000);
+        if (rateLimited) return null;
 
         const user = await db.query.users.findFirst({
-          where: eq(users.email, email),
+          where: eq(users.email, lowercaseEmail),
         });
 
         if (!user || !user.passwordHash) return null;
