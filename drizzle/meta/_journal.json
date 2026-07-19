@@ -43,6 +43,13 @@
       "when": 1784426044485,
       "tag": "0005_adorable_thor_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784452114444,
+      "tag": "0006_first_wither",
+      "breakpoints": true
     }
   ]
 }

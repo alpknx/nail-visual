@@ -19,6 +19,7 @@ interface Tag {
 
 interface PostFormSubmitData {
   imageUrl: string;
+  blurDataUrl?: string;
   description: string;
   price?: number;
   durationMinutes?: number;
@@ -49,6 +50,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
   onDelete,
 }, ref) => {
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
+  const [blurDataUrl, setBlurDataUrl] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState(initialData?.description || "");
   const [price, setPrice] = useState(initialData?.price ? initialData.price.toString() : "");
   const [duration, setDuration] = useState(initialData?.durationMinutes ? initialData.durationMinutes.toString() : "");
@@ -78,6 +80,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
   const handleSubmit = () => {
     onSubmit({
       imageUrl,
+      blurDataUrl,
       description,
       price: price ? parseFloat(price) : undefined,
       durationMinutes: duration ? parseInt(duration) : undefined,
@@ -117,6 +120,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
                 onClientUploadComplete={(res) => {
                   if (res?.[0]) {
                     setImageUrl(res[0].url);
+                    setBlurDataUrl(res[0].serverData.blurDataUrl ?? undefined);
                   }
                 }}
                 onUploadError={(error: Error) => {

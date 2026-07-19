@@ -31,6 +31,7 @@ export function UploadForm({ allTags }: UploadFormProps) {
 
   const onSubmit = async (values: {
     imageUrl: string;
+    blurDataUrl?: string;
     description: string;
     price?: number;
     durationMinutes?: number;
@@ -40,6 +41,7 @@ export function UploadForm({ allTags }: UploadFormProps) {
     try {
       await createPost({
         imageUrl: values.imageUrl,
+        blurDataUrl: values.blurDataUrl,
         description: values.description,
         price: values.price,
         durationMinutes: values.durationMinutes,

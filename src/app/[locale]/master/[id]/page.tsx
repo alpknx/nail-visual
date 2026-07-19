@@ -137,6 +137,8 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
                   fill
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   priority={index < 4}
+                  placeholder={post.blurDataUrl ? "blur" : undefined}
+                  blurDataURL={post.blurDataUrl ?? undefined}
                   className="object-cover transition-transform group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
