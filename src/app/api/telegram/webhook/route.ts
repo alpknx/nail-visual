@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { bookings, reviews } from "@/db/schema";
 import { eq, and, isNull, gt, desc } from "drizzle-orm";
 import { formatInTimeZone } from "date-fns-tz";
-import { sendTelegramMessage, answerTelegramCallback, editTelegramMessage } from "@/lib/telegram";
+import { sendTelegramMessage, sendTelegramPhoto, answerTelegramCallback, editTelegramMessage } from "@/lib/telegram";
 
 const RATING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -75,16 +75,19 @@ async function linkBooking(chatId: number, bookingId: string) {
   const startLabel = formatInTimeZone(booking.startDatetimeUtc, timezone, "EEEE, MMM d 'at' HH:mm 'UTC'");
   const masterName = booking.master?.businessName ?? "the master";
 
-  await sendTelegramMessage(
-    chatId,
-    `<b>Booking request</b>\n${masterName}\n${booking.post?.description ?? ""}\n${startLabel}${
-      booking.post?.durationMinutes ? ` (${booking.post.durationMinutes} min)` : ""
-    }\n\nTap below to confirm you'll be there, or cancel if your plans changed.`,
-    [[
-      { text: "✅ Confirm", callback_data: `confirm:${bookingId}` },
-      { text: "❌ Cancel", callback_data: `cancel:${bookingId}` },
-    ]]
-  );
+  const caption = `<b>Booking request</b>\n${masterName}\n${booking.post?.description ?? ""}\n${startLabel}${
+    booking.post?.durationMinutes ? ` (${booking.post.durationMinutes} min)` : ""
+  }\n\nTap below to confirm you'll be there, or cancel if your plans changed.`;
+  const buttons = [[
+    { text: "✅ Confirm", callback_data: `confirm:${bookingId}` },
+    { text: "❌ Cancel", callback_data: `cancel:${bookingId}` },
+  ]];
+
+  if (booking.post?.imageUrl) {
+    await sendTelegramPhoto(chatId, booking.post.imageUrl, caption, buttons);
+  } else {
+    await sendTelegramMessage(chatId, caption, buttons);
+  }
 }
 
 async function handleCallback(callback: NonNullable<TelegramUpdate["callback_query"]>) {

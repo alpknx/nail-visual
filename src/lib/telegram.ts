@@ -42,6 +42,21 @@ export async function sendTelegramMessage(
   });
 }
 
+export async function sendTelegramPhoto(
+  chatId: string | number,
+  photoUrl: string,
+  caption: string,
+  buttons?: InlineButton[][]
+) {
+  return callTelegramApi("sendPhoto", {
+    chat_id: chatId,
+    photo: photoUrl,
+    caption,
+    parse_mode: "HTML",
+    reply_markup: buttons ? { inline_keyboard: buttons } : undefined,
+  });
+}
+
 export async function answerTelegramCallback(callbackQueryId: string, text?: string) {
   return callTelegramApi("answerCallbackQuery", {
     callback_query_id: callbackQueryId,
