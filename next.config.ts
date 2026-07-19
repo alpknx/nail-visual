@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withSentryConfig } from "@sentry/nextjs";
+import path from "path";
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -11,6 +12,17 @@ const nextConfig: NextConfig = {
     compress: true, // Включить Gzip/Brotli компрессию
     poweredByHeader: false, // Убрать X-Powered-By header для безопасности
     productionBrowserSourceMaps: false, // Отключить source maps в продакшене (меньше размер)
+    // A second pnpm-lock.yaml exists one directory up (the outer git
+    // worktree checkout), which makes Next.js infer the wrong workspace
+    // root for output file tracing - the mechanism that decides which
+    // files (including sharp's native .node binary) get bundled into each
+    // Vercel serverless function. Pin it explicitly so sharp (added for
+    // upload-time blur placeholders) actually ships with the function.
+    outputFileTracingRoot: path.join(__dirname),
+    // sharp has a native binding - keep it external instead of letting
+    // webpack/Turbopack try to bundle it, which is the standard fix for
+    // "works locally, breaks on Vercel" native-module issues.
+    serverExternalPackages: ["sharp"],
         images: {
         // AVIF first - typically 30-50% smaller than WebP for photos, which
         // is most of what this app serves (portfolio/reference images).
