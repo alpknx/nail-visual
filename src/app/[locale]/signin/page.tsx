@@ -108,8 +108,7 @@ export default function SignInPage() {
         left={<NavbarBackLink onClick={handleBack} text="Back" />}
         className="relative z-10 bg-white dark:bg-gray-900"
       />
-      <BlockTitle
-      >
+      <BlockTitle className="!mt-2">
         {t('subtitle')}
       </BlockTitle>
       <List strong inset>
