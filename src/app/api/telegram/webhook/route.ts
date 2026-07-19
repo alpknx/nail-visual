@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { bookings, reviews } from "@/db/schema";
 import { eq, and, isNull, gt, desc } from "drizzle-orm";
 import { formatInTimeZone } from "date-fns-tz";
-import { sendTelegramMessage, sendTelegramPhoto, answerTelegramCallback, editTelegramMessage } from "@/lib/telegram";
+import { sendTelegramMessage, sendTelegramPhoto, answerTelegramCallback, editTelegramMessage, editTelegramCaption } from "@/lib/telegram";
 
 const RATING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -125,17 +125,29 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
 }
 
 async function confirmBookingFromBot(chatId: number, messageId: number, bookingId: string) {
-  const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, bookingId),
+    with: { post: true },
+  });
   if (!booking || booking.telegramChatId !== String(chatId)) {
     await sendTelegramMessage(chatId, "This booking isn't linked to this chat.");
     return;
   }
 
+  // The booking-request card was sent as a photo (sendTelegramPhoto) whenever
+  // the post has an image, and Telegram rejects editMessageText on a photo
+  // message - must use editMessageCaption there instead, or the Confirm/
+  // Cancel buttons never actually get removed and stay tappable forever.
+  const editCard = (text: string) =>
+    booking.post?.imageUrl
+      ? editTelegramCaption(chatId, messageId, text)
+      : editTelegramMessage(chatId, messageId, text);
+
   // The Cancel/Confirm buttons stay live until this message is edited below,
   // so a second tap can still land here after the booking was already
   // resolved - re-check status instead of trusting the button was one-shot.
   if (booking.status === "cancelled" || booking.status === "completed") {
-    await editTelegramMessage(chatId, messageId, `This booking is already ${booking.status} - nothing to confirm.`);
+    await editCard(`This booking is already ${booking.status} - nothing to confirm.`);
     return;
   }
 
@@ -144,22 +156,26 @@ async function confirmBookingFromBot(chatId: number, messageId: number, bookingI
     .set({ guestConfirmedAt: new Date(), updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
 
-  await editTelegramMessage(
-    chatId,
-    messageId,
-    "✅ Confirmed. See you then! We'll follow up here after your appointment."
-  );
+  await editCard("✅ Confirmed. See you then! We'll follow up here after your appointment.");
 }
 
 async function cancelBookingFromBot(chatId: number, messageId: number, bookingId: string) {
-  const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, bookingId),
+    with: { post: true },
+  });
   if (!booking || booking.telegramChatId !== String(chatId)) {
     await sendTelegramMessage(chatId, "This booking isn't linked to this chat.");
     return;
   }
 
+  const editCard = (text: string) =>
+    booking.post?.imageUrl
+      ? editTelegramCaption(chatId, messageId, text)
+      : editTelegramMessage(chatId, messageId, text);
+
   if (booking.status === "completed" || booking.status === "cancelled") {
-    await editTelegramMessage(chatId, messageId, `This booking is already ${booking.status} - nothing to cancel.`);
+    await editCard(`This booking is already ${booking.status} - nothing to cancel.`);
     return;
   }
 
@@ -168,7 +184,7 @@ async function cancelBookingFromBot(chatId: number, messageId: number, bookingId
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
 
-  await editTelegramMessage(chatId, messageId, "❌ Cancelled. Hope to see you another time!");
+  await editCard("❌ Cancelled. Hope to see you another time!");
 }
 
 async function recordRatingFromBot(chatId: number, messageId: number, bookingId: string, rating: number) {

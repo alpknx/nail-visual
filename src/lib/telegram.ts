@@ -84,6 +84,28 @@ export async function editTelegramMessage(
   });
 }
 
+/**
+ * Same as editTelegramMessage, but for messages sent via sendTelegramPhoto -
+ * Telegram rejects editMessageText on a photo message ("there is no text in
+ * the message to edit"), so photo-based cards must use editMessageCaption
+ * instead. Silently failing here (as callTelegramApi does on any API error)
+ * previously left Confirm/Cancel clickable forever on photo cards.
+ */
+export async function editTelegramCaption(
+  chatId: string | number,
+  messageId: number,
+  caption: string,
+  buttons?: InlineButton[][]
+) {
+  return callTelegramApi("editMessageCaption", {
+    chat_id: chatId,
+    message_id: messageId,
+    caption,
+    parse_mode: "HTML",
+    reply_markup: { inline_keyboard: buttons ?? [] },
+  });
+}
+
 export function telegramDeepLink(botUsername: string, bookingId: string) {
   return `https://t.me/${botUsername}?start=${bookingId}`;
 }
