@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Page, Navbar, NavbarBackLink, Block, Button } from "konsta/react";
 import { useRouter, useParams } from "next/navigation";
-import { format, startOfDay } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+import { format } from "date-fns";
+import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import { getMasterCalendarData, confirmBooking, cancelBookingByMaster } from "@/app/actions";
 import WeekPicker from "@/components/WeekPicker";
 import { toast } from "sonner";
@@ -50,7 +50,14 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
   const params = useParams();
   const locale = (params?.locale as string) || "en";
 
-  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
+  // Represent "today" as UTC midnight of the calendar date in the master's
+  // own timezone, not startOfDay(new Date()) (browser-local) - keeps the
+  // initial selection consistent with WeekPicker and loadDay below.
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const todayStr = formatInTimeZone(new Date(), timezone, "yyyy-MM-dd");
+    const [y, m, d] = todayStr.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d));
+  });
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [overrides, setOverrides] = useState<Override[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,9 +65,11 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
   const loadDay = useCallback(async (date: Date) => {
     setLoading(true);
     try {
-      // Format date as "YYYY-MM-DD" in master's timezone
-      const localDate = toZonedTime(date, timezone);
-      const dateStr = format(localDate, "yyyy-MM-dd");
+      // `date` is already a UTC-midnight representation of the target
+      // calendar day (see selectedDate's initializer and WeekPicker) - just
+      // read its Y/M/D back out, don't re-shift through toZonedTime here or
+      // it'll disagree with what was actually selected/displayed.
+      const dateStr = formatInTimeZone(date, "UTC", "yyyy-MM-dd");
       const data = await getMasterCalendarData(dateStr);
       setBookings(data.bookings as Booking[]);
       setOverrides(data.overrides as Override[]);
@@ -109,11 +118,11 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
         left={<NavbarBackLink onClick={() => router.back()} text="Back" />}
       />
 
-      <WeekPicker selectedDate={selectedDate} onSelect={setSelectedDate} />
+      <WeekPicker selectedDate={selectedDate} onSelect={setSelectedDate} timezone={timezone} />
 
       <div className="px-4 pb-2">
         <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-          {format(selectedDate, "EEEE, MMMM d")}
+          {formatInTimeZone(selectedDate, "UTC", "EEEE, MMMM d")}
         </p>
       </div>
 

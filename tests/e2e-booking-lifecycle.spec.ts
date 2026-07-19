@@ -161,16 +161,21 @@ test.describe("booking lifecycle", () => {
     //      calendar UI ──────────────────────────────────────────────────
     await masterPage.goto("/en/profile/calendar");
 
-    // BookingModal's date picker and WeekPicker both build their day list as
-    // `startOfDay(new Date())` plus an index offset, so index 1 (the same
-    // day the booking was made for above) refers to the same calendar date
-    // in both components. WeekPicker defaults to "today" selected, so we
-    // must explicitly select day index 1 to see the booking.
+    // BookingModal's date picker is browser-local ("today" = the browser's
+    // system timezone), while WeekPicker (this calendar) is master-timezone-
+    // aware - the two can disagree on which index is "the same day" for a
+    // master whose schedule timezone differs from the browser's. Scan
+    // nearby days instead of assuming a fixed index lines up between them.
     const calendarDayButtons = masterPage.locator("button").filter({ hasText: /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/ });
     await expect(calendarDayButtons.first()).toBeVisible({ timeout: 10_000 });
-    await calendarDayButtons.nth(1).click();
 
+    const dayButtonCount = await calendarDayButtons.count();
     const confirmButton = masterPage.getByRole("button", { name: "Confirm" });
+    for (let i = 0; i < Math.min(dayButtonCount, 5); i++) {
+      await calendarDayButtons.nth(i).click();
+      await expect(masterPage.getByText("Loading...")).toHaveCount(0, { timeout: 5000 }).catch(() => {});
+      if (await confirmButton.first().isVisible().catch(() => false)) break;
+    }
     await expect(confirmButton.first()).toBeVisible({ timeout: 10_000 });
     await confirmButton.first().click();
 
