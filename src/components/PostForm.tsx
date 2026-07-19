@@ -99,6 +99,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
                 src={imageUrl}
                 alt="Preview"
                 fill
+                sizes="(max-width: 448px) 100vw, 448px"
                 className="object-cover"
               />
               <button
@@ -139,6 +140,7 @@ const PostForm = React.forwardRef<{ submit: () => void }, PostFormProps>(({
               src={imageUrl}
               alt="Post Image"
               fill
+              sizes="(max-width: 448px) 100vw, 448px"
               className="object-contain opacity-80"
             />
           )}

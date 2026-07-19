@@ -112,7 +112,7 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
           </p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {masterPosts.map((post) => {
+            {masterPosts.map((post, index) => {
               // Use URLSearchParams to ensure proper encoding
               const postUrl = `/${locale}/post/${post.id}`;
               const searchParams = new URLSearchParams({ source: 'profile' });
@@ -148,6 +148,8 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
                   src={post.imageUrl}
                   alt={post.description || "Nail Art"}
                   fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  priority={index < 4}
                   className="object-cover transition-transform group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">

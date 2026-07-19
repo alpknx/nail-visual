@@ -151,6 +151,7 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
             src={post.imageUrl}
             alt={post.description || "Nail Art"}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
             style={{
