@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "konsta/react";
-import { MapPin, X } from "lucide-react";
+import { X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -20,7 +20,6 @@ interface MasterMatchDialogProps {
     masterId: string;
     businessName: string;
     avatarUrl?: string | null;
-    distance: number;
     price?: number | null;
     currency?: string | null;
     durationMinutes?: number | null;
@@ -198,10 +197,6 @@ export default function MasterMatchDialog({
             </div>
             <div className="min-w-0">
               <h3 className="font-semibold text-lg leading-tight truncate">{master.businessName}</h3>
-              <div className="flex items-center gap-1 text-sm text-gray-500">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
-                <span>{master.distance.toFixed(1)} km away</span>
-              </div>
             </div>
           </Link>
           <Button

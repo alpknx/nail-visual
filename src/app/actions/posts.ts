@@ -3,10 +3,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
-import { posts, postTags } from "@/db/schema";
+import { posts, postTags, masterProfiles } from "@/db/schema";
 import { z } from "zod";
 import { redirect } from "next/navigation";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray, isNotNull } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getLocaleFromHeaders } from "./shared";
 
@@ -90,104 +90,89 @@ export async function getMatchingMasters(postId: string) {
   // Cache matching masters for 2 minutes (expensive computation)
   const getCachedMasters = unstable_cache(
     async (pId: string) => {
-      // Get the post with its tags, and all masters with their posts, in parallel -
-      // the masters query doesn't depend on the post lookup's result.
-      const [post, masters] = await Promise.all([
-        db.query.posts.findFirst({
-          where: eq(posts.id, pId),
-          with: {
-            tags: {
-              with: {
-                tag: {
+      // 1. Get the target post's tag IDs - if it has none, nothing can match.
+      const targetTags = await db
+        .select({ tagId: postTags.tagId })
+        .from(postTags)
+        .where(eq(postTags.postId, pId));
 
-                },
-              },
-            },
-          },
-        }),
-        db.query.masterProfiles.findMany({
-          with: {
-            posts: {
-              with: {
-                tags: {
-                  with: {
-                    tag: {
-
-                    },
-                  },
-                },
-              },
-            },
-          },
-        }),
-      ]);
-
-      if (!post) {
+      const targetTagIds = targetTags.map((t) => t.tagId);
+      if (targetTagIds.length === 0) {
         return [];
       }
 
-      // Mock user location (New York)
-      const userLat = 40.7128;
-      const userLng = -74.0060;
+      // 2. Count matching tags per (master, post) directly in SQL - this
+      // narrows to only posts that share at least one tag with the target,
+      // instead of loading every master's every post into memory to score
+      // in JS. Excludes the target post itself.
+      const matchCounts = await db
+        .select({
+          masterId: posts.masterId,
+          postId: posts.id,
+          imageUrl: posts.imageUrl,
+          price: posts.price,
+          currency: posts.currency,
+          durationMinutes: posts.durationMinutes,
+          score: sql<number>`count(*)`.as("score"),
+        })
+        .from(posts)
+        .innerJoin(postTags, eq(postTags.postId, posts.id))
+        .where(sql`${postTags.tagId} IN ${targetTagIds} AND ${posts.id} != ${pId} AND ${isNotNull(posts.masterId)}`)
+        .groupBy(posts.id, posts.masterId, posts.imageUrl, posts.price, posts.currency, posts.durationMinutes)
+        .having(sql`count(*) > 0`);
 
-      // Score each master
-      const scoredMasters = masters
-        .map((master) => {
-          let score = 0;
-          let matchingPost = null;
-          let bestScore = 0;
+      if (matchCounts.length === 0) {
+        return [];
+      }
 
-          // Check each of master's posts
-          for (const masterPost of master.posts) {
-            let postScore = 0;
+      // 3. Keep only each master's best-matching post, then take the top 10.
+      const bestPerMaster = new Map<string, (typeof matchCounts)[number]>();
+      for (const row of matchCounts) {
+        if (!row.masterId) continue;
+        const current = bestPerMaster.get(row.masterId);
+        if (!current || row.score > current.score) {
+          bestPerMaster.set(row.masterId, row);
+        }
+      }
 
-            // Check tag matches
-            for (const postTag of post.tags) {
-              for (const masterTag of masterPost.tags) {
-                if (postTag.tag.id === masterTag.tag.id) {
-                  // Simple match count
-                  postScore += 1;
-                }
-              }
-            }
+      const top10 = [...bestPerMaster.values()]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
 
-            if (postScore > bestScore) {
-              bestScore = postScore;
-              matchingPost = masterPost;
-            }
-          }
+      // 4. Fetch master profile details only for these winning masters.
+      const masterIds = top10.map((m) => m.masterId!);
+      const masters = await db
+        .select({
+          userId: masterProfiles.userId,
+          businessName: masterProfiles.businessName,
+          phoneNumber: masterProfiles.phoneNumber,
+          phoneCountryCode: masterProfiles.phoneCountryCode,
+          avatarUrl: masterProfiles.avatarUrl,
+        })
+        .from(masterProfiles)
+        .where(inArray(masterProfiles.userId, masterIds));
 
-          score = bestScore;
+      const masterById = new Map(masters.map((m) => [m.userId, m]));
 
-          // Mock distance calculation (would use PostGIS in production)
-          const distance = Math.random() * 10; // Random distance 0-10km for MVP
-
+      return top10
+        .map((m) => {
+          const master = masterById.get(m.masterId!);
+          if (!master) return null;
           return {
             masterId: master.userId,
             businessName: master.businessName,
             phoneNumber: master.phoneNumber,
             phoneCountryCode: master.phoneCountryCode,
             avatarUrl: master.avatarUrl,
-            score,
-            distance,
-            matchingImageUrl: matchingPost?.imageUrl || null,
-            matchingPostId: matchingPost?.id || null,
-            price: matchingPost?.price || null,
-            currency: matchingPost?.currency || null,
-            durationMinutes: matchingPost?.durationMinutes || null,
+            score: m.score,
+            matchingImageUrl: m.imageUrl,
+            matchingPostId: m.postId,
+            price: m.price,
+            currency: m.currency,
+            durationMinutes: m.durationMinutes,
           };
         })
-        .filter((m) => m.score > 0) // Only show masters with at least some match
-        .sort((a, b) => {
-          // Sort by score first, then by distance
-          if (b.score !== a.score) {
-            return b.score - a.score;
-          }
-          return a.distance - b.distance;
-        })
-        .slice(0, 10); // Top 10
-
-      return scoredMasters;
+        .filter((m): m is NonNullable<typeof m> => m !== null);
     },
     [`matching-masters-${postId}`],
     {

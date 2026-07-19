@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, DollarSign } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { Card } from "konsta/react";
 
 interface Match {
@@ -11,7 +11,6 @@ interface Match {
   phoneCountryCode: string | null;
   avatarUrl?: string | null;
   score: number;
-  distance: number;
   matchingImageUrl: string | null;
   matchingPostId: string | null;
   price: number | null;
@@ -66,10 +65,6 @@ export default function MatchingMastersList({ matches, onMatchClick }: MatchingM
             <h3 className="font-medium text-sm truncate">
               {match.businessName}
             </h3>
-            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-              <MapPin className="h-3 w-3" />
-              <span>{match.distance.toFixed(1)} km</span>
-            </div>
             {match.price && (
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <DollarSign className="h-3 w-3" />
