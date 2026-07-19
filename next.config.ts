@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
     poweredByHeader: false, // Убрать X-Powered-By header для безопасности
     productionBrowserSourceMaps: false, // Отключить source maps в продакшене (меньше размер)
         images: {
+        // AVIF first - typically 30-50% smaller than WebP for photos, which
+        // is most of what this app serves (portfolio/reference images).
+        formats: ["image/avif", "image/webp"],
         remotePatterns: [
             { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
             { protocol: "https", hostname: "**.ufs.sh", pathname: "/f/**" },
@@ -38,4 +41,13 @@ export default withSentryConfig(withNextIntl(nextConfig), {
     // app still builds normally.
     org: process.env.SENTRY_ORG,
     project: process.env.SENTRY_PROJECT,
+
+    // This app doesn't use Session Replay - exclude its code from the
+    // client bundle instead of shipping it dead.
+    bundleSizeOptimizations: {
+        excludeDebugStatements: true,
+        excludeReplayShadowDom: true,
+        excludeReplayIframe: true,
+        excludeReplayWorker: true,
+    },
 });
