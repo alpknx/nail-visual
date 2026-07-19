@@ -7,7 +7,6 @@ import { X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import ContactButtons from "@/components/ContactButtons";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 import dynamic from "next/dynamic";
 
@@ -234,10 +233,6 @@ export default function MasterMatchDialog({
               Book Appointment
             </Button>
           )}
-          <ContactButtons
-            phoneNumber={master.phoneNumber}
-            phoneCountryCode={master.phoneCountryCode}
-          />
         </div>
       </div>
 

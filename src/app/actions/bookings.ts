@@ -3,14 +3,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
-import { posts, masterSchedules, masterOverrides, bookings } from "@/db/schema";
+import { posts, masterSchedules, masterOverrides, bookings, reviews } from "@/db/schema";
 import { z } from "zod";
-import { eq, and, gt, lt, ne, gte } from "drizzle-orm";
+import { eq, and, lt, ne, gte } from "drizzle-orm";
 import { getAvailableSlots, getMasterTimezone, dateStrInTimezone } from "@/lib/slots";
 import { addMinutes } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { isRateLimited } from "@/lib/rate-limit";
-import { sendGuestBookingConfirmationEmail } from "@/lib/email";
 
 export async function previewBooking(
   masterId: string,
@@ -67,7 +66,6 @@ export async function previewBooking(
 
 const guestSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
-  email: z.string().email("Invalid email"),
   phone: z.string().max(50).optional(),
 });
 
@@ -90,11 +88,13 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
   const isGuest = !session?.user;
 
   if (isGuest && !validated.guest) {
-    throw new Error("Name, email, and phone are required to book without an account");
+    throw new Error("Name is required to book without an account");
   }
 
   if (isGuest) {
-    const limited = await isRateLimited(`guest-booking:${validated.guest!.email}`, 5, 3600000);
+    const { headers } = await import("next/headers");
+    const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const limited = await isRateLimited(`guest-booking:${ip}`, 5, 3600000);
     if (limited) {
       throw new Error("Too many booking attempts. Please try again later.");
     }
@@ -133,7 +133,6 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       postId: validated.postId,
       clientId: session?.user?.id ?? null,
       guestName: isGuest ? validated.guest!.name : null,
-      guestEmail: isGuest ? validated.guest!.email : null,
       guestPhone: isGuest ? (validated.guest!.phone ?? null) : null,
       status: "pending",
       startDatetimeUtc: start,
@@ -141,19 +140,6 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       notes: validated.notes,
     })
     .returning();
-
-  if (isGuest) {
-    // Best-effort - never block the booking's success on email delivery.
-    sendGuestBookingConfirmationEmail({
-      to: validated.guest!.email,
-      guestName: validated.guest!.name,
-      masterName: post.author!.businessName,
-      masterPhone: post.author!.phoneNumber,
-      startUtc: start.toISOString(),
-      timezone,
-      durationMinutes: post.durationMinutes,
-    }).catch((err) => console.error("Guest booking confirmation email failed", err));
-  }
 
   return booking;
 }
@@ -198,6 +184,7 @@ export async function getClientBookings() {
       post: {
         with: { author: true },
       },
+      review: true,
     },
     orderBy: (bookings, { desc }) => [desc(bookings.startDatetimeUtc)],
   });
@@ -331,4 +318,64 @@ export async function getMasterCalendarData(date: string) {
   ]);
 
   return { bookings: dayBookings, overrides: dayOverrides, timezone };
+}
+
+const submitReviewSchema = z.object({
+  bookingId: z.string().uuid(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional(),
+});
+
+export async function submitReview(data: z.infer<typeof submitReviewSchema>) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || session.user.role !== "client") {
+    throw new Error("Unauthorized");
+  }
+
+  const validated = submitReviewSchema.parse(data);
+
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, validated.bookingId),
+  });
+
+  if (!booking || booking.clientId !== session.user.id) {
+    throw new Error("Not found or unauthorized");
+  }
+
+  if (booking.status !== "completed") {
+    throw new Error("You can only review a completed booking");
+  }
+
+  const existing = await db.query.reviews.findFirst({
+    where: eq(reviews.bookingId, booking.id),
+  });
+  if (existing) {
+    throw new Error("This booking has already been reviewed");
+  }
+
+  const [review] = await db
+    .insert(reviews)
+    .values({
+      bookingId: booking.id,
+      masterId: booking.masterId,
+      clientId: session.user.id,
+      reviewerName: session.user.name ?? "Client",
+      rating: validated.rating,
+      comment: validated.comment,
+    })
+    .returning();
+
+  return review;
+}
+
+export async function getMasterReviews(masterId: string) {
+  const masterReviews = await db.query.reviews.findMany({
+    where: eq(reviews.masterId, masterId),
+    orderBy: (reviews, { desc }) => [desc(reviews.createdAt)],
+  });
+
+  const count = masterReviews.length;
+  const average = count > 0 ? masterReviews.reduce((sum, r) => sum + r.rating, 0) / count : null;
+
+  return { reviews: masterReviews, average, count };
 }

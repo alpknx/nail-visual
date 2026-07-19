@@ -8,8 +8,6 @@ interface BookingModalNotesStepProps {
   isGuest: boolean;
   guestName: string;
   onGuestNameChange: (value: string) => void;
-  guestEmail: string;
-  onGuestEmailChange: (value: string) => void;
   guestPhone: string;
   onGuestPhoneChange: (value: string) => void;
 }
@@ -22,8 +20,6 @@ export default function BookingModalNotesStep({
   isGuest,
   guestName,
   onGuestNameChange,
-  guestEmail,
-  onGuestEmailChange,
   guestPhone,
   onGuestPhoneChange,
 }: BookingModalNotesStepProps) {
@@ -32,24 +28,16 @@ export default function BookingModalNotesStep({
       {isGuest && (
         <>
           <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-            Your contact info
+            Your name
           </p>
           <p className="text-xs text-gray-400 -mt-2">
-            No account needed - you&apos;ll get a confirmation by email, and the
-            master will contact you by phone.
+            No account needed - you&apos;ll confirm your booking via Telegram on the next screen.
           </p>
           <input
             type="text"
             value={guestName}
             onChange={(e) => onGuestNameChange(e.target.value)}
             placeholder="Your name"
-            className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-black"
-          />
-          <input
-            type="email"
-            value={guestEmail}
-            onChange={(e) => onGuestEmailChange(e.target.value)}
-            placeholder="your@email.com"
             className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-black"
           />
           <input

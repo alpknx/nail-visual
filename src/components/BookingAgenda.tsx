@@ -29,6 +29,7 @@ interface Booking {
   } | null;
   guestName: string | null;
   guestPhone: string | null;
+  guestConfirmedAt: Date | null;
 }
 
 interface Override {
@@ -212,6 +213,18 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
                   <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${s.badge}`}>
                     {s.label}
                   </span>
+
+                  {!b.client && (
+                    <span
+                      className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                        b.guestConfirmedAt
+                          ? "bg-sky-100 text-sky-700"
+                          : "bg-gray-100 text-gray-400"
+                      }`}
+                    >
+                      {b.guestConfirmedAt ? "Confirmed via Telegram" : "Awaiting Telegram confirm"}
+                    </span>
+                  )}
 
                   {b.status === "pending" && (
                     <button

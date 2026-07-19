@@ -6,9 +6,9 @@ import { useRouter, useParams } from "next/navigation";
 import { format, isFuture } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import Image from "next/image";
-import { cancelBooking, getClientBookings } from "@/app/actions";
+import { cancelBooking, getClientBookings, submitReview } from "@/app/actions";
 import { toast } from "sonner";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Star } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
@@ -30,6 +30,54 @@ interface Booking {
       timezone?: string | null;
     };
   };
+  review: { id: string; rating: number } | null;
+}
+
+function ReviewForm({ bookingId, onSubmitted }: { bookingId: string; onSubmitted: () => void }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!rating) return;
+    setSubmitting(true);
+    try {
+      await submitReview({ bookingId, rating, comment: comment || undefined });
+      toast.success("Thanks for the feedback!");
+      onSubmitted();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to submit review");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 pt-2 border-t border-gray-100 space-y-2">
+      <p className="text-xs font-medium text-gray-500">Rate your appointment</p>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} onClick={() => setRating(n)} aria-label={`${n} stars`}>
+            <Star className={`w-5 h-5 ${n <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Optional comment"
+        rows={2}
+        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs resize-none outline-none focus:border-black"
+      />
+      <button
+        onClick={handleSubmit}
+        disabled={!rating || submitting}
+        className="w-full rounded-xl py-2 text-sm font-medium bg-black text-white disabled:opacity-40"
+      >
+        {submitting ? "Submitting..." : "Submit review"}
+      </button>
+    </div>
+  );
 }
 
 const STATUS_STYLES: Record<BookingStatus, { badge: string; label: string }> = {
@@ -42,9 +90,11 @@ const STATUS_STYLES: Record<BookingStatus, { badge: string; label: string }> = {
 function BookingCard({
   booking,
   onCancel,
+  onReviewed,
 }: {
   booking: Booking;
   onCancel: (id: string) => Promise<void>;
+  onReviewed: () => void;
 }) {
   const [cancelling, setCancelling] = useState(false);
   const s = STATUS_STYLES[booking.status];
@@ -117,6 +167,11 @@ function BookingCard({
           >
             {cancelling ? "Cancelling..." : "Cancel booking"}
           </button>
+        )}
+
+        {/* Review */}
+        {booking.status === "completed" && !booking.review && (
+          <ReviewForm bookingId={booking.id} onSubmitted={onReviewed} />
         )}
       </div>
     </div>
@@ -211,7 +266,7 @@ export default function BookingsList() {
 
       <div className="px-4 pb-24 space-y-3">
         {shown.map((b) => (
-          <BookingCard key={b.id} booking={b} onCancel={handleCancel} />
+          <BookingCard key={b.id} booking={b} onCancel={handleCancel} onReviewed={load} />
         ))}
       </div>
     </Page>

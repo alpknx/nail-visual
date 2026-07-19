@@ -186,6 +186,14 @@ export const bookings = pgTable('bookings', {
   startDatetimeUtc: timestamp('start_datetime_utc', { withTimezone: true }).notNull(),
   endDatetimeUtc: timestamp('end_datetime_utc', { withTimezone: true }).notNull(),
   notes: text('notes'),
+  // Telegram integration: set once the booking's guest/client links their
+  // chat via the /start deep link. guestConfirmedAt is the guest tapping
+  // "Confirm" in the bot - a signal to the master, not a replacement for the
+  // master's own confirmBooking() action. reviewRequestedAt guards the
+  // session-followup cron from asking for a rating twice.
+  telegramChatId: varchar('telegram_chat_id', { length: 64 }),
+  guestConfirmedAt: timestamp('guest_confirmed_at', { withTimezone: true }),
+  reviewRequestedAt: timestamp('review_requested_at', { withTimezone: true }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 }, (table) => [
@@ -193,6 +201,21 @@ export const bookings = pgTable('bookings', {
   index('idx_bookings_client_id').on(table.clientId),
   index('idx_bookings_post_id').on(table.postId),
   index('idx_bookings_master_schedule').on(table.masterId, table.startDatetimeUtc, table.status),
+]);
+
+// Отзывы после сеанса (от гостя через Telegram-бота или от авторизованного клиента)
+export const reviews = pgTable('reviews', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  bookingId: uuid('booking_id').notNull().unique().references(() => bookings.id, { onDelete: 'cascade' }),
+  masterId: uuid('master_id').notNull().references(() => masterProfiles.userId, { onDelete: 'cascade' }),
+  clientId: uuid('client_id').references(() => users.id, { onDelete: 'set null' }),
+  reviewerName: varchar('reviewer_name', { length: 255 }).notNull(),
+  rating: integer('rating').notNull(),
+  comment: text('comment'),
+  commentRequestedAt: timestamp('comment_requested_at', { withTimezone: true }),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => [
+  index('idx_reviews_master_id').on(table.masterId),
 ]);
 
 // ==========================================
@@ -286,6 +309,25 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   }),
   client: one(users, {
     fields: [bookings.clientId],
+    references: [users.id],
+  }),
+  review: one(reviews, {
+    fields: [bookings.id],
+    references: [reviews.bookingId],
+  }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  booking: one(bookings, {
+    fields: [reviews.bookingId],
+    references: [bookings.id],
+  }),
+  master: one(masterProfiles, {
+    fields: [reviews.masterId],
+    references: [masterProfiles.userId],
+  }),
+  client: one(users, {
+    fields: [reviews.clientId],
     references: [users.id],
   }),
 }));

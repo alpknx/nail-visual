@@ -2,10 +2,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
 import { masterProfiles, posts } from "@/db/schema";
+import { getMasterReviews } from "@/app/actions";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { MapPin, Briefcase } from "lucide-react";
+import { MapPin, Briefcase, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import MasterProfileContext from "@/components/MasterProfileContext";
@@ -18,7 +19,7 @@ interface MasterProfilePageProps {
 export default async function MasterProfilePage({ params }: MasterProfilePageProps) {
   const { id, locale } = await params;
 
-  const [master, masterPosts] = await Promise.all([
+  const [master, masterPosts, { reviews, average, count }] = await Promise.all([
     db.query.masterProfiles.findFirst({
       where: eq(masterProfiles.userId, id),
       with: {
@@ -39,6 +40,7 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
         },
       },
     }),
+    getMasterReviews(id),
   ]);
 
   if (!master) {
@@ -85,6 +87,12 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
                   <Briefcase className="h-4 w-4" />
                   <span>{masterPosts.length} works</span>
                 </div>
+                {count > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span>{average!.toFixed(1)} ({count})</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -172,6 +180,32 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
           </div>
         )}
       </div>
+
+      {reviews.length > 0 && (
+        <div className="max-w-6xl mx-auto px-6 pb-10">
+          <h2 className="text-xl font-semibold mb-4">Reviews</h2>
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <div key={review.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{review.reviewerName}</span>
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {review.comment && (
+                  <p className="text-sm text-muted-foreground mt-2">{review.comment}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       </div>
     </>
   );

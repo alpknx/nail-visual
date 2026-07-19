@@ -37,10 +37,10 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
   // Step 3 - notes, plus guest contact info when not signed in as a client
   const [notes, setNotes] = useState("");
   const [guestName, setGuestName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
-  // Phone is optional - only name and email are required for a guest booking.
-  const guestInfoComplete = !isGuest || Boolean(guestName && guestEmail);
+  // Only a name is required for a guest booking - confirmation now happens
+  // via Telegram, and phone is just an optional fallback for the master.
+  const guestInfoComplete = !isGuest || Boolean(guestName);
 
   // Step 4
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof previewBooking>> | null>(null);
@@ -48,6 +48,7 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
 
   // Step 5
   const [submitting, setSubmitting] = useState(false);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   // Load master timezone on open
   useEffect(() => {
@@ -66,9 +67,9 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
       setSelectedSlot(null);
       setNotes("");
       setGuestName("");
-      setGuestEmail("");
       setGuestPhone("");
       setPreview(null);
+      setBookingId(null);
     }
   }, [open]);
 
@@ -103,7 +104,7 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
   const handleNotesNext = async () => {
     if (!selectedSlot) return;
     if (!guestInfoComplete) {
-      toast.error("Please fill in your name and email");
+      toast.error("Please enter your name");
       return;
     }
     setPreviewing(true);
@@ -123,15 +124,16 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
     if (!selectedSlot) return;
     setSubmitting(true);
     try {
-      await createBooking({
+      const booking = await createBooking({
         masterId,
         postId,
         datetimeUtc: selectedSlot,
         notes: notes || undefined,
         guest: isGuest
-          ? { name: guestName, email: guestEmail, phone: guestPhone || undefined }
+          ? { name: guestName, phone: guestPhone || undefined }
           : undefined,
       });
+      setBookingId(booking.id);
       setStep(5);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Booking failed");
@@ -153,13 +155,12 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
     isGuest,
     guestName,
     setGuestName,
-    guestEmail,
-    setGuestEmail,
     guestPhone,
     setGuestPhone,
     preview,
     previewing,
     submitting,
+    bookingId,
     handleDateSelect,
     handleSlotSelect,
     handleNotesNext,

@@ -197,8 +197,6 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
                 post.durationMinutes
               )}
               onBook={() => setBookingOpen(true)}
-              authorPhoneNumber={post.author!.phoneNumber}
-              authorPhoneCountryCode={post.author!.phoneCountryCode}
             />
           ) : null}
 

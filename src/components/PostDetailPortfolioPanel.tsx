@@ -1,6 +1,5 @@
 import { Block, Button } from "konsta/react";
 import { Clock, Edit, Trash2 } from "lucide-react";
-import ContactButtons from "@/components/ContactButtons";
 
 interface PostDetailPortfolioPanelProps {
   price: number | null;
@@ -13,8 +12,6 @@ interface PostDetailPortfolioPanelProps {
   onDelete: () => void;
   canBook: boolean;
   onBook: () => void;
-  authorPhoneNumber: string;
-  authorPhoneCountryCode: string | null;
 }
 
 export default function PostDetailPortfolioPanel({
@@ -28,8 +25,6 @@ export default function PostDetailPortfolioPanel({
   onDelete,
   canBook,
   onBook,
-  authorPhoneNumber,
-  authorPhoneCountryCode,
 }: PostDetailPortfolioPanelProps) {
   return (
     <Block className="!my-0 !py-4 space-y-4">
@@ -87,17 +82,11 @@ export default function PostDetailPortfolioPanel({
           </Button>
         </div>
       ) : (
-        <div className="space-y-2">
-          {canBook && (
-            <Button large className="w-full" onClick={onBook}>
-              Book Appointment
-            </Button>
-          )}
-          <ContactButtons
-            phoneNumber={authorPhoneNumber}
-            phoneCountryCode={authorPhoneCountryCode}
-          />
-        </div>
+        canBook && (
+          <Button large className="w-full" onClick={onBook}>
+            Book Appointment
+          </Button>
+        )
       )}
     </Block>
   );

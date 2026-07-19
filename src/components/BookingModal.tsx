@@ -53,13 +53,12 @@ export default function BookingModal({
     isGuest,
     guestName,
     setGuestName,
-    guestEmail,
-    setGuestEmail,
     guestPhone,
     setGuestPhone,
     preview,
     previewing,
     submitting,
+    bookingId,
     handleDateSelect,
     handleSlotSelect,
     handleNotesNext,
@@ -200,8 +199,6 @@ export default function BookingModal({
             isGuest={isGuest}
             guestName={guestName}
             onGuestNameChange={setGuestName}
-            guestEmail={guestEmail}
-            onGuestEmailChange={setGuestEmail}
             guestPhone={guestPhone}
             onGuestPhoneChange={setGuestPhone}
           />
@@ -224,6 +221,7 @@ export default function BookingModal({
           <BookingModalSuccessStep
             masterName={masterName}
             isGuest={isGuest}
+            bookingId={bookingId}
             onViewBookings={() => {
               onOpenChange(false);
               router.push(`/${locale}/bookings`);
