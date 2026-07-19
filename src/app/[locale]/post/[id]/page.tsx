@@ -34,8 +34,7 @@ export default async function PostDetailPage({ params, searchParams }: PostDetai
     notFound();
   }
 
-  // Only load matching masters if not in profile mode (to improve performance)
-  const matchingMasters = source === 'profile' ? [] : await getMatchingMasters(id);
+  const matchingMasters = await getMatchingMasters(id);
 
   return (
     <PostDetailClient post={post} matchingMasters={matchingMasters} source={source} />
