@@ -39,7 +39,8 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
-  const guestInfoComplete = !isGuest || Boolean(guestName && guestEmail && guestPhone);
+  // Phone is optional - only name and email are required for a guest booking.
+  const guestInfoComplete = !isGuest || Boolean(guestName && guestEmail);
 
   // Step 4
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof previewBooking>> | null>(null);
@@ -102,7 +103,7 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
   const handleNotesNext = async () => {
     if (!selectedSlot) return;
     if (!guestInfoComplete) {
-      toast.error("Please fill in your name, email, and phone number");
+      toast.error("Please fill in your name and email");
       return;
     }
     setPreviewing(true);
@@ -128,7 +129,7 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
         datetimeUtc: selectedSlot,
         notes: notes || undefined,
         guest: isGuest
-          ? { name: guestName, email: guestEmail, phone: guestPhone }
+          ? { name: guestName, email: guestEmail, phone: guestPhone || undefined }
           : undefined,
       });
       setStep(5);

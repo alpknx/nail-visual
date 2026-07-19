@@ -68,7 +68,7 @@ export async function previewBooking(
 const guestSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
   email: z.string().email("Invalid email"),
-  phone: z.string().min(1, "Phone number is required").max(50),
+  phone: z.string().max(50).optional(),
 });
 
 const createBookingSchema = z.object({
@@ -134,7 +134,7 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       clientId: session?.user?.id ?? null,
       guestName: isGuest ? validated.guest!.name : null,
       guestEmail: isGuest ? validated.guest!.email : null,
-      guestPhone: isGuest ? validated.guest!.phone : null,
+      guestPhone: isGuest ? (validated.guest!.phone ?? null) : null,
       status: "pending",
       startDatetimeUtc: start,
       endDatetimeUtc: end,
