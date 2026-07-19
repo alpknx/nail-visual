@@ -9,7 +9,6 @@ import {
   serial,
   integer,
   jsonb,
-  bigint,
   uniqueIndex,
   index,
   primaryKey,
@@ -54,29 +53,14 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const accounts = pgTable('accounts', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  type: varchar('type', { length: 255 }).notNull(),
-  provider: varchar('provider', { length: 255 }).notNull(),
-  providerAccountId: varchar('provider_account_id', { length: 255 }).notNull(),
-  refreshToken: text('refresh_token'),
-  accessToken: text('access_token'),
-  expiresAt: bigint('expires_at', { mode: 'number' }),
-  tokenType: varchar('token_type', { length: 255 }),
-  scope: text('scope'),
-  idToken: text('id_token'),
-  sessionState: text('session_state'),
-}, (table) => [
-  uniqueIndex('idx_accounts_provider_compound').on(table.provider, table.providerAccountId),
-]);
-
-export const sessions = pgTable('sessions', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  sessionToken: varchar('session_token', { length: 255 }).notNull().unique(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  expires: timestamp('expires', { mode: 'date' }).notNull(),
-});
+// NOTE: `accounts` and `sessions` tables (standard next-auth adapter schema)
+// were removed — this app uses `session: { strategy: "jwt" }` with a
+// Credentials-only provider (see src/lib/auth.ts), and DrizzleAdapter(db) is
+// called without a schema mapping, so the adapter falls back to its own
+// internal default tables (`account`/`session`, never created here) rather
+// than these. Verified: no next-auth code path (JWT strategy, no OAuth
+// provider) ever calls linkAccount/createSession/getSessionAndUser/etc.
+// See git history for the historical-data analysis behind this removal.
 
 export const verificationTokens = pgTable('verification_tokens', {
   identifier: text('identifier').notNull(),
@@ -213,8 +197,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [masterProfiles.userId],
   }),
-  accounts: many(accounts),
-  sessions: many(sessions),
   bookings: many(bookings),
 }));
 
