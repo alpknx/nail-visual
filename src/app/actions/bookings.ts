@@ -9,6 +9,8 @@ import { eq, and, gt, lt, ne, gte } from "drizzle-orm";
 import { getAvailableSlots, getMasterTimezone, dateStrInTimezone } from "@/lib/slots";
 import { addMinutes } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
+import { isRateLimited } from "@/lib/rate-limit";
+import { sendGuestBookingConfirmationEmail } from "@/lib/email";
 
 export async function previewBooking(
   masterId: string,
@@ -63,24 +65,44 @@ export async function previewBooking(
   };
 }
 
+const guestSchema = z.object({
+  name: z.string().min(1, "Name is required").max(255),
+  email: z.string().email("Invalid email"),
+  phone: z.string().min(1, "Phone number is required").max(50),
+});
+
 const createBookingSchema = z.object({
   masterId: z.string().uuid(),
   postId: z.string().uuid(),
   datetimeUtc: z.string().datetime({ offset: true }),
   notes: z.string().max(500).optional(),
+  guest: guestSchema.optional(),
 });
 
 export async function createBooking(data: z.infer<typeof createBookingSchema>) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== "client") {
+  if (session?.user && session.user.role !== "client") {
     throw new Error("Unauthorized — only clients can book");
   }
 
   const validated = createBookingSchema.parse(data);
+  const isGuest = !session?.user;
+
+  if (isGuest && !validated.guest) {
+    throw new Error("Name, email, and phone are required to book without an account");
+  }
+
+  if (isGuest) {
+    const limited = await isRateLimited(`guest-booking:${validated.guest!.email}`, 5, 3600000);
+    if (limited) {
+      throw new Error("Too many booking attempts. Please try again later.");
+    }
+  }
 
   const post = await db.query.posts.findFirst({
     where: eq(posts.id, validated.postId),
+    with: { author: true },
   });
 
   if (!post?.durationMinutes || post.masterId !== validated.masterId) {
@@ -109,13 +131,29 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
     .values({
       masterId: validated.masterId,
       postId: validated.postId,
-      clientId: session.user.id,
+      clientId: session?.user?.id ?? null,
+      guestName: isGuest ? validated.guest!.name : null,
+      guestEmail: isGuest ? validated.guest!.email : null,
+      guestPhone: isGuest ? validated.guest!.phone : null,
       status: "pending",
       startDatetimeUtc: start,
       endDatetimeUtc: end,
       notes: validated.notes,
     })
     .returning();
+
+  if (isGuest) {
+    // Best-effort - never block the booking's success on email delivery.
+    sendGuestBookingConfirmationEmail({
+      to: validated.guest!.email,
+      guestName: validated.guest!.name,
+      masterName: post.author!.businessName,
+      masterPhone: post.author!.phoneNumber,
+      startUtc: start.toISOString(),
+      timezone,
+      durationMinutes: post.durationMinutes,
+    }).catch((err) => console.error("Guest booking confirmation email failed", err));
+  }
 
   return booking;
 }

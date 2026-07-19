@@ -3,12 +3,14 @@ import { CheckCircle2 } from "lucide-react";
 
 interface BookingModalSuccessStepProps {
   masterName: string;
+  isGuest: boolean;
   onViewBookings: () => void;
   onBackToFeed: () => void;
 }
 
 export default function BookingModalSuccessStep({
   masterName,
+  isGuest,
   onViewBookings,
   onBackToFeed,
 }: BookingModalSuccessStepProps) {
@@ -18,15 +20,25 @@ export default function BookingModalSuccessStep({
       <div>
         <h4 className="text-xl font-bold">Booking sent!</h4>
         <p className="text-sm text-gray-500 mt-1">
-          Waiting for {masterName} to confirm. You&apos;ll see it in your bookings.
+          {isGuest
+            ? `Waiting for ${masterName} to confirm. Check your email for a confirmation - ${masterName} will also contact you by phone.`
+            : `Waiting for ${masterName} to confirm. You'll see it in your bookings.`}
         </p>
       </div>
-      <Button large className="w-full" onClick={onViewBookings}>
-        View My Bookings
-      </Button>
-      <button onClick={onBackToFeed} className="text-sm text-gray-400 underline">
-        Back to feed
-      </button>
+      {isGuest ? (
+        <button onClick={onBackToFeed} className="text-sm text-gray-400 underline">
+          Back to feed
+        </button>
+      ) : (
+        <>
+          <Button large className="w-full" onClick={onViewBookings}>
+            View My Bookings
+          </Button>
+          <button onClick={onBackToFeed} className="text-sm text-gray-400 underline">
+            Back to feed
+          </button>
+        </>
+      )}
     </div>
   );
 }

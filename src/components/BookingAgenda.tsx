@@ -26,7 +26,9 @@ interface Booking {
   client: {
     name: string | null;
     email: string | null;
-  };
+  } | null;
+  guestName: string | null;
+  guestPhone: string | null;
 }
 
 interface Override {
@@ -168,10 +170,16 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
                   )}
                 </p>
 
-                {/* Client */}
+                {/* Client (or guest, if booked without an account) */}
                 <p className="text-sm font-semibold truncate">
-                  {b.client.name ?? b.client.email ?? "Client"}
+                  {b.client?.name ?? b.client?.email ?? b.guestName ?? "Client"}
+                  {!b.client && (
+                    <span className="ml-1.5 text-xs font-normal text-gray-400">(guest)</span>
+                  )}
                 </p>
+                {!b.client && b.guestPhone && (
+                  <p className="text-xs text-gray-500 truncate">{b.guestPhone}</p>
+                )}
 
                 {/* Service */}
                 {b.post.description && (

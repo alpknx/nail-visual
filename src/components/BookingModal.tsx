@@ -49,6 +49,13 @@ export default function BookingModal({
     loadingSlots,
     notes,
     setNotes,
+    isGuest,
+    guestName,
+    setGuestName,
+    guestEmail,
+    setGuestEmail,
+    guestPhone,
+    setGuestPhone,
     preview,
     previewing,
     submitting,
@@ -192,6 +199,13 @@ export default function BookingModal({
             onNotesChange={setNotes}
             previewing={previewing}
             onContinue={handleNotesNext}
+            isGuest={isGuest}
+            guestName={guestName}
+            onGuestNameChange={setGuestName}
+            guestEmail={guestEmail}
+            onGuestEmailChange={setGuestEmail}
+            guestPhone={guestPhone}
+            onGuestPhoneChange={setGuestPhone}
           />
         )}
 
@@ -211,6 +225,7 @@ export default function BookingModal({
         {step === 5 && (
           <BookingModalSuccessStep
             masterName={masterName}
+            isGuest={isGuest}
             onViewBookings={() => {
               onOpenChange(false);
               router.push(`/${locale}/bookings`);

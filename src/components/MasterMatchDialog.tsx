@@ -235,7 +235,7 @@ export default function MasterMatchDialog({
 
         {/* Footer Actions */}
         <div className="p-4 bg-white border-t border-gray-100 space-y-2" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
-          {session?.user?.role === "client" && master.matchingPostId && master.durationMinutes && (
+          {(!session?.user || session.user.role === "client") && master.matchingPostId && master.durationMinutes && (
             <Button large className="w-full" onClick={() => setBookingOpen(true)}>
               Book Appointment
             </Button>

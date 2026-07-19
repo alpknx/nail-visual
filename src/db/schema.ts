@@ -174,7 +174,14 @@ export const bookings = pgTable('bookings', {
   id: uuid('id').defaultRandom().primaryKey(),
   masterId: uuid('master_id').notNull().references(() => masterProfiles.userId, { onDelete: 'cascade' }),
   postId: uuid('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
-  clientId: uuid('client_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  // Null for guest bookings (no account) - guestName/guestEmail/guestPhone
+  // are populated instead in that case. Exactly one of clientId or the
+  // guest fields should be set; enforced at the application layer in
+  // createBooking(), not as a DB constraint.
+  clientId: uuid('client_id').references(() => users.id, { onDelete: 'cascade' }),
+  guestName: varchar('guest_name', { length: 255 }),
+  guestEmail: varchar('guest_email', { length: 255 }),
+  guestPhone: varchar('guest_phone', { length: 50 }),
   status: bookingStatusEnum('status').notNull().default('pending'),
   startDatetimeUtc: timestamp('start_datetime_utc', { withTimezone: true }).notNull(),
   endDatetimeUtc: timestamp('end_datetime_utc', { withTimezone: true }).notNull(),

@@ -190,7 +190,11 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
               isDeleting={isDeleting}
               onEdit={() => router.push(`/${locale}/post/${post.id}/update`)}
               onDelete={handleDelete}
-              canBook={Boolean(session?.user?.role === "client" && post.masterId && post.durationMinutes)}
+              canBook={Boolean(
+                (!session?.user || session.user.role === "client") &&
+                post.masterId &&
+                post.durationMinutes
+              )}
               onBook={() => setBookingOpen(true)}
               authorPhoneNumber={post.author!.phoneNumber}
               authorPhoneCountryCode={post.author!.phoneCountryCode}

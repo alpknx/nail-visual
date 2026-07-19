@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { startOfDay } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { format } from "date-fns";
+import { useSession } from "next-auth/react";
 import {
   getAvailableSlotsAction,
   previewBooking,
@@ -19,6 +20,9 @@ interface UseBookingFlowParams {
 }
 
 export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams) {
+  const { data: session } = useSession();
+  const isGuest = !session?.user;
+
   const [step, setStep] = useState<BookingStep>(1);
   const [timezone, setTimezone] = useState("Europe/Warsaw");
 
@@ -30,8 +34,12 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
-  // Step 3
+  // Step 3 - notes, plus guest contact info when not signed in as a client
   const [notes, setNotes] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const guestInfoComplete = !isGuest || Boolean(guestName && guestEmail && guestPhone);
 
   // Step 4
   const [preview, setPreview] = useState<Awaited<ReturnType<typeof previewBooking>> | null>(null);
@@ -56,6 +64,9 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
       setSlots([]);
       setSelectedSlot(null);
       setNotes("");
+      setGuestName("");
+      setGuestEmail("");
+      setGuestPhone("");
       setPreview(null);
     }
   }, [open]);
@@ -90,6 +101,10 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
   // Step 3 → 4: preview
   const handleNotesNext = async () => {
     if (!selectedSlot) return;
+    if (!guestInfoComplete) {
+      toast.error("Please fill in your name, email, and phone number");
+      return;
+    }
     setPreviewing(true);
     try {
       const data = await previewBooking(masterId, postId, selectedSlot);
@@ -112,6 +127,9 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
         postId,
         datetimeUtc: selectedSlot,
         notes: notes || undefined,
+        guest: isGuest
+          ? { name: guestName, email: guestEmail, phone: guestPhone }
+          : undefined,
       });
       setStep(5);
     } catch (e) {
@@ -131,6 +149,13 @@ export function useBookingFlow({ open, masterId, postId }: UseBookingFlowParams)
     selectedSlot,
     notes,
     setNotes,
+    isGuest,
+    guestName,
+    setGuestName,
+    guestEmail,
+    setGuestEmail,
+    guestPhone,
+    setGuestPhone,
     preview,
     previewing,
     submitting,
