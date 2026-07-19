@@ -170,7 +170,7 @@ function BookingCard({
         )}
 
         {/* Review */}
-        {booking.status === "completed" && !booking.review && (
+        {(booking.status === "completed" || booking.status === "cancelled") && !booking.review && (
           <ReviewForm bookingId={booking.id} onSubmitted={onReviewed} />
         )}
       </div>

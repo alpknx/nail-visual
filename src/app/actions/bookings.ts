@@ -10,6 +10,7 @@ import { getAvailableSlots, getMasterTimezone, dateStrInTimezone } from "@/lib/s
 import { addMinutes } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { isRateLimited } from "@/lib/rate-limit";
+import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function previewBooking(
   masterId: string,
@@ -258,6 +259,7 @@ export async function cancelBookingByMaster(bookingId: string) {
 
   const booking = await db.query.bookings.findFirst({
     where: eq(bookings.id, bookingId),
+    with: { master: true },
   });
 
   if (!booking || booking.masterId !== session.user.id) {
@@ -272,6 +274,25 @@ export async function cancelBookingByMaster(bookingId: string) {
     .update(bookings)
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
+
+  if (booking.telegramChatId) {
+    const masterName = booking.master?.businessName ?? "The master";
+    sendTelegramMessage(
+      booking.telegramChatId,
+      `Unfortunately, ${masterName} can't see you for this appointment - it's been cancelled. Sorry for the inconvenience!\n\nMind rating the experience anyway?`,
+      [
+        [
+          { text: "⭐️", callback_data: `rate:${booking.id}:1` },
+          { text: "⭐️⭐️", callback_data: `rate:${booking.id}:2` },
+          { text: "⭐️⭐️⭐️", callback_data: `rate:${booking.id}:3` },
+        ],
+        [
+          { text: "⭐️⭐️⭐️⭐️", callback_data: `rate:${booking.id}:4` },
+          { text: "⭐️⭐️⭐️⭐️⭐️", callback_data: `rate:${booking.id}:5` },
+        ],
+      ]
+    ).catch((err) => console.error("Telegram cancellation notice failed", err));
+  }
 
   return { success: true };
 }
@@ -342,8 +363,8 @@ export async function submitReview(data: z.infer<typeof submitReviewSchema>) {
     throw new Error("Not found or unauthorized");
   }
 
-  if (booking.status !== "completed") {
-    throw new Error("You can only review a completed booking");
+  if (booking.status !== "completed" && booking.status !== "cancelled") {
+    throw new Error("You can only review a completed or cancelled booking");
   }
 
   const existing = await db.query.reviews.findFirst({
