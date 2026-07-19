@@ -83,11 +83,19 @@ export function usePostSource(source: string | undefined) {
     }
   })();
 
-  // Clear sessionStorage after reading to avoid stale data
+  // sessionStorage.postSource is a one-shot signal meaning "this specific
+  // navigation came from a profile page" (a fallback for mobile Safari,
+  // where the URL query param / referrer can be unreliable). It must be
+  // cleared once read - otherwise it stays 'profile' forever after the
+  // first profile visit in a tab, permanently hiding Similar Works on
+  // every post viewed afterward regardless of how the user got there.
   useEffect(() => {
     if (typeof window !== 'undefined' && sourceFromReferrer === 'profile') {
-      // Don't clear immediately - keep it for potential back navigation
-      // sessionStorage.removeItem('postSource');
+      try {
+        sessionStorage.removeItem('postSource');
+      } catch (e) {
+        // ignore
+      }
     }
   }, [sourceFromReferrer]);
 
