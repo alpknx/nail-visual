@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
+import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -27,4 +28,14 @@ const nextConfig: NextConfig = {
     },
 };
 
-export default withNextIntl(nextConfig);
+export default withSentryConfig(withNextIntl(nextConfig), {
+    // Suppresses source map upload logs during build.
+    silent: true,
+
+    // Sentry org/project used for source map uploads at build time. These
+    // are only required when SENTRY_AUTH_TOKEN is set (e.g. in CI); without
+    // a token, the build-time Sentry plugin skips source map upload and the
+    // app still builds normally.
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+});

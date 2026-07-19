@@ -1,5 +1,6 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { getProtectedPaths, canAccessRoute } from "@/config/protected-routes";
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
@@ -75,6 +76,7 @@ export async function middleware(request: NextRequest) {
         } catch (error) {
             // Log error for debugging
             console.error('Middleware auth error:', error);
+            Sentry.captureException(error);
             // On error, still redirect to signin to be safe
             const url = new URL(`/${locale}/signin`, request.url);
             url.searchParams.set("callbackUrl", pathWithoutLocale);

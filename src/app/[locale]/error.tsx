@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { Page, Block, Button } from "konsta/react";
 
 export default function LocaleError({
@@ -13,6 +14,7 @@ export default function LocaleError({
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (
