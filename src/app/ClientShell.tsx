@@ -3,8 +3,41 @@
 import React, { useEffect } from "react";
 import NextAuthProvider from "@/providers/NextAuthProvider";
 import { ReactQueryClientProvider } from "@/lib/queryClient";
-import { App } from "konsta/react";
 import BottomNavbar from "@/components/BottomNavbar";
+
+// NOTE: `<App>` is intentionally kept as a static import here — see below.
+//
+// `konsta/react`'s only entry point is a single barrel file that eagerly
+// imports all ~68 components, so `import { App } from "konsta/react"` pulls
+// in the whole barrel's JS. konsta's App component itself is trivial enough
+// to make a flash-free `next/dynamic` fallback possible in principle: for
+// theme="ios" (not "parent") it just renders
+// `<div className="k-ios k-app w-full h-full min-h-screen relative safe-areas">`
+// (see konsta/react/components/App.js + shared/classes/AppClasses.js) wrapped
+// in a context provider with no DOM output of its own, and none of that
+// className's CSS is gated on the JS chunk (konsta/react/theme.css is
+// statically imported in globals.css) — so a static placeholder div with the
+// same classes would be pixel-identical at first paint.
+//
+// That was tried (`dynamic(() => import("konsta/react").then(m => m.App))`)
+// and reverted: konsta@5.0.6's package.json `exports["./react"]` only
+// declares an `"import"` condition, and its internal source uses
+// extensionless relative imports (e.g. `from '../shared/cls'`, not
+// `'../shared/cls.js'`), which are invalid under strict ESM resolution.
+// Next's webpack build resolves the *static* top-level `import` leniently
+// (bundler-style resolution) but fails to resolve the *dynamic* `import()`
+// used by `next/dynamic`'s code-splitting path with
+// "Module not found: Package path ./react is not exported from package
+// konsta (see exports field in .../konsta/package.json)". This reproduces
+// consistently and is a konsta packaging issue, not fixable from this file.
+//
+// Separately, even if it did resolve: `BottomNavbar` (rendered below, also
+// statically imported here) itself does
+// `import { Tabbar, TabbarLink, Icon } from "konsta/react"` at module scope,
+// so the barrel would still be reachable synchronously through BottomNavbar
+// regardless of whether `App` were dynamic — a real win would require
+// dynamic-importing BottomNavbar too.
+import { App } from "konsta/react";
 
 export default function ClientShell({ children }: { children: React.ReactNode }) {
     useEffect(() => {
