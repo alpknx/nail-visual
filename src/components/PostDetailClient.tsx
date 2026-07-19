@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -103,37 +103,7 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
     setSelectedMatch(match);
   }, []);
 
-  const {
-    sourceFromUrl,
-    sourceFromWindow,
-    sourceFromReferrer,
-    effectiveSource,
-    isPortfolioMode,
-    finalIsPortfolioMode,
-  } = usePostSource(source);
-
-  // Debug logging (remove in production)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log('PostDetailClient - source prop:', source);
-      console.log('PostDetailClient - source from URL (useSearchParams):', sourceFromUrl);
-      console.log('PostDetailClient - source from window.location:', sourceFromWindow);
-      console.log('PostDetailClient - source from referrer:', sourceFromReferrer);
-      console.log('PostDetailClient - effective source:', effectiveSource);
-      console.log('PostDetailClient - isPortfolioMode:', isPortfolioMode);
-      console.log('PostDetailClient - finalIsPortfolioMode:', finalIsPortfolioMode);
-      console.log('PostDetailClient - full URL:', window.location.href);
-      console.log('PostDetailClient - referrer:', document.referrer);
-      console.log('PostDetailClient - sessionStorage postSource:', sessionStorage.getItem('postSource'));
-      console.log('PostDetailClient - isOwner:', isOwner);
-      console.log('PostDetailClient - session user id:', session?.user?.id);
-      console.log('PostDetailClient - post author userId:', post.author?.userId);
-      console.log('PostDetailClient - post masterId:', post.masterId);
-      console.log('PostDetailClient - post object:', { masterId: post.masterId, author: post.author });
-    }
-  }, [source, sourceFromUrl, sourceFromWindow, sourceFromReferrer, effectiveSource, isPortfolioMode, finalIsPortfolioMode, isOwner, session, post]);
-
-
+  const { isPortfolioMode, finalIsPortfolioMode } = usePostSource(source);
 
   return (
     <Page className="!h-[100dvh] !overflow-hidden flex flex-col">

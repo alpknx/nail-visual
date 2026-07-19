@@ -29,23 +29,7 @@ export default function PostDetailSimilarWorks({
   onMatchClick,
 }: PostDetailSimilarWorksProps) {
   // Only show "Similar Works Nearby" if NOT in portfolio mode AND we have matching masters
-  // CRITICAL: Double-check finalIsPortfolioMode to prevent showing on mobile Safari
-  const shouldShow = (() => {
-    // Extra safety check for mobile Safari - check sessionStorage directly during render
-    let shouldHideSimilarWorks = false;
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = sessionStorage.getItem('postSource');
-        if (stored === 'profile') {
-          shouldHideSimilarWorks = true;
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
-    // Never show if we're in portfolio mode OR if sessionStorage says profile
-    return !shouldHideSimilarWorks && !finalIsPortfolioMode && !isPortfolioMode && matchingMasters && matchingMasters.length > 0;
-  })();
+  const shouldShow = !finalIsPortfolioMode && !isPortfolioMode && matchingMasters && matchingMasters.length > 0;
 
   if (!shouldShow) return null;
 

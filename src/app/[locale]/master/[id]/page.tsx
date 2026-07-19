@@ -9,7 +9,6 @@ import Image from "next/image";
 import { MapPin, Briefcase, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import MasterProfileContext from "@/components/MasterProfileContext";
 import MasterProfileNavbar from "@/components/MasterProfileNavbar";
 
 interface MasterProfilePageProps {
@@ -49,21 +48,8 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
 
   return (
     <>
-      {/* Set sessionStorage immediately via inline script for mobile Safari */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            if (typeof window !== 'undefined' && window.sessionStorage) {
-              try {
-                window.sessionStorage.setItem('postSource', 'profile');
-              } catch(e) {}
-            }
-          `,
-        }}
-      />
       <div className="min-h-screen bg-background">
         <MasterProfileNavbar />
-        <MasterProfileContext />
         {/* Header */}
       <div className="bg-muted/30 border-b">
         <div className="max-w-6xl mx-auto p-6 space-y-4">
