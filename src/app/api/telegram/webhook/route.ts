@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { bookings, reviews } from "@/db/schema";
 import { eq, and, isNull, gt, desc } from "drizzle-orm";
 import { formatInTimeZone } from "date-fns-tz";
-import { sendTelegramMessage, answerTelegramCallback } from "@/lib/telegram";
+import { sendTelegramMessage, answerTelegramCallback, editTelegramMessage } from "@/lib/telegram";
 
 const RATING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -15,7 +15,7 @@ interface TelegramUpdate {
   callback_query?: {
     id: string;
     data?: string;
-    message?: { chat: { id: number } };
+    message?: { chat: { id: number }; message_id: number };
   };
 }
 
@@ -89,30 +89,31 @@ async function linkBooking(chatId: number, bookingId: string) {
 
 async function handleCallback(callback: NonNullable<TelegramUpdate["callback_query"]>) {
   const chatId = callback.message?.chat.id;
+  const messageId = callback.message?.message_id;
   const data = callback.data ?? "";
 
-  if (!chatId) {
+  if (!chatId || !messageId) {
     await answerTelegramCallback(callback.id);
     return;
   }
 
   if (data.startsWith("confirm:")) {
     const bookingId = data.slice("confirm:".length);
-    await confirmBookingFromBot(chatId, bookingId);
+    await confirmBookingFromBot(chatId, messageId, bookingId);
     await answerTelegramCallback(callback.id, "Confirmed!");
     return;
   }
 
   if (data.startsWith("cancel:")) {
     const bookingId = data.slice("cancel:".length);
-    await cancelBookingFromBot(chatId, bookingId);
+    await cancelBookingFromBot(chatId, messageId, bookingId);
     await answerTelegramCallback(callback.id, "Cancelled");
     return;
   }
 
   if (data.startsWith("rate:")) {
     const [, bookingId, ratingStr] = data.split(":");
-    await recordRatingFromBot(chatId, bookingId, Number(ratingStr));
+    await recordRatingFromBot(chatId, messageId, bookingId, Number(ratingStr));
     await answerTelegramCallback(callback.id, "Thanks!");
     return;
   }
@@ -120,10 +121,18 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
   await answerTelegramCallback(callback.id);
 }
 
-async function confirmBookingFromBot(chatId: number, bookingId: string) {
+async function confirmBookingFromBot(chatId: number, messageId: number, bookingId: string) {
   const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
   if (!booking || booking.telegramChatId !== String(chatId)) {
     await sendTelegramMessage(chatId, "This booking isn't linked to this chat.");
+    return;
+  }
+
+  // The Cancel/Confirm buttons stay live until this message is edited below,
+  // so a second tap can still land here after the booking was already
+  // resolved - re-check status instead of trusting the button was one-shot.
+  if (booking.status === "cancelled" || booking.status === "completed") {
+    await editTelegramMessage(chatId, messageId, `This booking is already ${booking.status} - nothing to confirm.`);
     return;
   }
 
@@ -132,10 +141,14 @@ async function confirmBookingFromBot(chatId: number, bookingId: string) {
     .set({ guestConfirmedAt: new Date(), updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
 
-  await sendTelegramMessage(chatId, "You're confirmed. See you then! We'll follow up here after your appointment.");
+  await editTelegramMessage(
+    chatId,
+    messageId,
+    "✅ Confirmed. See you then! We'll follow up here after your appointment."
+  );
 }
 
-async function cancelBookingFromBot(chatId: number, bookingId: string) {
+async function cancelBookingFromBot(chatId: number, messageId: number, bookingId: string) {
   const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
   if (!booking || booking.telegramChatId !== String(chatId)) {
     await sendTelegramMessage(chatId, "This booking isn't linked to this chat.");
@@ -143,7 +156,7 @@ async function cancelBookingFromBot(chatId: number, bookingId: string) {
   }
 
   if (booking.status === "completed" || booking.status === "cancelled") {
-    await sendTelegramMessage(chatId, `This booking is already ${booking.status} - nothing to cancel.`);
+    await editTelegramMessage(chatId, messageId, `This booking is already ${booking.status} - nothing to cancel.`);
     return;
   }
 
@@ -152,17 +165,20 @@ async function cancelBookingFromBot(chatId: number, bookingId: string) {
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
 
-  await sendTelegramMessage(chatId, "Your booking has been cancelled. Hope to see you another time!");
+  await editTelegramMessage(chatId, messageId, "❌ Cancelled. Hope to see you another time!");
 }
 
-async function recordRatingFromBot(chatId: number, bookingId: string, rating: number) {
+async function recordRatingFromBot(chatId: number, messageId: number, bookingId: string, rating: number) {
   if (!bookingId || !Number.isInteger(rating) || rating < 1 || rating > 5) return;
 
   const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
   if (!booking || booking.telegramChatId !== String(chatId)) return;
 
   const existing = await db.query.reviews.findFirst({ where: eq(reviews.bookingId, bookingId) });
-  if (existing) return;
+  if (existing) {
+    await editTelegramMessage(chatId, messageId, "You already rated this appointment - thanks again!");
+    return;
+  }
 
   await db.insert(reviews).values({
     bookingId,
@@ -173,7 +189,7 @@ async function recordRatingFromBot(chatId: number, bookingId: string, rating: nu
     commentRequestedAt: new Date(),
   });
 
-  await sendTelegramMessage(chatId, "Want to add a comment? Just reply here (optional).");
+  await editTelegramMessage(chatId, messageId, `Thanks for the ${"⭐️".repeat(rating)} rating! Want to add a comment? Just reply here (optional).`);
 }
 
 async function attachCommentToPendingReview(chatId: number, text: string) {

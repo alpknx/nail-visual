@@ -49,6 +49,26 @@ export async function answerTelegramCallback(callbackQueryId: string, text?: str
   });
 }
 
+/**
+ * Replaces a message's text and removes its inline keyboard (or swaps in new
+ * buttons). Used right after handling a callback so a Confirm/Cancel/rating
+ * button can't be tapped again on a message that's already been acted on.
+ */
+export async function editTelegramMessage(
+  chatId: string | number,
+  messageId: number,
+  text: string,
+  buttons?: InlineButton[][]
+) {
+  return callTelegramApi("editMessageText", {
+    chat_id: chatId,
+    message_id: messageId,
+    text,
+    parse_mode: "HTML",
+    reply_markup: { inline_keyboard: buttons ?? [] },
+  });
+}
+
 export function telegramDeepLink(botUsername: string, bookingId: string) {
   return `https://t.me/${botUsername}?start=${bookingId}`;
 }
