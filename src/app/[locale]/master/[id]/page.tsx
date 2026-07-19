@@ -130,27 +130,6 @@ export default async function MasterProfilePage({ params }: MasterProfilePagePro
                 key={post.id}
                 href={fullUrl}
                 className="group relative aspect-square rounded-lg overflow-hidden bg-muted block"
-                onClick={(e) => {
-                  // Store source in sessionStorage as backup for mobile Safari
-                  // Set it BEFORE navigation to ensure it's available
-                  if (typeof window !== 'undefined') {
-                    try {
-                      sessionStorage.setItem('postSource', 'profile');
-                    } catch (e) {
-                      // ignore
-                    }
-                  }
-                }}
-                onTouchStart={() => {
-                  // Also set on touch for mobile Safari
-                  if (typeof window !== 'undefined') {
-                    try {
-                      sessionStorage.setItem('postSource', 'profile');
-                    } catch (e) {
-                      // ignore
-                    }
-                  }
-                }}
               >
                 <Image
                   src={post.imageUrl}
