@@ -27,8 +27,8 @@ Nail Visual compresses a typically fragmented discovery-and-booking flow into a 
 Guest bookings are confirmed through a Telegram bot instead of email:
 
 1. Guest books with just a name (no account, no email) → gets a one-tap deep link to the bot
-2. Bot shows the booking details with an inline **Confirm** button; tapping it flags the booking as guest-confirmed (visible to the artist in their calendar) — the artist still confirms/cancels manually as the final word
-3. If the artist cancels, the guest is notified in the same chat
+2. Bot shows the booking details with inline **Confirm** / **Cancel** buttons; Confirm flags the booking as guest-confirmed (visible to the artist in their calendar) — the artist still confirms/cancels manually as the final word. Cancel lets the guest call off the appointment themselves, right from the chat
+3. If the artist cancels instead, the guest is notified in the same chat
 4. After the appointment (or on cancellation), the bot asks for a 1–5 star rating and an optional comment, which becomes a public review on the artist's profile
 
 Webhook: `POST /api/telegram/webhook` · session-completion sweep: `GET /api/cron/session-followup` (daily, Vercel Cron).
