@@ -1,1 +1,0 @@
-ALTER TABLE "posts" ADD COLUMN "blur_data_url" text;

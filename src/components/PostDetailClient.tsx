@@ -25,7 +25,6 @@ interface PostTag {
 interface PostDetailPost {
   id: string;
   imageUrl: string;
-  blurDataUrl: string | null;
   description: string | null;
   price: number | null;
   currency: string | null;
@@ -155,8 +154,6 @@ export default function PostDetailClient({ post, matchingMasters, source }: Post
             sizes="100vw"
             className="object-cover"
             priority
-            placeholder={post.blurDataUrl ? "blur" : undefined}
-            blurDataURL={post.blurDataUrl ?? undefined}
             style={{
               filter: 'none',
               WebkitFilter: 'none',

@@ -333,8 +333,6 @@ export default function Home() {
                         sizes="(max-width: 768px) 50vw, 33vw"
                         priority={isPriority}
                         loading={isPriority ? undefined : "lazy"}
-                        placeholder={post.blurDataUrl ? "blur" : undefined}
-                        blurDataURL={post.blurDataUrl ?? undefined}
                         onLoad={(e) => {
                           // Smooth fade-in when image loads
                           const target = e.currentTarget;

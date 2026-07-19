@@ -186,7 +186,6 @@ export async function getMatchingMasters(postId: string) {
 
 const createPostSchema = z.object({
   imageUrl: z.string().url(),
-  blurDataUrl: z.string().optional(),
   description: z.string().optional(),
   price: z.number().optional(),
   durationMinutes: z.number().optional(),
@@ -206,7 +205,6 @@ export async function createPost(data: z.infer<typeof createPostSchema>) {
   const [newPost] = await db.insert(posts).values({
     masterId: session.user.id,
     imageUrl: validated.imageUrl,
-    blurDataUrl: validated.blurDataUrl,
     description: validated.description,
     price: validated.price ? Math.round(validated.price) : null,
     currency: "PLN", // Default for now

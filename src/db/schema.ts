@@ -119,10 +119,6 @@ export const posts = pgTable('posts', {
   id: uuid('id').defaultRandom().primaryKey(),
   masterId: uuid('master_id').references(() => masterProfiles.userId, { onDelete: 'cascade' }),
   imageUrl: text('image_url').notNull(),
-  // Tiny base64 data URI (generated at upload time, see api/uploadthing/core.ts)
-  // used as next/image's blur placeholder. Null for posts uploaded before
-  // this existed - those just render without a blur placeholder.
-  blurDataUrl: text('blur_data_url'),
   price: integer('price'), // Store as cents
   currency: varchar('currency', { length: 10 }).default('PLN'),
   durationMinutes: integer('duration_minutes'),
