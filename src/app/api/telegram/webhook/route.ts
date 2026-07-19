@@ -79,8 +79,11 @@ async function linkBooking(chatId: number, bookingId: string) {
     chatId,
     `<b>Booking request</b>\n${masterName}\n${booking.post?.description ?? ""}\n${startLabel}${
       booking.post?.durationMinutes ? ` (${booking.post.durationMinutes} min)` : ""
-    }\n\nTap below to confirm you'll be there.`,
-    [[{ text: "✅ Confirm", callback_data: `confirm:${bookingId}` }]]
+    }\n\nTap below to confirm you'll be there, or cancel if your plans changed.`,
+    [[
+      { text: "✅ Confirm", callback_data: `confirm:${bookingId}` },
+      { text: "❌ Cancel", callback_data: `cancel:${bookingId}` },
+    ]]
   );
 }
 
@@ -97,6 +100,13 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
     const bookingId = data.slice("confirm:".length);
     await confirmBookingFromBot(chatId, bookingId);
     await answerTelegramCallback(callback.id, "Confirmed!");
+    return;
+  }
+
+  if (data.startsWith("cancel:")) {
+    const bookingId = data.slice("cancel:".length);
+    await cancelBookingFromBot(chatId, bookingId);
+    await answerTelegramCallback(callback.id, "Cancelled");
     return;
   }
 
@@ -123,6 +133,26 @@ async function confirmBookingFromBot(chatId: number, bookingId: string) {
     .where(eq(bookings.id, bookingId));
 
   await sendTelegramMessage(chatId, "You're confirmed. See you then! We'll follow up here after your appointment.");
+}
+
+async function cancelBookingFromBot(chatId: number, bookingId: string) {
+  const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
+  if (!booking || booking.telegramChatId !== String(chatId)) {
+    await sendTelegramMessage(chatId, "This booking isn't linked to this chat.");
+    return;
+  }
+
+  if (booking.status === "completed" || booking.status === "cancelled") {
+    await sendTelegramMessage(chatId, `This booking is already ${booking.status} - nothing to cancel.`);
+    return;
+  }
+
+  await db
+    .update(bookings)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(bookings.id, bookingId));
+
+  await sendTelegramMessage(chatId, "Your booking has been cancelled. Hope to see you another time!");
 }
 
 async function recordRatingFromBot(chatId: number, bookingId: string, rating: number) {
