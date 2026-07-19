@@ -85,6 +85,23 @@ export default function BookingAgenda({ masterId, timezone }: { masterId: string
     loadDay(selectedDate);
   }, [selectedDate, loadDay]);
 
+  // Guest actions (confirm/cancel via Telegram) update the booking directly
+  // in the DB with no push channel back to this page - poll in the
+  // background so the master doesn't have to manually refresh to see them.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getMasterCalendarData(formatInTimeZone(selectedDate, "UTC", "yyyy-MM-dd"))
+        .then((data) => {
+          setBookings(data.bookings as Booking[]);
+          setOverrides(data.overrides as Override[]);
+        })
+        .catch(() => {
+          // Silent - the next poll or a manual date change will retry.
+        });
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [selectedDate]);
+
   const formatTime = (utcDate: Date) => {
     const local = toZonedTime(new Date(utcDate), timezone);
     return format(local, "HH:mm");
