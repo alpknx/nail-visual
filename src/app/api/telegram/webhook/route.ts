@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { bookings, reviews } from "@/db/schema";
 import { eq, and, isNull, gt, desc } from "drizzle-orm";
 import { formatInTimeZone } from "date-fns-tz";
-import { sendTelegramMessage, sendTelegramPhoto, answerTelegramCallback, editTelegramMessage, editTelegramCaption } from "@/lib/telegram";
+import { sendTelegramMessage, sendTelegramPhoto, answerTelegramCallback, editTelegramMessage, editTelegramCaption, type InlineButton } from "@/lib/telegram";
 
 const RATING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -136,12 +136,12 @@ async function confirmBookingFromBot(chatId: number, messageId: number, bookingI
 
   // The booking-request card was sent as a photo (sendTelegramPhoto) whenever
   // the post has an image, and Telegram rejects editMessageText on a photo
-  // message - must use editMessageCaption there instead, or the Confirm/
-  // Cancel buttons never actually get removed and stay tappable forever.
-  const editCard = (text: string) =>
+  // message - must use editMessageCaption there instead, or the button edit
+  // silently fails and stale buttons stay tappable forever.
+  const editCard = (text: string, buttons?: InlineButton[][]) =>
     booking.post?.imageUrl
-      ? editTelegramCaption(chatId, messageId, text)
-      : editTelegramMessage(chatId, messageId, text);
+      ? editTelegramCaption(chatId, messageId, text, buttons)
+      : editTelegramMessage(chatId, messageId, text, buttons);
 
   // The Cancel/Confirm buttons stay live until this message is edited below,
   // so a second tap can still land here after the booking was already
@@ -151,12 +151,27 @@ async function confirmBookingFromBot(chatId: number, messageId: number, bookingI
     return;
   }
 
+  if (booking.guestConfirmedAt) {
+    // Already confirmed - re-show the same state instead of re-writing the DB.
+    await editCard(
+      "✅ Confirmed. See you then! Plans changed?",
+      [[{ text: "❌ Cancel", callback_data: `cancel:${bookingId}` }]]
+    );
+    return;
+  }
+
   await db
     .update(bookings)
     .set({ guestConfirmedAt: new Date(), updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
 
-  await editCard("✅ Confirmed. See you then! We'll follow up here after your appointment.");
+  // Confirm isn't a terminal state - the guest might still need to cancel
+  // later if plans change, so keep a Cancel button live. Only Cancel itself
+  // is terminal (the booking is erased from the master's calendar).
+  await editCard(
+    "✅ Confirmed. See you then! We'll follow up here after your appointment.\n\nPlans changed?",
+    [[{ text: "❌ Cancel", callback_data: `cancel:${bookingId}` }]]
+  );
 }
 
 async function cancelBookingFromBot(chatId: number, messageId: number, bookingId: string) {
@@ -169,10 +184,10 @@ async function cancelBookingFromBot(chatId: number, messageId: number, bookingId
     return;
   }
 
-  const editCard = (text: string) =>
+  const editCard = (text: string, buttons?: InlineButton[][]) =>
     booking.post?.imageUrl
-      ? editTelegramCaption(chatId, messageId, text)
-      : editTelegramMessage(chatId, messageId, text);
+      ? editTelegramCaption(chatId, messageId, text, buttons)
+      : editTelegramMessage(chatId, messageId, text, buttons);
 
   if (booking.status === "completed" || booking.status === "cancelled") {
     await editCard(`This booking is already ${booking.status} - nothing to cancel.`);

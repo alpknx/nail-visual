@@ -1,7 +1,7 @@
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const API_BASE = BOT_TOKEN ? `https://api.telegram.org/bot${BOT_TOKEN}` : null;
 
-interface InlineButton {
+export interface InlineButton {
   text: string;
   callback_data: string;
 }
