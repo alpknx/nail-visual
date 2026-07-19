@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, ChevronLeft, Clock } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useBookingFlow } from "@/hooks/use-booking-flow";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 import BookingModalDateStep from "@/components/BookingModalDateStep";
 import BookingModalTimeSlotStep from "@/components/BookingModalTimeSlotStep";
 import BookingModalNotesStep from "@/components/BookingModalNotesStep";
@@ -104,10 +105,7 @@ export default function BookingModal({
     setIsDragging(false);
   };
 
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
+  useBodyScrollLock(open);
 
   if (!open || !mounted) return null;
 

@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import ContactButtons from "@/components/ContactButtons";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 import dynamic from "next/dynamic";
 
 const BookingModal = dynamic(() => import("@/components/BookingModal"), { ssr: false });
@@ -114,18 +115,10 @@ export default function MasterMatchDialog({
     setIsDragging(false);
   };
 
-  // Light scroll prevention - don't block browser navigation
-  useEffect(() => {
-    if (open) {
-      // Only prevent scroll on modal content, not entire body
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
+  // Light scroll prevention - don't block browser navigation.
+  // Reference-counted so it composes correctly with the nested BookingModal,
+  // which also locks scroll while open.
+  useBodyScrollLock(open);
 
   if (!open || !mounted) return null;
 
@@ -188,7 +181,7 @@ export default function MasterMatchDialog({
           >
             <div className="h-12 w-12 rounded-full overflow-hidden bg-gray-100 border border-gray-200 relative flex-shrink-0">
               {master.avatarUrl ? (
-                <Image src={master.avatarUrl} alt={master.businessName} fill className="object-cover" />
+                <Image src={master.avatarUrl} alt={master.businessName} fill sizes="48px" className="object-cover" />
               ) : (
                 <div className="flex items-center justify-center h-full w-full bg-gray-200 text-gray-500 font-bold">
                   {master.businessName.charAt(0).toUpperCase()}
@@ -216,6 +209,7 @@ export default function MasterMatchDialog({
               src={master.matchingImageUrl}
               alt={`Work by ${master.businessName}`}
               fill
+              sizes="(max-width: 448px) 100vw, 448px"
               className="object-cover"
               priority
             />
