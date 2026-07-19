@@ -83,7 +83,12 @@ export default function OverridesList({
 
   return (
     <>
-      <BlockTitle>Blocked Times</BlockTitle>
+      <BlockTitle>Time Off</BlockTitle>
+      <p className="px-4 -mt-2 mb-2 text-xs text-gray-400">
+        Block out vacations, breaks, or any time within your working hours
+        when you&apos;re not available. This only removes availability - it
+        can&apos;t add extra hours outside your weekly schedule.
+      </p>
 
       {fetching ? (
         <Block>
@@ -114,7 +119,7 @@ export default function OverridesList({
         </List>
       )}
 
-      <BlockTitle>Add Block</BlockTitle>
+      <BlockTitle>Block a Period</BlockTitle>
       <List strong inset>
         <ListItem
           title="From"
@@ -154,7 +159,7 @@ export default function OverridesList({
 
       <Block>
         <Button large onClick={handleAdd} disabled={adding}>
-          {adding ? "Adding..." : "Add Block"}
+          {adding ? "Blocking..." : "Block This Time"}
         </Button>
       </Block>
     </>

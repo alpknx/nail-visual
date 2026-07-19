@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { masterProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import ScheduleEditor from "@/components/ScheduleEditor";
-import OverridesList from "@/components/OverridesList";
+import ScheduleTabs from "@/components/ScheduleTabs";
 import { getMasterSchedule } from "@/app/actions";
 
 export default async function SchedulePage() {
@@ -28,10 +27,5 @@ export default async function SchedulePage() {
 
   const timezone = schedule?.timezone ?? "Europe/Warsaw";
 
-  return (
-    <>
-      <ScheduleEditor masterId={session.user.id} />
-      <OverridesList masterId={session.user.id} timezone={timezone} />
-    </>
-  );
+  return <ScheduleTabs masterId={session.user.id} timezone={timezone} />;
 }

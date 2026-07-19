@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Page, Navbar, NavbarBackLink, Block, BlockTitle, List, ListItem, Button, Toggle } from "konsta/react";
-import { useRouter, useParams } from "next/navigation";
+import { Block, BlockTitle, List, ListItem, Button, Toggle } from "konsta/react";
 import { getMasterSchedule, upsertMasterSchedule } from "@/app/actions";
 import { toast } from "sonner";
 
@@ -45,10 +44,6 @@ type WeekRanges = Record<number, DayRange>;
 const DEFAULT_RANGE: DayRange = { enabled: false, startTime: "09:00", endTime: "18:00" };
 
 export default function ScheduleEditor({ masterId }: { masterId: string }) {
-  const router = useRouter();
-  const params = useParams();
-  const locale = (params?.locale as string) || "en";
-
   const [timezone, setTimezone] = useState("Europe/Warsaw");
   const [ranges, setRanges] = useState<WeekRanges>(() =>
     Object.fromEntries(DAYS.map((d) => [d.dayOfWeek, { ...DEFAULT_RANGE }]))
@@ -98,8 +93,7 @@ export default function ScheduleEditor({ masterId }: { masterId: string }) {
     try {
       await upsertMasterSchedule({ timezone, ranges: activeRanges });
       toast.success("Schedule saved");
-      router.push(`/${locale}/profile`);
-    } catch (e) {
+    } catch {
       toast.error("Failed to save schedule");
     } finally {
       setLoading(false);
@@ -107,21 +101,11 @@ export default function ScheduleEditor({ masterId }: { masterId: string }) {
   };
 
   if (fetching) {
-    return (
-      <Page>
-        <Navbar title="Working Hours" />
-        <Block className="text-center mt-10">Loading...</Block>
-      </Page>
-    );
+    return <Block className="text-center mt-10 text-sm text-gray-400">Loading...</Block>;
   }
 
   return (
-    <Page>
-      <Navbar
-        title="Working Hours"
-        left={<NavbarBackLink onClick={() => router.back()} text="Back" />}
-      />
-
+    <>
       <BlockTitle>Timezone</BlockTitle>
       <List strong inset>
         <ListItem
@@ -143,6 +127,9 @@ export default function ScheduleEditor({ masterId }: { masterId: string }) {
       </List>
 
       <BlockTitle>Working Days</BlockTitle>
+      <p className="px-4 -mt-2 mb-2 text-xs text-gray-400">
+        Turn on the days you work and set your hours. Clients can only book within these windows.
+      </p>
       <List strong inset>
         {DAYS.map(({ dayOfWeek, label }) => {
           const range = ranges[dayOfWeek];
@@ -184,6 +171,6 @@ export default function ScheduleEditor({ masterId }: { masterId: string }) {
           {loading ? "Saving..." : "Save Schedule"}
         </Button>
       </Block>
-    </Page>
+    </>
   );
 }
